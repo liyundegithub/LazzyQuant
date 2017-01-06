@@ -125,10 +125,11 @@ void QuantTrader::loadTradeStrategySettings()
         strategy->setBarList(getBars(instrument, time_frame), collector_map[instrument]->getCurrentBar(time_frame));
         strategy_map.insert(instrument, strategy);
 
-        if (position_map.contains(instrument)) {
-            position_map[instrument] += strategy->getPosition();
-        } else {
-            position_map.insert(instrument, strategy->getPosition());
+        auto position = strategy->getPosition();
+        if (!position_map.contains(instrument)) {
+            position_map.insert(instrument, position);
+        } else if (position.is_initialized() && position_map[instrument].is_initialized()) {
+            position_map[instrument] = position_map[instrument].get() + position.get();
         }
     }
 }
@@ -444,16 +445,31 @@ void QuantTrader::onMarketData(const QString& instrumentID, uint time, double la
     }
 
     auto strategyList = strategy_map.values(instrumentID);
-    int new_position_sum = 0;
+    boost::optional<int> new_position_sum;
     foreach (auto *strategy, strategyList) {
-        if (isNewTick) {    // 有新的成交价格
+        if (isNewTick) {    // 有新的成交
             strategy->onNewTick(time, lastPrice);
         }
-        new_position_sum += strategy->getPosition();
+        auto position = strategy->getPosition();
+        if (position.is_initialized()) {
+            if (new_position_sum.is_initialized()) {
+                new_position_sum = new_position_sum.get() + position.get();
+            } else {
+                new_position_sum = position;
+            }
+        }
     }
-    if (position_map[instrumentID] != new_position_sum) {
-        position_map[instrumentID] = new_position_sum;
-        pExecuter->setPosition(instrumentID, new_position_sum);
+
+    if (new_position_sum.is_initialized()) {
+        if (position_map.contains(instrumentID) && position_map[instrumentID].is_initialized()) {
+            if (position_map[instrumentID].get() != new_position_sum.get()) {
+                position_map[instrumentID] = new_position_sum;
+                pExecuter->setPosition(instrumentID, new_position_sum.get());
+            }
+        } else {
+            position_map[instrumentID] = new_position_sum;
+            pExecuter->setPosition(instrumentID, new_position_sum.get());
+        }
     }
 }
 

@@ -1,6 +1,8 @@
 #ifndef QUANT_TRADER_H
 #define QUANT_TRADER_H
 
+#include <boost/optional.hpp>
+
 #include "market_watcher_interface.h"
 #include "ctp_executer_interface.h"
 
@@ -25,7 +27,7 @@ protected:
     QMap<QString, QMap<int, QList<Bar>>> bars_map;
     QMultiMap<QString, AbstractIndicator*> indicator_map;
     QMultiMap<QString, AbstractStrategy*> strategy_map;
-    QMap<QString, int> position_map;
+    QMap<QString, boost::optional<int>> position_map;
 
     QString kt_export_dir;
     void loadQuantTraderSettings();

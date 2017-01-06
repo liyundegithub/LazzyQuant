@@ -1,6 +1,7 @@
 #include <QMetaEnum>
 #include <QSettings>
 #include <QDateTime>
+#include <QStringList>
 #include <QDebug>
 
 #include "abstract_strategy.h"
@@ -16,17 +17,24 @@ AbstractStrategy::AbstractStrategy(const QString &id, const QString& instrumentI
     qDebug() << "id = " << id << ", instrumentID = " << instrumentID << ", time_frame = " << time_frame;
 
     result = new QSettings(QSettings::IniFormat, QSettings::UserScope, "ctp", "strategy_result");
-    result->beginGroup(stratety_id);
-    position = result->value("position", 0).toInt();
-    tp_price = result->value("tp_price", -1.0).toDouble();
-    sl_price = result->value("sl_price", -1.0).toDouble();
+    auto groupList = result->childGroups();
+    if (groupList.contains(stratety_id)) {
+        result->beginGroup(stratety_id);
+        position = result->value("position", 0).toInt();
+        if (result->contains("tp_price")) {
+            tp_price = result->value("tp_price").toDouble();
+        }
+        if (result->contains("sl_price")) {
+            sl_price = result->value("sl_price").toDouble();
+        }
+        result->endGroup();
+    }
 
     lastCalcualtedBarTime = -1;
 }
 
 AbstractStrategy::~AbstractStrategy()
 {
-    result->endGroup();
     delete result;
 }
 
@@ -38,35 +46,47 @@ inline bool AbstractStrategy::isNewBar() const
 inline void AbstractStrategy::resetPosition()
 {
     position = 0;
-    tp_price = -1.0;
-    sl_price = -1.0;
+    tp_price.reset();
+    sl_price.reset();
     saveResult();
 }
 
 inline void AbstractStrategy::saveResult()
 {
+    result->beginGroup(stratety_id);
     result->setValue("lastSave", QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz"));
-    result->setValue("position", position);
-    result->setValue("tp_price", tp_price);
-    result->setValue("sl_price", sl_price);
+    result->setValue("position", position.get());
+
+    if (tp_price.is_initialized()) {
+        result->setValue("tp_price", tp_price.get());
+    } else if (result->contains("tp_price")) {
+        result->remove("tp_price");
+    }
+
+    if (sl_price.is_initialized()) {
+        result->setValue("sl_price", sl_price.get());
+    } else if (result->contains("sl_price")) {
+        result->remove("sl_price");
+    }
+    result->endGroup();
 }
 
 void AbstractStrategy::checkTPSL(double price)
 {
-    if (tp_price > 0.0) {
-        if (position > 0 && price > tp_price) {
+    if (tp_price.is_initialized()) {
+        if (position > 0 && price > tp_price.get()) {
             resetPosition();
         }
-        if (position < 0 && price < tp_price) {
+        if (position < 0 && price < tp_price.get()) {
             resetPosition();
         }
     }
 
-    if (sl_price > 0.0) {
-        if (position > 0 && price < sl_price) {
+    if (sl_price.is_initialized()) {
+        if (position > 0 && price < sl_price.get()) {
             resetPosition();
         }
-        if (position < 0 && price > sl_price) {
+        if (position < 0 && price > sl_price.get()) {
             resetPosition();
         }
     }
@@ -79,7 +99,9 @@ void AbstractStrategy::checkIfNewBar()
             indicator->update();
         }
         onNewBar();
-        saveResult();
+        if (position.is_initialized()) {
+            saveResult();
+        }
         lastCalcualtedBarTime = lastBar->time;
     }
 }

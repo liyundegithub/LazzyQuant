@@ -3,6 +3,8 @@
 
 #include <QObject>
 
+#include <boost/optional.hpp>
+
 class Bar;
 class AbstractIndicator;
 class QSettings;
@@ -20,9 +22,9 @@ protected:
     Bar *lastBar;
 
     QSettings *result;
-    int position;
-    double tp_price;
-    double sl_price;
+    boost::optional<int> position;
+    boost::optional<double> tp_price;
+    boost::optional<double> sl_price;
 
     int lastCalcualtedBarTime;
     bool isNewBar() const;
@@ -35,7 +37,7 @@ public:
     explicit AbstractStrategy(const QString& id, const QString& instrumentID, const QString& time_frame, QObject *parent = 0);
     ~AbstractStrategy();
 
-    int getPosition() const {
+    boost::optional<int> getPosition() const {
         return position;
     }
 

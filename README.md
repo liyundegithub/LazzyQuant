@@ -8,12 +8,14 @@
 
 ## 配置文件示例:
 文件名: quant_trader.ini  
-[HistoryPath]  
-ktexport=F:/KT/KTExportData     # 飞狐交易师历史数据导出目录  
-collector=E:/collected          # K线数据收集保存目录(程序启动时导入此目录中的数据)  
+<pre><code>
+[HistoryPath]
+ktexport=F:/KT/KTExportData     # 飞狐交易师历史数据导出目录
+collector=E:/collected          # K线数据收集保存目录(程序启动时导入此目录中的数据)
 
-[Collector]                     # 需要收集的合约K线 (1分钟线是默认被收集的)  
-cu1703=MIN5 | MIN15 | MIN60     # cu1703的1分钟线, 5分钟线, 15分钟线, 60分钟线  
-i1705=MIN5 | MIN15 | MIN60      # i1705的1分钟线, 5分钟线, 15分钟线, 60分钟线  
-CF705=MIN1                      # CF705的1分钟线  
-ag1706=MIN5 | MIN15             # ag1706的1分钟线, 5分钟线, 15分钟线  
+[Collector]                     # 需要收集的合约K线 (1分钟线是默认被收集的)
+cu1703=MIN5 | MIN15 | MIN60     # cu1703的1分钟线, 5分钟线, 15分钟线, 60分钟线
+i1705=MIN5 | MIN15 | MIN60      # i1705的1分钟线, 5分钟线, 15分钟线, 60分钟线
+CF705=MIN1                      # CF705的1分钟线
+ag1706=MIN5 | MIN15             # ag1706的1分钟线, 5分钟线, 15分钟线
+</code></pre>
