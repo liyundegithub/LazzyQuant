@@ -73,20 +73,29 @@ inline void AbstractStrategy::saveResult()
 
 void AbstractStrategy::checkTPSL(double price)
 {
+    if (!position.is_initialized()) {
+        // No position
+        return;
+    }
+
+    int position_value = position.get();
+
+    // Check take profit
     if (tp_price.is_initialized()) {
-        if (position > 0 && price > tp_price.get()) {
+        if (position_value > 0 && price > tp_price.get()) {
             resetPosition();
         }
-        if (position < 0 && price < tp_price.get()) {
+        if (position_value < 0 && price < tp_price.get()) {
             resetPosition();
         }
     }
 
+    // Check stop loss
     if (sl_price.is_initialized()) {
-        if (position > 0 && price < sl_price.get()) {
+        if (position_value > 0 && price < sl_price.get()) {
             resetPosition();
         }
-        if (position < 0 && price > sl_price.get()) {
+        if (position_value < 0 && price > sl_price.get()) {
             resetPosition();
         }
     }
