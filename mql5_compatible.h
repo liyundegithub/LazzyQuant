@@ -63,7 +63,7 @@ protected:
     bool is_time_series;
 
 public:
-    _TimeSeries(bool is_time_series) :
+    explicit _TimeSeries(bool is_time_series) :
         is_time_series(is_time_series) {
     }
 
@@ -81,8 +81,6 @@ public:
 
     virtual const T& operator[](int i) const = 0;
 };
-
-#include <QVector>
 
 template<typename T>
 class _ListProxy : public _TimeSeries<T> {
@@ -113,6 +111,8 @@ public:
         }
     }
 };
+
+#include <QVector>
 
 template<typename T>
 class _VectorProxy : public _TimeSeries<T> {

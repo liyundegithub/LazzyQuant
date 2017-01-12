@@ -19,3 +19,29 @@ i1705=MIN5 | MIN15 | MIN60      # i1705的1分钟线, 5分钟线, 15分钟线, 6
 CF705=MIN1                      # CF705的1分钟线
 ag1706=MIN5 | MIN15             # ag1706的1分钟线, 5分钟线, 15分钟线
 </code></pre>
+
+文件名: trade_strategy.ini  
+<pre><code>
+[1]                             # 策略ID
+strategy=DblMaPsarStrategy      # 策略名称 (与代码中的策略类名相同)
+instrument=cu1703               # 合约代码
+timeframe=MIN15                 # 时间框架 (枚举)
+param1=3                        # 第一个参数 (int型)
+param2=16                       # 第二个参数 (int型)
+param3=MODE_EMA                 # 第三个参数 (枚举, 平均线类型)
+param4=PRICE_TYPICAL            # 第四个参数 (枚举, 价格类型)
+param5=0.02                     # 第五个参数 (double型)
+param6=0.18                     # 第六个参数 (double型)
+                                # 最多九个参数
+
+[2]
+Strategy=DblMaPsarStrategy
+Instrument=i1705
+timeframe=MIN5
+param1=3
+param2=16
+param3=MODE_SMA
+param4=PRICE_CLOSE
+param5=0.02
+param6=0.18
+</code></pre>

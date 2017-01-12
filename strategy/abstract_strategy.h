@@ -26,7 +26,7 @@ protected:
     boost::optional<double> tp_price;
     boost::optional<double> sl_price;
 
-    int lastCalcualtedBarTime;
+    uint lastCalcualtedBarTime;
     bool isNewBar() const;
     void resetPosition();
     void saveResult();
@@ -47,7 +47,7 @@ public:
         lastBar = last;
     }
 
-    // Inherit from AbstractStrategy and overwite following virtual functions
+    // Inherit from AbstractStrategy and override following virtual functions
     virtual void setParameter(const QVariant& param1, const QVariant& param2, const QVariant& param3,
                               const QVariant& param4, const QVariant& param5, const QVariant& param6,
                               const QVariant& param7, const QVariant& param8, const QVariant& param9) = 0;

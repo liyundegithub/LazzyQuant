@@ -90,7 +90,7 @@ bool BarCollector::onMarketData(uint time, double lastPrice, int volume)
 
         if (bar.isNewBar()) {
             bar.open = lastPrice;
-            // TODO add data, save as time_t format
+            // TODO add date, save as time_t format
             bar.time = time / time_unit * time_unit;
         }
 
