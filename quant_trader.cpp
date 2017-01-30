@@ -1,6 +1,7 @@
 #include <QMultiMap>
 #include <QSettings>
 
+#include "market.h"
 #include "quant_trader.h"
 #include "bar.h"
 #include "bar_collector.h"
@@ -8,11 +9,25 @@
 #include "indicator/parabolicsar.h"
 #include "strategy/DblMaPsar_strategy.h"
 
+extern QList<Market> markets;
+
 QuantTrader* QuantTrader::instance;
 
 int barCollector_enumIdx;
 int MA_METHOD_enumIdx;
 int APPLIED_PRICE_enumIdx;
+
+/*!
+ * \brief getInstrumentName
+ * 从合约代码里提取交易品种名(就是去掉交割月份)
+ * 比如 cu1703 --> cu, i1705 --> i
+ *
+ * \param instrumentID 合约代码
+ * \return 交易品种名
+ */
+static inline QString getInstrumentName(const QString &instrumentID) {
+    return instrumentID.left(instrumentID.length() - 4);
+}
 
 QuantTrader::QuantTrader(QObject *parent) :
     QObject(parent)
@@ -26,16 +41,15 @@ QuantTrader::QuantTrader(QObject *parent) :
     MA_METHOD_enumIdx = MA::staticMetaObject.indexOfEnumerator("ENUM_MA_METHOD");
     APPLIED_PRICE_enumIdx = MQL5IndicatorOnSingleDataBuffer::staticMetaObject.indexOfEnumerator("ENUM_APPLIED_PRICE");
 
+    loadCommonMarketData();
     loadQuantTraderSettings();
     loadTradeStrategySettings();
 
+    saveBarTimeIndex = -1;
     saveBarTimer = new QTimer(this);
     saveBarTimer->setSingleShot(true);
-    connect(saveBarTimer, SIGNAL(timeout()), this, SLOT(resetSaveBarTimer()));
-    foreach (const auto & collector, collector_map) {
-        connect(saveBarTimer, SIGNAL(timeout()), collector, SLOT(saveBars()));
-    }
-    resetSaveBarTimer();
+    connect(saveBarTimer, SIGNAL(timeout()), this, SLOT(saveBarsAndResetTimer()));
+    saveBarsAndResetTimer();
 
     pExecuter = new org::ctp::ctp_executer("org.ctp.ctp_executer", "/ctp_executer", QDBusConnection::sessionBus(), this);
     pWatcher = new org::ctp::market_watcher("org.ctp.market_watcher", "/market_watcher", QDBusConnection::sessionBus(), this);
@@ -45,6 +59,36 @@ QuantTrader::QuantTrader(QObject *parent) :
 QuantTrader::~QuantTrader()
 {
     qDebug() << "~QuantTrader";
+}
+
+/*!
+ * \brief getEndPoints
+ * 查询并获取此合约的每个交易时段的结束时间点列表
+ *
+ * \param instrumentID 合约代码
+ * \return 每个交易时段的结束时间点列表(未排序)
+ */
+QList<QTime> getEndPoints(const QString &instrumentID) {
+    QString instrument = getInstrumentName(instrumentID);
+    QList<QTime> endPoints;
+    foreach (const auto &market, markets) {
+        foreach (const auto &code, market.codes) {
+            if (instrument == code) {
+                int i = 0, size = market.masks.size();
+                for (; i < size; i++) {
+                    if (QRegExp(market.masks[i]).exactMatch(instrumentID)) {
+                        auto tradeTimeList = market.tradetimeses[i];
+                        foreach (const auto &item, tradeTimeList) {
+                            endPoints << item.second;
+                        }
+                        return endPoints;
+                    }
+                }
+                return endPoints;   // instrumentID未能匹配任何正则表达式
+            }
+        }
+    }
+    return endPoints;
 }
 
 void QuantTrader::loadQuantTraderSettings()
@@ -57,11 +101,11 @@ void QuantTrader::loadQuantTraderSettings()
     settings.endGroup();
 
     settings.beginGroup("Collector");
-    QStringList instrumentList = settings.childKeys();
+    QStringList instrumentIDs = settings.childKeys();
 
-    foreach (const QString &instrument, instrumentList) {
-        QString time_frame_string_with_dots = settings.value(instrument).toString();
-        QStringList time_frame_stringlist = time_frame_string_with_dots.split('|');
+    foreach (const QString &instrumentID, instrumentIDs) {
+        QString combined_time_frame_string = settings.value(instrumentID).toString();
+        QStringList time_frame_stringlist = combined_time_frame_string.split('|');
         BarCollector::TimeFrames time_frame_flags;
         foreach (const QString &tf, time_frame_stringlist) {
             int time_frame_value = BarCollector::staticMetaObject.enumerator(barCollector_enumIdx).keyToValue(tf.trimmed().toLatin1().data());
@@ -69,11 +113,30 @@ void QuantTrader::loadQuantTraderSettings()
             time_frame_flags |= time_frame;
         }
 
-        BarCollector *collector = new BarCollector(instrument, time_frame_flags, this);
-        collector_map[instrument] = collector;
-        qDebug() << instrument << ":\t" << time_frame_flags << "\t" << time_frame_stringlist;
+        BarCollector *collector = new BarCollector(instrumentID, time_frame_flags, this);
+        collector_map[instrumentID] = collector;
+        qDebug() << instrumentID << ":\t" << time_frame_flags << "\t" << time_frame_stringlist;
     }
     settings.endGroup();
+
+    QMap<QTime, QStringList> endPointsMap;
+    foreach (const QString &instrumentID, instrumentIDs) {
+        auto endPoints = getEndPoints(instrumentID);
+        foreach (const auto &item, endPoints) {
+            endPointsMap[item] << instrumentID;
+        }
+    }
+
+    auto keys = endPointsMap.keys();
+    qSort(keys);
+    foreach (const auto &item, keys) {
+        QList<BarCollector*> collectors;
+        foreach (const auto &instrumentID, endPointsMap[item]) {
+            collectors << collector_map[instrumentID];
+        }
+        collectorsToSave << collectors;
+        saveBarTimePoints << item.addSecs(120); // Save bars 2 minutes after market close
+    }
 }
 
 void QuantTrader::loadTradeStrategySettings()
@@ -203,10 +266,17 @@ static QString getSuffix(String instrument) {
 #undef each
 #endif
 
-static QString getKTExportName(const QString &instrument) {
-    QString month = instrument.right(2);
-    QString name = instrument.left(instrument[1].isLetter() ? 2 : 1);
-    return name + month;
+/*!
+ * \brief getKTExportName
+ * 从合约代码中提取飞狐交易师导出数据的文件名
+ * 比如 cu1703 --> cu03, i1705 --> i05
+ *
+ * \param instrumentID 合约代码
+ * \return 从飞狐交易师导出的此合约数据的文件名
+ */
+static inline QString getKTExportName(const QString &instrumentID) {
+    QString month = instrumentID.right(2);
+    return getInstrumentName(instrumentID) + month;
 }
 
 QList<Bar>* QuantTrader::getBars(const QString &instrumentID, const QString &time_frame_str)
@@ -292,7 +362,7 @@ static QVariant getParam(const QByteArray &typeName, va_list &ap)
     return ret;
 }
 
-static bool compareValue(const QVariant &v1, const QVariant &v2)
+static bool compareVariant(const QVariant &v1, const QVariant &v2)
 {
     int typeId = v1.userType();
     if (typeId != v2.userType()) {
@@ -354,7 +424,7 @@ AbstractIndicator* QuantTrader::registerIndicator(const QString &instrumentID, c
             bool match = true;
             for (int i = 0; i < parameter_number; i++) {
                 QVariant value = obj->property(names[i]);
-                if (!compareValue(params[i], value)) {
+                if (!compareVariant(params[i], value)) {
                     match = false;
                 }
             }
@@ -413,26 +483,32 @@ AbstractIndicator* QuantTrader::registerIndicator(const QString &instrumentID, c
     return ret;
 }
 
-void QuantTrader::resetSaveBarTimer()
+/*!
+ * \brief QuantTrader::saveBarsAndResetTimer
+ * 保存K线数据并重启计时器至下一个保存时点
+ */
+void QuantTrader::saveBarsAndResetTimer()
 {
-    static const auto time_points = []() -> QList<QTime> {
-        QList<QTime> tlist;
-        tlist << QTime(2, 32) << QTime(10, 17) << QTime(11, 32) << QTime(15, 17);
-        return tlist;
-    }();
+    const int size = saveBarTimePoints.size();
+    if (saveBarTimeIndex >= 0 && saveBarTimeIndex < size) {
+        foreach (const auto &collector, collectorsToSave[saveBarTimeIndex]) {
+            collector->saveBars();
+        }
+    }
 
-    const int size = time_points.size();
     int i;
     for (i = 0; i < size; i++) {
-        int diff = QTime::currentTime().msecsTo(time_points[i]);
+        int diff = QTime::currentTime().msecsTo(saveBarTimePoints[i]);
         if (diff > 1000) {
             saveBarTimer->start(diff);
+            saveBarTimeIndex = i;
             break;
         }
     }
     if (i == size) {
-        int diff = QTime::currentTime().msecsTo(time_points[0]);
+        int diff = QTime::currentTime().msecsTo(saveBarTimePoints[0]);
         saveBarTimer->start(diff + 86400000);   // diff should be negative, there are 86400 seconds in a day
+        saveBarTimeIndex = 0;
     }
 }
 

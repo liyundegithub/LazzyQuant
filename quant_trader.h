@@ -22,7 +22,7 @@ protected:
     org::ctp::market_watcher *pWatcher;
     org::ctp::ctp_executer *pExecuter;
 
-    // Following QString keys stands for instument names
+    // Following QString keys are instumentIDs
     QMap<QString, BarCollector*> collector_map;
     QMap<QString, QMap<int, QList<Bar>>> bars_map;
     QMultiMap<QString, AbstractIndicator*> indicator_map;
@@ -35,6 +35,9 @@ protected:
     QList<Bar>* getBars(const QString &instrumentID, const QString &time_frame_str);
 
     QTimer *saveBarTimer;
+    QList<QTime> saveBarTimePoints;
+    QList<QList<BarCollector*>> collectorsToSave;
+    int saveBarTimeIndex;
 
 public:
     explicit QuantTrader(QObject *parent = 0);
@@ -48,7 +51,7 @@ signals:
 private slots:
     void onMarketData(const QString& instrumentID, uint time, double lastPrice, int volume);
     void onNewBar(const QString &instrumentID, int time_frame, const Bar& bar);
-    void resetSaveBarTimer();
+    void saveBarsAndResetTimer();
 };
 
 #endif // QUANT_TRADER_H

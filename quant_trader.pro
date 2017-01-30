@@ -1,4 +1,4 @@
-QT += core dbus
+QT += core dbus xml
 QT -= gui
 
 TARGET = quant_trader
@@ -16,7 +16,8 @@ SOURCES += main.cpp \
     indicator/parabolicsar.cpp \
     indicator/mql5_indicator.cpp \
     strategy/abstract_strategy.cpp \
-    bar.cpp
+    bar.cpp \
+    market.cpp
 
 DBUS_INTERFACES += market_watcher.xml ctp_executer.xml
 
@@ -30,6 +31,7 @@ HEADERS += \
     indicator/parabolicsar.h \
     mql5_compatible.h \
     indicator/mql5_indicator.h \
-    strategy/abstract_strategy.h
+    strategy/abstract_strategy.h \
+    market.h
 
 unix:QMAKE_CXXFLAGS += -std=c++11
