@@ -20,13 +20,19 @@ int APPLIED_PRICE_enumIdx;
 /*!
  * \brief getInstrumentName
  * 从合约代码里提取交易品种名(就是去掉交割月份)
- * 比如 cu1703 --> cu, i1705 --> i
+ * 比如 cu1703 --> cu, i1705 --> i, CF705 --> CF
  *
  * \param instrumentID 合约代码
  * \return 交易品种名
  */
-static inline QString getInstrumentName(const QString &instrumentID) {
-    return instrumentID.left(instrumentID.length() - 4);
+static QString getInstrumentName(const QString &instrumentID) {
+    const int len = instrumentID.length();
+    for (int i = 0; i < len; i++) {
+        if (instrumentID[i].isDigit()) {
+            return instrumentID.left(i);
+        }
+    }
+    return "";
 }
 
 QuantTrader::QuantTrader(QObject *parent) :
@@ -221,8 +227,8 @@ const static QString ZJ[] = {"ic", "if", "ih", "t",  "tf"};
 #define each
 #endif
 // 通过合约名获得文件的扩展名
-static QString getSuffix(String instrument) {
-    const QString instrumentLowerCase = instrument.left(instrument[1].isLetter() ? 2 : 1).toLower();
+static QString getSuffix(String instrumentID) {
+    const QString instrumentLowerCase = getInstrumentName(instrumentID).toLower();
     for each (String instr in SQ) {
         if (instrumentLowerCase == instr) {
             return ".SQ";
@@ -269,7 +275,7 @@ static QString getSuffix(String instrument) {
 /*!
  * \brief getKTExportName
  * 从合约代码中提取飞狐交易师导出数据的文件名
- * 比如 cu1703 --> cu03, i1705 --> i05
+ * 比如 cu1703 --> cu03, i1705 --> i05, CF705 --> CF05
  *
  * \param instrumentID 合约代码
  * \return 从飞狐交易师导出的此合约数据的文件名
@@ -520,6 +526,16 @@ void QuantTrader::saveBarsAndResetTimer()
     }
 }
 
+/*!
+ * \brief QuantTrader::onMarketData
+ * 处理市场数据, 如果有新的成交则计算相关策略
+ * 统计相关策略给出的仓位, 如果与旧数值不同则发送给执行模块
+ *
+ * \param instrumentID 合约代码
+ * \param time 时间
+ * \param lastPrice 最新成交价
+ * \param volume 成交量
+ */
 void QuantTrader::onMarketData(const QString& instrumentID, uint time, double lastPrice, int volume)
 {
     BarCollector *collector = collector_map.value(instrumentID, nullptr);
@@ -557,6 +573,14 @@ void QuantTrader::onMarketData(const QString& instrumentID, uint time, double la
     }
 }
 
+/*!
+ * \brief QuantTrader::onNewBar
+ * 储存新收集的K线数据并计算相关策略
+ *
+ * \param instrumentID 合约代码
+ * \param time_frame 时间框架
+ * \param bar 新的K线数据
+ */
 void QuantTrader::onNewBar(const QString &instrumentID, int time_frame, const Bar &bar)
 {
     bars_map[instrumentID][time_frame].append(bar);
