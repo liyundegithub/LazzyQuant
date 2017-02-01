@@ -74,9 +74,9 @@ QList<QTime> getEndPoints(const QString &instrumentID) {
     foreach (const auto &market, markets) {
         foreach (const auto &code, market.codes) {
             if (instrument == code) {
-                int i = 0, size = market.masks.size();
+                int i = 0, size = market.regexs.size();
                 for (; i < size; i++) {
-                    if (QRegExp(market.masks[i]).exactMatch(instrumentID)) {
+                    if (QRegExp(market.regexs[i]).exactMatch(instrument)) {
                         auto tradeTimeList = market.tradetimeses[i];
                         foreach (const auto &item, tradeTimeList) {
                             endPoints << item.second;
@@ -279,6 +279,14 @@ static inline QString getKTExportName(const QString &instrumentID) {
     return getInstrumentName(instrumentID) + month;
 }
 
+/*!
+ * \brief QuantTrader::getBars
+ * 获取历史K线数据, 包括从交易师软件导出的数据和quant_trader保存的K线数据
+ *
+ * \param instrumentID 合约代码
+ * \param time_frame_str 时间框架(字符串)
+ * \return QList<Bar>指针
+ */
 QList<Bar>* QuantTrader::getBars(const QString &instrumentID, const QString &time_frame_str)
 {
     int time_frame_value = BarCollector::staticMetaObject.enumerator(barCollector_enumIdx).keyToValue(time_frame_str.trimmed().toLatin1().data());

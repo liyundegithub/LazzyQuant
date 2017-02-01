@@ -11,7 +11,7 @@ struct Market {
     QString label;
     QStringList codes;
     QStringList descs;
-    QStringList masks;
+    QStringList regexs;
     QList<QList<QPair<QTime, QTime>>> tradetimeses;
 };
 

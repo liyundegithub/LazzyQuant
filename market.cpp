@@ -43,9 +43,15 @@ Market loadMkt(const QString &file_name)
         QDomElement e = n.toElement();
         if (!e.isNull()) {
             QString mask = e.attribute("mask");
-            QString tradetime = e.attribute("tradetime");
-            market.masks << mask;
+            if (mask.endsWith("*") && !mask.endsWith(".*")) {
+                // 修正正则表达式
+                mask.chop(1);
+                market.regexs << (mask + ".*");
+            } else {
+                market.regexs << mask;
+            }
 
+            QString tradetime = e.attribute("tradetime");
             QList<QPair<QTime, QTime>> tradetimes;
             QStringList list1 = tradetime.trimmed().split(';');
             foreach (const auto &item, list1) {
