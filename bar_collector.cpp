@@ -90,8 +90,9 @@ bool BarCollector::onMarketData(uint time, double lastPrice, int volume)
 
         if (bar.isNewBar()) {
             bar.open = lastPrice;
-            // TODO add date, save as time_t format
-            bar.time = time / time_unit * time_unit;
+            QDateTime barTime = QDateTime::currentDateTime();
+            barTime.setTime(QTime(0, 0).addSecs(time));    // 当前的日期(YYMMDD)加上交易所的时间(HHMMSS)
+            bar.time = barTime.toTime_t() / time_unit * time_unit;
         }
 
         if (lastPrice > bar.high) {

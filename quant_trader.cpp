@@ -346,6 +346,21 @@ QList<Bar>* QuantTrader::getBars(const QString &instrumentID, const QString &tim
         barList.append(tmpList);
     }
 
+    const int barListSize = barList.size();
+    QSet<int> invalidSet;
+    for (int i = 0; i < barListSize; i ++) {
+        for (int j = i + 1; j < barListSize; j++) {
+            if (barList[i].time >= barList[j].time) {
+                invalidSet.insert(j);
+            }
+        }
+    }
+    auto invalidList = invalidSet.toList();
+    qSort(invalidList.begin(), invalidList.end(), qGreater<int>());
+    foreach (const int i, invalidList) {
+        barList.removeAt(i);
+    }
+
     if (!collector_map.contains(instrumentID)) {
         qDebug() << "Warning! Missing collector for" << instrumentID << "!";
     }
