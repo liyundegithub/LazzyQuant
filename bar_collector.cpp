@@ -124,6 +124,7 @@ void BarCollector::saveBars()
         QDataStream wstream(&barFile);
         wstream.setFloatingPointPrecision(QDataStream::DoublePrecision);
         wstream << barList;
+        wstream << current_bar_map[key];
         barFile.close();
         barList.clear();
     }

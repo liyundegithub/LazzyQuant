@@ -27,12 +27,13 @@ int APPLIED_PRICE_enumIdx;
  */
 static QString getInstrumentName(const QString &instrumentID) {
     const int len = instrumentID.length();
-    for (int i = 0; i < len; i++) {
+    int i = 0;
+    for (; i < len; i++) {
         if (instrumentID[i].isDigit()) {
-            return instrumentID.left(i);
+            break;
         }
     }
-    return "";
+    return instrumentID.left(i);
 }
 
 QuantTrader::QuantTrader(QObject *parent) :
@@ -120,6 +121,7 @@ void QuantTrader::loadQuantTraderSettings()
         }
 
         BarCollector *collector = new BarCollector(instrumentID, time_frame_flags, this);
+        connect(collector, SIGNAL(collectedBar(QString,int,Bar)), this, SLOT(onNewBar(QString,int,Bar)), Qt::DirectConnection);
         collector_map[instrumentID] = collector;
         qDebug() << instrumentID << ":\t" << time_frame_flags << "\t" << time_frame_stringlist;
     }
@@ -287,11 +289,11 @@ static inline QString getKTExportName(const QString &instrumentID) {
 
 /*!
  * \brief QuantTrader::getBars
- * 获取历史K线数据, 包括从交易师软件导出的数据和quant_trader保存的K线数据
+ * 获取历史K线数据, 包括从飞狐交易师导出的数据和quant_trader保存的K线数据
  *
  * \param instrumentID 合约代码
  * \param time_frame_str 时间框架(字符串)
- * \return QList<Bar>指针
+ * \return 指向包含此合约历史K线数据的QList<Bar>指针
  */
 QList<Bar>* QuantTrader::getBars(const QString &instrumentID, const QString &time_frame_str)
 {
@@ -344,9 +346,7 @@ QList<Bar>* QuantTrader::getBars(const QString &instrumentID, const QString &tim
         barList.append(tmpList);
     }
 
-    if (collector_map.contains(instrumentID)) {
-        connect(collector_map[instrumentID], SIGNAL(collectedBar(QString,int,Bar)), this, SLOT(onNewBar(QString,int,Bar)), Qt::DirectConnection);
-    } else {
+    if (!collector_map.contains(instrumentID)) {
         qDebug() << "Warning! Missing collector for" << instrumentID << "!";
     }
 
