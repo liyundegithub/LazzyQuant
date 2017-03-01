@@ -71,11 +71,15 @@ static const auto g_time_table = []() -> QMap<BarCollector::TimeFrame, uint> {
 bool BarCollector::onMarketData(uint time, double lastPrice, int volume)
 {
     bool isNewTick = (volume == lastVolume);
+    QDateTime now = QDateTime::currentDateTime();
+    now.setTime(QTime(0, 0).addSecs(time));    // 当前的日期(YYMMDD)加上交易所的时间(HHMMSS)
+    auto currentTime = now.toTime_t();
+
     foreach (const auto key, keys) {
         Bar & bar = current_bar_map[key];
         const uint time_unit = g_time_table[key];  // TODO optimize, use time_unit as key
 
-        if ((time / time_unit) != (bar.time / time_unit)) {
+        if ((currentTime / time_unit) != (bar.time / time_unit)) {
             if (bar.tick_volume > 0) {
                 bar_list_map[key].append(bar);
                 emit collectedBar(instrument, key, bar);
@@ -90,9 +94,7 @@ bool BarCollector::onMarketData(uint time, double lastPrice, int volume)
 
         if (bar.isNewBar()) {
             bar.open = lastPrice;
-            QDateTime barTime = QDateTime::currentDateTime();
-            barTime.setTime(QTime(0, 0).addSecs(time));    // 当前的日期(YYMMDD)加上交易所的时间(HHMMSS)
-            bar.time = barTime.toTime_t() / time_unit * time_unit;
+            bar.time = currentTime / time_unit * time_unit;
         }
 
         if (lastPrice > bar.high) {
@@ -115,6 +117,11 @@ void BarCollector::saveBars()
 {
     foreach (const auto key, keys) {
         auto & barList = bar_list_map[key];
+        const auto & lastBar = current_bar_map[key];
+
+        if (!lastBar.isNewBar()) {
+            barList.append(lastBar);
+        }
         if (barList.size() == 0) {
             continue;
         }
@@ -125,7 +132,6 @@ void BarCollector::saveBars()
         QDataStream wstream(&barFile);
         wstream.setFloatingPointPrecision(QDataStream::DoublePrecision);
         wstream << barList;
-        wstream << current_bar_map[key];
         barFile.close();
         barList.clear();
     }
