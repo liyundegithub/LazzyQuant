@@ -17,9 +17,9 @@ SOURCES += main.cpp \
     indicator/mql5_indicator.cpp \
     strategy/abstract_strategy.cpp \
     bar.cpp \
-    market.cpp
+    ../common/market.cpp
 
-DBUS_INTERFACES += market_watcher.xml ctp_executer.xml
+DBUS_INTERFACES += ../interface/market_watcher.xml ../interface/ctp_executer.xml
 
 HEADERS += \
     quant_trader.h \
@@ -32,6 +32,6 @@ HEADERS += \
     mql5_compatible.h \
     indicator/mql5_indicator.h \
     strategy/abstract_strategy.h \
-    market.h
+    ../common/market.h
 
 unix:QMAKE_CXXFLAGS += -std=c++11

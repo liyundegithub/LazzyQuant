@@ -1,7 +1,7 @@
 #include <QMultiMap>
 #include <QSettings>
 
-#include "market.h"
+#include "../common/market.h"
 #include "quant_trader.h"
 #include "bar.h"
 #include "bar_collector.h"
