@@ -1,7 +1,8 @@
 #include <QMultiMap>
 #include <QSettings>
 
-#include "../common/market.h"
+#include "market.h"
+#include "utility.h"
 #include "quant_trader.h"
 #include "bar.h"
 #include "bar_collector.h"
@@ -16,25 +17,6 @@ QuantTrader* QuantTrader::instance;
 int barCollector_enumIdx;
 int MA_METHOD_enumIdx;
 int APPLIED_PRICE_enumIdx;
-
-/*!
- * \brief getInstrumentName
- * 从合约代码里提取交易品种名(就是去掉交割月份)
- * 比如 cu1703 --> cu, i1705 --> i, CF705 --> CF
- *
- * \param instrumentID 合约代码
- * \return 交易品种名
- */
-static QString getInstrumentName(const QString &instrumentID) {
-    const int len = instrumentID.length();
-    int i = 0;
-    for (; i < len; i++) {
-        if (instrumentID[i].isDigit()) {
-            break;
-        }
-    }
-    return instrumentID.left(i);
-}
 
 QuantTrader::QuantTrader(QObject *parent) :
     QObject(parent)
@@ -58,8 +40,8 @@ QuantTrader::QuantTrader(QObject *parent) :
     connect(saveBarTimer, SIGNAL(timeout()), this, SLOT(saveBarsAndResetTimer()));
     saveBarsAndResetTimer();
 
-    pExecuter = new org::ctp::ctp_executer("org.ctp.ctp_executer", "/ctp_executer", QDBusConnection::sessionBus(), this);
-    pWatcher = new org::ctp::market_watcher("org.ctp.market_watcher", "/market_watcher", QDBusConnection::sessionBus(), this);
+    pExecuter = new com::lazzyquant::trade_executer("com.lazzyquant.trade_executer", "/ctp_executer", QDBusConnection::sessionBus(), this);
+    pWatcher = new com::lazzyquant::market_watcher("com.lazzyquant.market_watcher", "/ctp_watcher", QDBusConnection::sessionBus(), this);
     connect(pWatcher, SIGNAL(newMarketData(QString, uint, double, int, double, double)), this, SLOT(onMarketData(QString, uint, double, int)));
 }
 
@@ -100,7 +82,7 @@ QList<QTime> getEndPoints(const QString &instrumentID) {
 
 void QuantTrader::loadQuantTraderSettings()
 {
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "ctp", "quant_trader");
+    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "LazzyQuant", "quant_trader");
 
     settings.beginGroup("HistoryPath");
     kt_export_dir = settings.value("ktexport").toString();
@@ -156,7 +138,7 @@ void QuantTrader::loadTradeStrategySettings()
         return map;
     }();
 
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "ctp", "trade_strategy");
+    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "LazzyQuant", "trade_strategy");
     QStringList groups = settings.childGroups();
     qDebug() << groups.size() << "stragegs in all.";
 

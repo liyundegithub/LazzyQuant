@@ -9,7 +9,7 @@ QList<Market> markets;
 
 void loadCommonMarketData()
 {
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "ctp", "common");
+    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "LazzyQuant", "common");
 
     settings.beginGroup("Markets");
     QStringList marketsKey = settings.childKeys();

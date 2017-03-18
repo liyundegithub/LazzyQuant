@@ -10,16 +10,18 @@ TEMPLATE = app
 SOURCES += main.cpp \
     quant_trader.cpp \
     bar_collector.cpp \
+    bar.cpp \
     strategy/DblMaPsar_strategy.cpp \
     indicator/abstract_indicator.cpp \
     indicator/ma.cpp \
     indicator/parabolicsar.cpp \
     indicator/mql5_indicator.cpp \
     strategy/abstract_strategy.cpp \
-    bar.cpp \
-    ../common/market.cpp
+    ../common/market.cpp \
+    ../common/utility.cpp
 
-DBUS_INTERFACES += ../interface/market_watcher.xml ../interface/ctp_executer.xml
+INCLUDEPATH += ../common/
+DBUS_INTERFACES += ../interface/market_watcher.xml ../interface/trade_executer.xml
 
 HEADERS += \
     quant_trader.h \
@@ -32,6 +34,7 @@ HEADERS += \
     mql5_compatible.h \
     indicator/mql5_indicator.h \
     strategy/abstract_strategy.h \
-    ../common/market.h
+    ../common/market.h \
+    ../common/utility.h
 
 unix:QMAKE_CXXFLAGS += -std=c++11

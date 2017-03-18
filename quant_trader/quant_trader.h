@@ -4,7 +4,7 @@
 #include <boost/optional.hpp>
 
 #include "market_watcher_interface.h"
-#include "ctp_executer_interface.h"
+#include "trade_executer_interface.h"
 
 template <typename T> class QList;
 template <typename Key, typename T> class QMap;
@@ -19,8 +19,8 @@ class QuantTrader : public QObject
 {
     Q_OBJECT
 protected:
-    org::ctp::market_watcher *pWatcher;
-    org::ctp::ctp_executer *pExecuter;
+    com::lazzyquant::market_watcher *pWatcher;
+    com::lazzyquant::trade_executer *pExecuter;
 
     // Following QString keys are instumentIDs
     QMap<QString, BarCollector*> collector_map;
