@@ -14,13 +14,13 @@ SOURCES += main.cpp \
     trade_handler.cpp \
     order.cpp
 
-HEADERS += \
+HEADERS += ../config.h \
+    ctp_executer.h \
     trade_handler.h \
     order.h \
-    ../common/expires.h \
-    ctp_executer.h
+    ../common/expires.h
 
-INCLUDEPATH += ../common/
+INCLUDEPATH += ../ ../common/
 DBUS_ADAPTORS += ../interface/trade_executer.xml
 
 DISTFILES +=

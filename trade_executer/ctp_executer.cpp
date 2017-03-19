@@ -5,6 +5,7 @@
 #include <QSettings>
 #include <QtConcurrentRun>
 
+#include "config.h"
 #include "ctp_executer.h"
 #include "trade_executer_adaptor.h"
 #include "trade_handler.h"
@@ -40,7 +41,7 @@ CtpExecuter::CtpExecuter(QObject *parent) :
     FrontID = 0;
     SessionID = 0;
 
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "LazzyQuant", "ctp_executer");
+    QSettings settings(QSettings::IniFormat, QSettings::UserScope, ORGANIZATION, EXECUTER_NAME);
     QByteArray flowPath = settings.value("FlowPath").toByteArray();
 
     settings.beginGroup("AccountInfo");
@@ -72,8 +73,8 @@ CtpExecuter::CtpExecuter(QObject *parent) :
 
     new Trade_executerAdaptor(this);
     QDBusConnection dbus = QDBusConnection::sessionBus();
-    dbus.registerObject("/ctp_executer", this);
-    dbus.registerService("com.lazzyquant.trade_executer");
+    dbus.registerObject(EXECUTER_DBUS_OBJECT, this);
+    dbus.registerService(EXECUTER_DBUS_SERVICE);
 
     pUserApi->Init();
 }

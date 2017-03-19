@@ -1,6 +1,7 @@
 #include <QMultiMap>
 #include <QSettings>
 
+#include "config.h"
 #include "market.h"
 #include "utility.h"
 #include "quant_trader.h"
@@ -40,8 +41,8 @@ QuantTrader::QuantTrader(QObject *parent) :
     connect(saveBarTimer, SIGNAL(timeout()), this, SLOT(saveBarsAndResetTimer()));
     saveBarsAndResetTimer();
 
-    pExecuter = new com::lazzyquant::trade_executer("com.lazzyquant.trade_executer", "/ctp_executer", QDBusConnection::sessionBus(), this);
-    pWatcher = new com::lazzyquant::market_watcher("com.lazzyquant.market_watcher", "/ctp_watcher", QDBusConnection::sessionBus(), this);
+    pExecuter = new com::lazzyquant::trade_executer(EXECUTER_DBUS_SERVICE, EXECUTER_DBUS_OBJECT, QDBusConnection::sessionBus(), this);
+    pWatcher = new com::lazzyquant::market_watcher(WATCHER_DBUS_SERVICE, WATCHER_DBUS_OBJECT, QDBusConnection::sessionBus(), this);
     connect(pWatcher, SIGNAL(newMarketData(QString, uint, double, int, double, double)), this, SLOT(onMarketData(QString, uint, double, int)));
 }
 
@@ -82,7 +83,7 @@ QList<QTime> getEndPoints(const QString &instrumentID) {
 
 void QuantTrader::loadQuantTraderSettings()
 {
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "LazzyQuant", "quant_trader");
+    QSettings settings(QSettings::IniFormat, QSettings::UserScope, ORGANIZATION, "quant_trader");
 
     settings.beginGroup("HistoryPath");
     kt_export_dir = settings.value("ktexport").toString();
@@ -138,7 +139,7 @@ void QuantTrader::loadTradeStrategySettings()
         return map;
     }();
 
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "LazzyQuant", "trade_strategy");
+    QSettings settings(QSettings::IniFormat, QSettings::UserScope, ORGANIZATION, "trade_strategy");
     QStringList groups = settings.childGroups();
     qDebug() << groups.size() << "stragegs in all.";
 

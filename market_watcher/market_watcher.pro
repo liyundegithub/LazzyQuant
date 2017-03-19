@@ -7,21 +7,19 @@ CONFIG -= app_bundle
 
 TEMPLATE = app
 
-INCLUDEPATH = ../common
-
 SOURCES += main.cpp \
-    tick_receiver.cpp \
-    market_watcher.cpp \
     ../common/market.cpp \
-    ../common/utility.cpp
+    ../common/utility.cpp \
+    market_watcher.cpp \
+    tick_receiver.cpp
 
-HEADERS += \
-    market_watcher.h \
-    tick_receiver.h \
+HEADERS += ../config.h \
     ../common/market.h \
-    ../common/utility.h
+    ../common/utility.h \
+    market_watcher.h \
+    tick_receiver.h
 
-INCLUDEPATH += ../common/
+INCLUDEPATH += ../ ../common/
 DBUS_ADAPTORS += ../interface/market_watcher.xml
 
 DISTFILES +=

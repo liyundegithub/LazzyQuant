@@ -20,10 +20,10 @@ SOURCES += main.cpp \
     ../common/market.cpp \
     ../common/utility.cpp
 
-INCLUDEPATH += ../common/
+INCLUDEPATH += ../ ../common/
 DBUS_INTERFACES += ../interface/market_watcher.xml ../interface/trade_executer.xml
 
-HEADERS += \
+HEADERS += ../config.h \
     quant_trader.h \
     bar_collector.h \
     bar.h \

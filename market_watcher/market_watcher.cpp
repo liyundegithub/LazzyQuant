@@ -1,6 +1,7 @@
 ﻿#include <QSettings>
 #include <QDebug>
 
+#include "config.h"
 #include "market.h"
 #include "utility.h"
 #include "market_watcher.h"
@@ -16,7 +17,7 @@ MarketWatcher::MarketWatcher(QObject *parent) :
 
     loadCommonMarketData();
 
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "LazzyQuant", "ctp_watcher");
+    QSettings settings(QSettings::IniFormat, QSettings::UserScope, ORGANIZATION, WATCHER_NAME);
     QByteArray flowPath = settings.value("FlowPath").toByteArray();
 
     settings.beginGroup("AccountInfo");
@@ -33,7 +34,7 @@ MarketWatcher::MarketWatcher(QObject *parent) :
     settings.beginGroup("SubscribeList");
     QStringList subscribeList = settings.childKeys();
     foreach (const QString &key, subscribeList) {
-        if (settings.value(key).toString() == "1") {
+        if (settings.value(key).toBool()) {
             subscribeSet.insert(key);
         }
     }
@@ -61,8 +62,8 @@ MarketWatcher::MarketWatcher(QObject *parent) :
 
     new Market_watcherAdaptor(this);
     QDBusConnection dbus = QDBusConnection::sessionBus();
-    dbus.registerObject("/ctp_watcher", this);
-    dbus.registerService("com.lazzyquant.market_watcher");
+    dbus.registerObject(WATCHER_DBUS_OBJECT, this);
+    dbus.registerService(WATCHER_DBUS_SERVICE);
 
     pUserApi->Init();
 }
@@ -231,7 +232,6 @@ void MarketWatcher::processDepthMarketData(const CThostFtdcDepthMarketDataField&
                                depthMarketDataField.Turnover,
                                depthMarketDataField.OpenInterest);
 
-            // TODO save tick
             break;
         }
     }
