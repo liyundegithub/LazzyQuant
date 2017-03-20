@@ -43,7 +43,7 @@ QuantTrader::QuantTrader(QObject *parent) :
 
     pExecuter = new com::lazzyquant::trade_executer(EXECUTER_DBUS_SERVICE, EXECUTER_DBUS_OBJECT, QDBusConnection::sessionBus(), this);
     pWatcher = new com::lazzyquant::market_watcher(WATCHER_DBUS_SERVICE, WATCHER_DBUS_OBJECT, QDBusConnection::sessionBus(), this);
-    connect(pWatcher, SIGNAL(newMarketData(QString, uint, double, int, double, double)), this, SLOT(onMarketData(QString, uint, double, int)));
+    connect(pWatcher, SIGNAL(newMarketData(QString, uint, double, int, double, int, double, int)), this, SLOT(onMarketData(QString, uint, double, int)));
 }
 
 QuantTrader::~QuantTrader()

@@ -13,13 +13,14 @@ class CThostFtdcTraderApi;
 class CTradeHandler;
 class Order;
 template<class T> class Expires;
+struct CONFIG_ITEM;
 
 class CtpExecuter : public QObject
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "com.lazzyquant.trade_executer")
 public:
-    explicit CtpExecuter(QObject *parent = 0);
+    explicit CtpExecuter(const CONFIG_ITEM &config, QObject *parent = 0);
     ~CtpExecuter();
 
 protected:

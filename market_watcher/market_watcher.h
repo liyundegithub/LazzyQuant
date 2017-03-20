@@ -11,12 +11,13 @@ class QTime;
 class CThostFtdcMdApi;
 class CTickReceiver;
 struct CThostFtdcDepthMarketDataField;
+struct CONFIG_ITEM;
 
 class MarketWatcher : public QObject {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "com.lazzyquant.market_watcher")
 public:
-    explicit MarketWatcher(QObject *parent = 0);
+    explicit MarketWatcher(const CONFIG_ITEM &config, QObject *parent = 0);
     ~MarketWatcher();
 
 protected:
@@ -42,7 +43,7 @@ protected:
 
 signals:
     void heartBeatWarning(int nTimeLapse);
-    void newMarketData(const QString& instrumentID, uint time, double lastPrice, int volume, double turnover, double openInterest);
+    void newMarketData(const QString& instrumentID, uint time, double lastPrice, int volume, double askPrice1, int askVolume1, double bidPrice1, int bidVolume1);
 
 public slots:
     QString getTradingDay() const;

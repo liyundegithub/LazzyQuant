@@ -1,7 +1,7 @@
 ﻿#include <QSettings>
 #include <QDebug>
 
-#include "config.h"
+#include "config_struct.h"
 #include "market.h"
 #include "utility.h"
 #include "market_watcher.h"
@@ -10,14 +10,14 @@
 
 extern QList<Market> markets;
 
-MarketWatcher::MarketWatcher(QObject *parent) :
+MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, QObject *parent) :
     QObject(parent)
 {
     nRequestID = 0;
 
     loadCommonMarketData();
 
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, ORGANIZATION, WATCHER_NAME);
+    QSettings settings(QSettings::IniFormat, QSettings::UserScope, config.organization, config.name);
     QByteArray flowPath = settings.value("FlowPath").toByteArray();
 
     settings.beginGroup("AccountInfo");
@@ -62,8 +62,8 @@ MarketWatcher::MarketWatcher(QObject *parent) :
 
     new Market_watcherAdaptor(this);
     QDBusConnection dbus = QDBusConnection::sessionBus();
-    dbus.registerObject(WATCHER_DBUS_OBJECT, this);
-    dbus.registerService(WATCHER_DBUS_SERVICE);
+    dbus.registerObject(config.dbusObject, this);
+    dbus.registerService(config.dbusService);
 
     pUserApi->Init();
 }
@@ -150,7 +150,7 @@ void MarketWatcher::login()
 void MarketWatcher::subscribe()
 {
     const int num = subscribeSet.size();
-    char* subscribe_array = new char[num * 8];
+    char* subscribe_array = new char[num * 32];
     char** ppInstrumentID = new char*[num];
     QSetIterator<QString> iterator(subscribeSet);
     for (int i = 0; i < num; i++) {
@@ -229,8 +229,10 @@ void MarketWatcher::processDepthMarketData(const CThostFtdcDepthMarketDataField&
                                QTime(0, 0).secsTo(emitTime),
                                depthMarketDataField.LastPrice,
                                depthMarketDataField.Volume,
-                               depthMarketDataField.Turnover,
-                               depthMarketDataField.OpenInterest);
+                               depthMarketDataField.AskPrice1,
+                               depthMarketDataField.AskVolume1,
+                               depthMarketDataField.BidPrice1,
+                               depthMarketDataField.BidVolume1);
 
             break;
         }

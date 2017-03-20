@@ -5,7 +5,7 @@
 #include <QSettings>
 #include <QtConcurrentRun>
 
-#include "config.h"
+#include "config_struct.h"
 #include "ctp_executer.h"
 #include "trade_executer_adaptor.h"
 #include "trade_handler.h"
@@ -34,14 +34,14 @@ static inline void _sleep(int ms)
 
 #define DATE_TIME (QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz"))
 
-CtpExecuter::CtpExecuter(QObject *parent) :
+CtpExecuter::CtpExecuter(const CONFIG_ITEM &config, QObject *parent) :
     QObject(parent)
 {
     nRequestID = 0;
     FrontID = 0;
     SessionID = 0;
 
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, ORGANIZATION, EXECUTER_NAME);
+    QSettings settings(QSettings::IniFormat, QSettings::UserScope, config.organization, config.name);
     QByteArray flowPath = settings.value("FlowPath").toByteArray();
 
     settings.beginGroup("AccountInfo");
@@ -73,8 +73,8 @@ CtpExecuter::CtpExecuter(QObject *parent) :
 
     new Trade_executerAdaptor(this);
     QDBusConnection dbus = QDBusConnection::sessionBus();
-    dbus.registerObject(EXECUTER_DBUS_OBJECT, this);
-    dbus.registerService(EXECUTER_DBUS_SERVICE);
+    dbus.registerObject(config.dbusObject, this);
+    dbus.registerService(config.dbusService);
 
     pUserApi->Init();
 }

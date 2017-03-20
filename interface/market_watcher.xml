@@ -9,8 +9,10 @@
       <arg name="time" type="u" direction="out"/>
       <arg name="lastPrice" type="d" direction="out"/>
       <arg name="volume" type="i" direction="out"/>
-      <arg name="turnover" type="d" direction="out"/>
-      <arg name="openInterest" type="d" direction="out"/>
+      <arg name="askPrice1" type="d" direction="out"/>
+      <arg name="askVolume1" type="i" direction="out"/>
+      <arg name="bidPrice1" type="d" direction="out"/>
+      <arg name="bidVolume1" type="i" direction="out"/>
     </signal>
     <method name="getTradingDay">
       <arg type="s" direction="out"/>
