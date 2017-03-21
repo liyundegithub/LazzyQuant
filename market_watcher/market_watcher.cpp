@@ -15,8 +15,6 @@ MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, QObject *parent) :
 {
     nRequestID = 0;
 
-    loadCommonMarketData();
-
     QSettings settings(QSettings::IniFormat, QSettings::UserScope, config.organization, config.name);
     QByteArray flowPath = settings.value("FlowPath").toByteArray();
 
@@ -154,7 +152,7 @@ void MarketWatcher::subscribe()
     char** ppInstrumentID = new char*[num];
     QSetIterator<QString> iterator(subscribeSet);
     for (int i = 0; i < num; i++) {
-        ppInstrumentID[i] = strcpy(subscribe_array + 8 * i, iterator.next().toLatin1().data());
+        ppInstrumentID[i] = strcpy(subscribe_array + 32 * i, iterator.next().toLatin1().data());
     }
 
     pUserApi->SubscribeMarketData(ppInstrumentID, num);

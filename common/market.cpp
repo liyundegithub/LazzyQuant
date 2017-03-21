@@ -3,13 +3,14 @@
 #include <QDomDocument>
 #include <QTime>
 
+#include "config.h"
 #include "market.h"
 
 QList<Market> markets;
 
 void loadCommonMarketData()
 {
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "LazzyQuant", "common");
+    QSettings settings(QSettings::IniFormat, QSettings::UserScope, ORGANIZATION, "common");
 
     settings.beginGroup("Markets");
     QStringList marketsKey = settings.childKeys();
