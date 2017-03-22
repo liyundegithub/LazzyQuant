@@ -26,22 +26,24 @@ DBUS_ADAPTORS += ../interface/trade_executer.xml
 DISTFILES +=
 
 unix {
-    HEADERS += \
-        ../ctp/linux64/ThostFtdcTraderApi.h \
-        ../ctp/linux64/ThostFtdcUserApiDataType.h \
-        ../ctp/linux64/ThostFtdcUserApiStruct.h
-
-    INCLUDEPATH += ../ctp/linux64/
-    LIBS += ../ctp/linux64/thosttraderapi.so
+    CTP_FOLDER_PREFIX = linux
     QMAKE_CXXFLAGS += -std=c++11
 }
 
-win32 {
-    HEADERS += \
-        ../ctp/win32/ThostFtdcTraderApi.h \
-        ../ctp/win32/ThostFtdcUserApiDataType.h \
-        ../ctp/win32/ThostFtdcUserApiStruct.h
+win32:CTP_FOLDER_PREFIX = win
 
-    INCLUDEPATH += ../ctp/win32/
-    LIBS += ../ctp/win32/thosttraderapi.lib
+contains(QT_ARCH, i386) {
+    CTP_FOLDER_SUFFIX = 32
+}else {
+    CTP_FOLDER_SUFFIX = 64
 }
+
+HEADERS += \
+    ../ctp/$$CTP_FOLDER_PREFIX$$CTP_FOLDER_SUFFIX/ThostFtdcTraderApi.h \
+    ../ctp/$$CTP_FOLDER_PREFIX$$CTP_FOLDER_SUFFIX/ThostFtdcUserApiDataType.h \
+    ../ctp/$$CTP_FOLDER_PREFIX$$CTP_FOLDER_SUFFIX/ThostFtdcUserApiStruct.h
+
+INCLUDEPATH += ../ctp/$$CTP_FOLDER_PREFIX$$CTP_FOLDER_SUFFIX/
+
+unix:LIBS += ../ctp/$$CTP_FOLDER_PREFIX$$CTP_FOLDER_SUFFIX/thosttraderapi.so
+win32:LIBS += ../ctp/$$CTP_FOLDER_PREFIX$$CTP_FOLDER_SUFFIX/thosttraderapi.lib

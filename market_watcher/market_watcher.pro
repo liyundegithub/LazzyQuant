@@ -25,22 +25,24 @@ DBUS_ADAPTORS += ../interface/market_watcher.xml
 DISTFILES +=
 
 unix {
-    HEADERS += \
-        ../ctp/linux64/ThostFtdcMdApi.h \
-        ../ctp/linux64/ThostFtdcUserApiDataType.h \
-        ../ctp/linux64/ThostFtdcUserApiStruct.h
-
-    INCLUDEPATH += ../ctp/linux64/
-    LIBS += ../ctp/linux64/thostmduserapi.so
+    CTP_FOLDER_PREFIX = linux
     QMAKE_CXXFLAGS += -std=c++11
 }
 
-win32 {
-    HEADERS += \
-        ../ctp/win32/ThostFtdcMdApi.h \
-        ../ctp/win32/ThostFtdcUserApiDataType.h \
-        ../ctp/win32/ThostFtdcUserApiStruct.h
+win32:CTP_FOLDER_PREFIX = win
 
-    INCLUDEPATH += ../ctp/win32/
-    LIBS += ../ctp/win32/thostmduserapi.lib
+contains(QT_ARCH, i386) {
+    CTP_FOLDER_SUFFIX = 32
+}else {
+    CTP_FOLDER_SUFFIX = 64
 }
+
+HEADERS += \
+    ../ctp/$$CTP_FOLDER_PREFIX$$CTP_FOLDER_SUFFIX/ThostFtdcMdApi.h \
+    ../ctp/$$CTP_FOLDER_PREFIX$$CTP_FOLDER_SUFFIX/ThostFtdcUserApiDataType.h \
+    ../ctp/$$CTP_FOLDER_PREFIX$$CTP_FOLDER_SUFFIX/ThostFtdcUserApiStruct.h
+
+INCLUDEPATH += ../ctp/$$CTP_FOLDER_PREFIX$$CTP_FOLDER_SUFFIX/
+
+unix:LIBS += ../ctp/$$CTP_FOLDER_PREFIX$$CTP_FOLDER_SUFFIX/thostmduserapi.so
+win32:LIBS += ../ctp/$$CTP_FOLDER_PREFIX$$CTP_FOLDER_SUFFIX/thostmduserapi.lib
