@@ -4,7 +4,7 @@ QT -= gui
 greaterThan(QT_MAJOR_VERSION, 4): QT += concurrent
 
 TARGET = ctp_executer
-CONFIG += console
+CONFIG += console c++11
 CONFIG -= app_bundle
 
 TEMPLATE = app
@@ -23,18 +23,12 @@ HEADERS += ../config.h \
 INCLUDEPATH += ../ ../common/
 DBUS_ADAPTORS += ../interface/trade_executer.xml
 
-DISTFILES +=
-
-unix {
-    CTP_FOLDER_PREFIX = linux
-    QMAKE_CXXFLAGS += -std=c++11
-}
-
+unix:CTP_FOLDER_PREFIX = linux
 win32:CTP_FOLDER_PREFIX = win
 
 contains(QT_ARCH, i386) {
     CTP_FOLDER_SUFFIX = 32
-}else {
+} else {
     CTP_FOLDER_SUFFIX = 64
 }
 
@@ -45,5 +39,5 @@ HEADERS += \
 
 INCLUDEPATH += ../ctp/$$CTP_FOLDER_PREFIX$$CTP_FOLDER_SUFFIX/
 
-unix:LIBS += ../ctp/$$CTP_FOLDER_PREFIX$$CTP_FOLDER_SUFFIX/thosttraderapi.so
-win32:LIBS += ../ctp/$$CTP_FOLDER_PREFIX$$CTP_FOLDER_SUFFIX/thosttraderapi.lib
+unix:LIBS += $$PWD/../ctp/$$CTP_FOLDER_PREFIX$$CTP_FOLDER_SUFFIX/thosttraderapi.so
+win32:LIBS += $$PWD/../ctp/$$CTP_FOLDER_PREFIX$$CTP_FOLDER_SUFFIX/thosttraderapi.lib

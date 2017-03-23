@@ -2,7 +2,7 @@ QT += core dbus xml
 QT -= gui
 
 TARGET = market_watcher
-CONFIG += console
+CONFIG += console c++11
 CONFIG -= app_bundle
 
 TEMPLATE = app
@@ -22,18 +22,12 @@ HEADERS += ../config.h \
 INCLUDEPATH += ../ ../common/
 DBUS_ADAPTORS += ../interface/market_watcher.xml
 
-DISTFILES +=
-
-unix {
-    CTP_FOLDER_PREFIX = linux
-    QMAKE_CXXFLAGS += -std=c++11
-}
-
+unix:CTP_FOLDER_PREFIX = linux
 win32:CTP_FOLDER_PREFIX = win
 
 contains(QT_ARCH, i386) {
     CTP_FOLDER_SUFFIX = 32
-}else {
+} else {
     CTP_FOLDER_SUFFIX = 64
 }
 
@@ -44,5 +38,5 @@ HEADERS += \
 
 INCLUDEPATH += ../ctp/$$CTP_FOLDER_PREFIX$$CTP_FOLDER_SUFFIX/
 
-unix:LIBS += ../ctp/$$CTP_FOLDER_PREFIX$$CTP_FOLDER_SUFFIX/thostmduserapi.so
-win32:LIBS += ../ctp/$$CTP_FOLDER_PREFIX$$CTP_FOLDER_SUFFIX/thostmduserapi.lib
+unix:LIBS += $$PWD/../ctp/$$CTP_FOLDER_PREFIX$$CTP_FOLDER_SUFFIX/thostmduserapi.so
+win32:LIBS += $$PWD/../ctp/$$CTP_FOLDER_PREFIX$$CTP_FOLDER_SUFFIX/thostmduserapi.lib
