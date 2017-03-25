@@ -4,6 +4,7 @@
 #include <QStringList>
 #include <QDebug>
 
+#include "config.h"
 #include "abstract_strategy.h"
 #include "../bar.h"
 #include "../indicator/abstract_indicator.h"
@@ -16,7 +17,7 @@ AbstractStrategy::AbstractStrategy(const QString &id, const QString& instrumentI
 {
     qDebug() << "id = " << id << ", instrumentID = " << instrumentID << ", time_frame = " << time_frame;
 
-    result = new QSettings(QSettings::IniFormat, QSettings::UserScope, "ctp", "strategy_result");
+    result = new QSettings(QSettings::IniFormat, QSettings::UserScope, ORGANIZATION, "strategy_result");
     auto groupList = result->childGroups();
     if (groupList.contains(stratety_id)) {
         result->beginGroup(stratety_id);

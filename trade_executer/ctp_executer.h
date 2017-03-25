@@ -76,6 +76,8 @@ signals:
     void dealMade(const QString& instrument, int volume);
 public slots:
     QString getTradingDay() const;
+    void buyLimit(const QString& instrument, int volume, double price);
+    void sellLimit(const QString& instrument, int volume, double price);
     void setPosition(const QString& instrument, int new_position);
     int getPosition(const QString& instrument) const;
     int getPendingOrderVolume(const QString &instrument) const;

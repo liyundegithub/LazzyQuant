@@ -11,6 +11,16 @@
     <method name="getTradingDay">
       <arg type="s" direction="out"/>
     </method>
+    <method name="buyLimit">
+      <arg name="instrument" type="s" direction="in"/>
+      <arg name="volume" type="i" direction="in"/>
+      <arg name="price" type="d" direction="in"/>
+    </method>
+    <method name="sellLimit">
+      <arg name="instrument" type="s" direction="in"/>
+      <arg name="volume" type="i" direction="in"/>
+      <arg name="price" type="d" direction="in"/>
+    </method>
     <method name="setPosition">
       <arg name="instrument" type="s" direction="in"/>
       <arg name="new_position" type="i" direction="in"/>

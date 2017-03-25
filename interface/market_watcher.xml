@@ -13,6 +13,10 @@
       <arg name="askVolume1" type="i" direction="out"/>
       <arg name="bidPrice1" type="d" direction="out"/>
       <arg name="bidVolume1" type="i" direction="out"/>
+      <arg name="askPrice2" type="d" direction="out"/>
+      <arg name="askVolume2" type="i" direction="out"/>
+      <arg name="bidPrice2" type="d" direction="out"/>
+      <arg name="bidVolume2" type="i" direction="out"/>
     </signal>
     <method name="getTradingDay">
       <arg type="s" direction="out"/>

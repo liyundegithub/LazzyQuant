@@ -43,7 +43,9 @@ protected:
 
 signals:
     void heartBeatWarning(int nTimeLapse);
-    void newMarketData(const QString& instrumentID, uint time, double lastPrice, int volume, double askPrice1, int askVolume1, double bidPrice1, int bidVolume1);
+    void newMarketData(const QString& instrumentID, uint time, double lastPrice, int volume,
+                       double askPrice1, int askVolume1, double bidPrice1, int bidVolume1,
+                       double askPrice2, int askVolume2, double bidPrice2, int bidVolume2);
 
 public slots:
     QString getTradingDay() const;

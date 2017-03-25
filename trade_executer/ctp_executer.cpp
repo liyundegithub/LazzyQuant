@@ -731,6 +731,56 @@ QString CtpExecuter::getTradingDay() const
 }
 
 /*!
+ * \brief CtpExecuter::buyLimit
+ * 限价买进合约 (开多或平空)
+ *
+ * \param instrument 合约代码
+ * \param volume 买进数量 (大于零)
+ * \param price 买进价格 (必须在涨跌停范围内)
+ */
+void CtpExecuter::buyLimit(const QString& instrument, int volume, double price)
+{
+    int position = getPosition(instrument);
+
+    int remain_volume = volume;
+    if (position < 0) {
+        int close_short = qMin(qAbs(position), qAbs(remain_volume));
+        // Close short position
+        insertLimitOrder(instrument, false, close_short, price);
+        remain_volume -= close_short;
+    }
+
+    if (remain_volume > 0) {
+        insertLimitOrder(instrument, true, remain_volume, price);
+    }
+}
+
+/*!
+ * \brief CtpExecuter::sellLimit
+ * 限价卖出合约 (开空或平多)
+ *
+ * \param instrument 合约代码
+ * \param volume 卖出数量 (大于零)
+ * \param price 卖出价格 (必须在涨跌停范围内)
+ */
+void CtpExecuter::sellLimit(const QString& instrument, int volume, double price)
+{
+    int position = getPosition(instrument);
+
+    int remain_volume = volume;
+    if (position > 0) {
+        int close_long = qMin(qAbs(position), qAbs(remain_volume));
+        // Close long position
+        insertLimitOrder(instrument, false, - close_long, price);
+        remain_volume -= close_long;
+    }
+
+    if (remain_volume > 0) {
+        insertLimitOrder(instrument, true, - remain_volume, price);
+    }
+}
+
+/*!
  * \brief CtpExecuter::setPosition
  * 为该合约设置一个新的目标仓位, 如果与原仓位不同, 则执行相应操作以达成目标
  *

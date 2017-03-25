@@ -230,7 +230,11 @@ void MarketWatcher::processDepthMarketData(const CThostFtdcDepthMarketDataField&
                                depthMarketDataField.AskPrice1,
                                depthMarketDataField.AskVolume1,
                                depthMarketDataField.BidPrice1,
-                               depthMarketDataField.BidVolume1);
+                               depthMarketDataField.BidVolume1,
+                               depthMarketDataField.AskPrice2,
+                               depthMarketDataField.AskVolume2,
+                               depthMarketDataField.BidPrice2,
+                               depthMarketDataField.BidVolume2);
 
             break;
         }
