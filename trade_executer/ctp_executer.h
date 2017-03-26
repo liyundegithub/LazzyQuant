@@ -60,7 +60,7 @@ private slots:
     int qryInstrumentCommissionRate(const QString &instrument = QString());
     int qryInstrument(const QString &instrument = QString(), const QString &exchangeID = QString());
     int qryDepthMarketData(const QString &instrument = QString());
-    int insertLimitOrder(const QString &instrument, bool open, int volume, double price);
+    int insertLimitOrder(const QString &instrument, bool open, int volume, double price, bool allOrAny = false, bool gfdOrIoc = true);
     int cancelOrder(char* orderRef, int frontID, int sessionID, const QString &instrument);
     int qryMaxOrderVolume(const QString &instrument, bool buy, char offsetFlag);
     int qryOrder(const QString &instrument = QString());
@@ -76,8 +76,8 @@ signals:
     void dealMade(const QString& instrument, int volume);
 public slots:
     QString getTradingDay() const;
-    void buyLimit(const QString& instrument, int volume, double price);
-    void sellLimit(const QString& instrument, int volume, double price);
+    void buyLimit(const QString& instrument, int volume, double price, int orderType = 0);
+    void sellLimit(const QString& instrument, int volume, double price, int orderType = 0);
     void setPosition(const QString& instrument, int new_position);
     int getPosition(const QString& instrument) const;
     int getPendingOrderVolume(const QString &instrument) const;

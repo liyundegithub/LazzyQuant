@@ -47,3 +47,18 @@ QString getFutureIDFromOptionID(const QString &instrumentID)
     }
     return instrumentID.left(i);
 }
+
+/*!
+ * \brief makeOptionID
+ *
+ * \param futureID 标的期货合约代码
+ * \param dir Call or Put
+ * \param exercisePrice 行权价
+ * \return 期权合约代码
+ */
+QString makeOptionID(const QString &futureID, const OPTION_DIR dir, const int exercisePrice)
+{
+    QString middle = (dir == CALL_OPT) ? "-C-" : "-P-"; // FIXME SR705C6400
+    QString optionID = futureID + middle + QString::number(exercisePrice);
+    return optionID;
+}

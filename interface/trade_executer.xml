@@ -15,6 +15,18 @@
       <arg name="instrument" type="s" direction="in"/>
       <arg name="volume" type="i" direction="in"/>
       <arg name="price" type="d" direction="in"/>
+      <arg name="orderType" type="i" direction="in"/>
+    </method>
+    <method name="buyLimit">
+      <arg name="instrument" type="s" direction="in"/>
+      <arg name="volume" type="i" direction="in"/>
+      <arg name="price" type="d" direction="in"/>
+    </method>
+    <method name="sellLimit">
+      <arg name="instrument" type="s" direction="in"/>
+      <arg name="volume" type="i" direction="in"/>
+      <arg name="price" type="d" direction="in"/>
+      <arg name="orderType" type="i" direction="in"/>
     </method>
     <method name="sellLimit">
       <arg name="instrument" type="s" direction="in"/>
