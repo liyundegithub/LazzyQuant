@@ -5,6 +5,7 @@
 
 #include "config.h"
 #include "market.h"
+#include "utility.h"
 
 QList<Market> markets;
 
@@ -89,4 +90,34 @@ Market loadMkt(const QString &file_name)
     }
 
     return market;
+}
+
+/*!
+ * \brief getEndPoints
+ * 查询并获取此合约的每个交易时段的结束时间点列表
+ *
+ * \param instrumentID 合约代码
+ * \return 每个交易时段的结束时间点列表(未排序)
+ */
+QList<QTime> getEndPoints(const QString &instrumentID) {
+    QString instrument = getInstrumentName(instrumentID);
+    QList<QTime> endPoints;
+    foreach (const auto &market, markets) {
+        foreach (const auto &code, market.codes) {
+            if (instrument == code) {
+                int i = 0, size = market.regexs.size();
+                for (; i < size; i++) {
+                    if (QRegExp(market.regexs[i]).exactMatch(instrument)) {
+                        auto tradeTimeList = market.tradetimeses[i];
+                        foreach (const auto &item, tradeTimeList) {
+                            endPoints << item.second;
+                        }
+                        return endPoints;
+                    }
+                }
+                return endPoints;   // instrumentID未能匹配任何正则表达式
+            }
+        }
+    }
+    return endPoints;
 }

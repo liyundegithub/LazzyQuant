@@ -51,36 +51,6 @@ QuantTrader::~QuantTrader()
     qDebug() << "~QuantTrader";
 }
 
-/*!
- * \brief getEndPoints
- * 查询并获取此合约的每个交易时段的结束时间点列表
- *
- * \param instrumentID 合约代码
- * \return 每个交易时段的结束时间点列表(未排序)
- */
-QList<QTime> getEndPoints(const QString &instrumentID) {
-    QString instrument = getInstrumentName(instrumentID);
-    QList<QTime> endPoints;
-    foreach (const auto &market, markets) {
-        foreach (const auto &code, market.codes) {
-            if (instrument == code) {
-                int i = 0, size = market.regexs.size();
-                for (; i < size; i++) {
-                    if (QRegExp(market.regexs[i]).exactMatch(instrument)) {
-                        auto tradeTimeList = market.tradetimeses[i];
-                        foreach (const auto &item, tradeTimeList) {
-                            endPoints << item.second;
-                        }
-                        return endPoints;
-                    }
-                }
-                return endPoints;   // instrumentID未能匹配任何正则表达式
-            }
-        }
-    }
-    return endPoints;
-}
-
 void QuantTrader::loadQuantTraderSettings()
 {
     QSettings settings(QSettings::IniFormat, QSettings::UserScope, ORGANIZATION, "quant_trader");
@@ -187,75 +157,6 @@ void QuantTrader::loadTradeStrategySettings()
         }
     }
 }
-
-/* 以下这段代码包括getSuffix函数是从Java移植过来的, 写成这样是为了尽量维持与VC++2010和c++11的兼容性 */
-/* 如果不考虑兼容VC++2010, 可直接使用Range-based for loop */
-
-// 上海期货交易所                                   燃油, 线材
-const static QString SQ[] = {"fu", "wr"};
-// 上海期货交易所 (夜盘)              铜,   铝,   锌,   铅,   镍,   锡,   金,   银,螺纹钢,热轧卷板,沥青,天然橡胶
-const static QString SY[] = {"cu", "al", "zn", "pb", "ni", "sn", "au", "ag", "rb", "hc", "bu", "ru"};
-// 大连商品交易所                                  玉米, 玉米淀粉, 纤维板,  胶合板, 鸡蛋, 线型低密度聚乙烯, 聚氯乙烯, 聚丙烯
-const static QString DL[] = {"c",  "cs", "fb", "bb", "jd", "l",  "v",  "pp"};
-// 大连商品交易所  (夜盘)          黄大豆1号, 黄大豆2号, 豆粕, 大豆原油, 棕榈油, 冶金焦炭, 焦煤, 铁矿石
-const static QString DY[] = {"a",  "b",  "m",  "y",  "p",  "j",  "jm", "i"};
-// 郑州商品交易所
-const static QString ZZ[] = {"jr", "lr", "pm", "ri", "rs", "sf", "sm", "wh"};
-// 郑州商品交易所 (夜盘)
-const static QString ZY[] = {"cf", "fg", "ma", "oi", "rm", "sr", "ta", "zc", "tc"};	// zc原来为tc
-// 中金所
-const static QString ZJ[] = {"ic", "if", "ih", "t",  "tf"};
-
-#define String const QString&
-#ifndef _MSC_VER
-#define in :
-#define each
-#endif
-// 通过合约名获得文件的扩展名
-static QString getSuffix(String instrumentID) {
-    const QString instrumentLowerCase = getInstrumentName(instrumentID).toLower();
-    for each (String instr in SQ) {
-        if (instrumentLowerCase == instr) {
-            return ".SQ";
-        }
-    }
-    for each (String instr in SY) {
-        if (instrumentLowerCase == instr) {
-            return ".SY";
-        }
-    }
-    for each (String instr in DL) {
-        if (instrumentLowerCase == instr) {
-            return ".DL";
-        }
-    }
-    for each (String instr in DY) {
-        if (instrumentLowerCase == instr) {
-            return ".DY";
-        }
-    }
-    for each (String instr in ZZ) {
-        if (instrumentLowerCase == instr) {
-            return ".ZZ";
-        }
-    }
-    for each (String instr in ZY) {
-        if (instrumentLowerCase == instr) {
-            return ".ZY";
-        }
-    }
-    for each (String instr in ZJ) {
-        if (instrumentLowerCase == instr) {
-            return ".ZJ";
-        }
-    }
-    return ".notfound";
-}
-#undef String
-#ifndef _MSC_VER
-#undef in
-#undef each
-#endif
 
 /*!
  * \brief getKTExportName

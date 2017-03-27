@@ -17,6 +17,11 @@ MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, QObject *parent) :
 
     QSettings settings(QSettings::IniFormat, QSettings::UserScope, config.organization, config.name);
     QByteArray flowPath = settings.value("FlowPath").toByteArray();
+    saveDepthMarketData = settings.value("SaveDepthMarketData").toBool();
+    saveDepthMarketDataPath = settings.value("SaveDepthMarketDataPath").toString();
+    if (saveDepthMarketDataPath == "") {    // FIXME check if saveDepthMarketDataPath is valid
+        saveDepthMarketData = false;
+    }
 
     settings.beginGroup("AccountInfo");
     brokerID = settings.value("BrokerID").toByteArray();
@@ -58,6 +63,8 @@ MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, QObject *parent) :
     }
     settings.endGroup();
 
+    setSaveDepthMarketData();
+
     new Market_watcherAdaptor(this);
     QDBusConnection dbus = QDBusConnection::sessionBus();
     dbus.registerObject(config.dbusObject, this);
@@ -70,6 +77,80 @@ MarketWatcher::~MarketWatcher()
 {
     pUserApi->Release();
     delete pReceiver;
+}
+
+void MarketWatcher::setSaveDepthMarketData()
+{
+    for (const QString &instrumentID : subscribeSet) {
+        const QString path_for_this_instrumentID = saveDepthMarketDataPath + "/" + instrumentID;
+        QDir dir(path_for_this_instrumentID);
+        if (!dir.exists()) {
+            bool ret = dir.mkpath(path_for_this_instrumentID);
+            if (!ret) {
+                qDebug() << "Create directory" << path_for_this_instrumentID << "failed!";
+            }
+        }
+    }
+
+    QMap<QTime, QStringList> endPointsMap;
+    foreach (const QString &instrumentID, subscribeSet) {
+        auto endPoints = getEndPoints(instrumentID);
+        foreach (const auto &item, endPoints) {
+            endPointsMap[item] << instrumentID;
+        }
+    }
+
+    auto keys = endPointsMap.keys();
+    qSort(keys);
+    foreach (const auto &item, keys) {
+        saveBarTimePoints << item.addSecs(180); // Save data 3 minutes after market close
+    }
+
+    saveBarTimeIndex = -1;
+    saveBarTimer = new QTimer(this);
+    saveBarTimer->setSingleShot(true);
+    connect(saveBarTimer, SIGNAL(timeout()), this, SLOT(saveBarsAndResetTimer()));
+    saveDepthMarketDataAndResetTimer();
+}
+
+QDataStream& operator<<(QDataStream& s, const CThostFtdcDepthMarketDataField& dataField)
+{
+    s.writeRawData((const char*)&dataField, sizeof(CThostFtdcDepthMarketDataField));
+    return s;
+}
+
+void MarketWatcher::saveDepthMarketDataAndResetTimer()
+{
+    const int size = saveBarTimePoints.size();
+    if (saveBarTimeIndex >= 0 && saveBarTimeIndex < size) {
+        for (const auto &instrumentID : subscribeSet) {
+            auto &depthMarketDataList = depthMarketDataListMap[instrumentID];
+            if (depthMarketDataList.length() > 0) {
+                QString file_name = saveDepthMarketDataPath + "/" + instrumentID + "/" + QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz") + ".data";
+                QFile depthMarketDataFile(file_name);
+                depthMarketDataFile.open(QFile::WriteOnly);
+                QDataStream wstream(&depthMarketDataFile);
+                wstream << depthMarketDataList;
+                depthMarketDataFile.close();
+                depthMarketDataList.clear();
+            }
+        }
+    }
+
+    int i;
+    for (i = 0; i < size; i++) {
+        int diff = QTime::currentTime().msecsTo(saveBarTimePoints[i]);
+        if (diff > 1000) {
+            saveBarTimer->start(diff);
+            saveBarTimeIndex = i;
+            break;
+        }
+    }
+    if (i == size) {
+        int diff = QTime::currentTime().msecsTo(saveBarTimePoints[0]);
+        saveBarTimer->start(diff + 86400000);   // diff should be negative, there are 86400 seconds in a day
+        saveBarTimeIndex = 0;
+    }
 }
 
 void MarketWatcher::customEvent(QEvent *event)
@@ -236,6 +317,8 @@ void MarketWatcher::processDepthMarketData(const CThostFtdcDepthMarketDataField&
                                depthMarketDataField.BidPrice2,
                                depthMarketDataField.BidVolume2);
 
+            if (saveDepthMarketData)
+                depthMarketDataListMap[instrumentID].append(depthMarketDataField);
             break;
         }
     }

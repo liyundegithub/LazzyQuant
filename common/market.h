@@ -17,5 +17,6 @@ struct Market {
 
 void loadCommonMarketData();
 Market loadMkt(const QString &file_name);
+QList<QTime> getEndPoints(const QString &instrumentID);
 
 #endif // MARKET_H

@@ -7,6 +7,7 @@
 #include <QSet>
 #include <QMultiMap>
 
+class QTimer;
 class QTime;
 class CThostFtdcMdApi;
 class CTickReceiver;
@@ -26,6 +27,15 @@ protected:
     CTickReceiver *pReceiver;
     QSet<QString> subscribeSet;
     QMap<QString, QList<QPair<QTime, QTime>>> tradingTimeMap;
+
+    bool saveDepthMarketData;
+    QString saveDepthMarketDataPath;
+    QMap<QString, QList<CThostFtdcDepthMarketDataField>> depthMarketDataListMap;
+    QTimer *saveBarTimer;
+    QList<QTime> saveBarTimePoints;
+    int saveBarTimeIndex;
+    void setSaveDepthMarketData();
+    void saveDepthMarketDataAndResetTimer();
 
     QByteArray brokerID;
     QByteArray userID;

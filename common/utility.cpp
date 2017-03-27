@@ -1,5 +1,3 @@
-#include <QStringList>
-
 #include "utility.h"
 
 /*!
@@ -62,3 +60,48 @@ QString makeOptionID(const QString &futureID, const OPTION_DIR dir, const int ex
     QString optionID = futureID + middle + QString::number(exercisePrice);
     return optionID;
 }
+
+
+#define String const QString&
+
+// 通过合约名获得文件的扩展名
+QString getSuffix(String instrumentID) {
+    const QString instrumentLowerCase = getInstrumentName(instrumentID).toLower();
+    for (String instr : SQ) {
+        if (instrumentLowerCase == instr) {
+            return ".SQ";
+        }
+    }
+    for (String instr : SY) {
+        if (instrumentLowerCase == instr) {
+            return ".SY";
+        }
+    }
+    for (String instr : DL) {
+        if (instrumentLowerCase == instr) {
+            return ".DL";
+        }
+    }
+    for (String instr : DY) {
+        if (instrumentLowerCase == instr) {
+            return ".DY";
+        }
+    }
+    for (String instr : ZZ) {
+        if (instrumentLowerCase == instr) {
+            return ".ZZ";
+        }
+    }
+    for (String instr : ZY) {
+        if (instrumentLowerCase == instr) {
+            return ".ZY";
+        }
+    }
+    for (String instr : ZJ) {
+        if (instrumentLowerCase == instr) {
+            return ".ZJ";
+        }
+    }
+    return ".notfound";
+}
+#undef String
