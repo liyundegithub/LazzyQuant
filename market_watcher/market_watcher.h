@@ -5,7 +5,7 @@
 #include <QAtomicInt>
 #include <QStringList>
 #include <QSet>
-#include <QMultiMap>
+#include <QMap>
 
 class QTimer;
 class QTime;
@@ -31,11 +31,12 @@ protected:
     bool saveDepthMarketData;
     QString saveDepthMarketDataPath;
     QMap<QString, QList<CThostFtdcDepthMarketDataField>> depthMarketDataListMap;
-    QTimer *saveBarTimer;
+
     QList<QTime> saveBarTimePoints;
+    QList<QStringList> instrumentsToSave;
     int saveBarTimeIndex;
-    void setSaveDepthMarketData();
-    void saveDepthMarketDataAndResetTimer();
+    void prepareSaveDepthMarketData();
+    void saveDepthMarketDataToFile(int index);
 
     QByteArray brokerID;
     QByteArray userID;

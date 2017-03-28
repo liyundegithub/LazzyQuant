@@ -4,6 +4,7 @@
 #include "config_struct.h"
 #include "market.h"
 #include "utility.h"
+#include "multiple_timer.h"
 #include "market_watcher.h"
 #include "market_watcher_adaptor.h"
 #include "tick_receiver.h"
@@ -63,7 +64,7 @@ MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, QObject *parent) :
     }
     settings.endGroup();
 
-    setSaveDepthMarketData();
+    prepareSaveDepthMarketData();
 
     new Market_watcherAdaptor(this);
     QDBusConnection dbus = QDBusConnection::sessionBus();
@@ -79,7 +80,7 @@ MarketWatcher::~MarketWatcher()
     delete pReceiver;
 }
 
-void MarketWatcher::setSaveDepthMarketData()
+void MarketWatcher::prepareSaveDepthMarketData()
 {
     for (const QString &instrumentID : subscribeSet) {
         const QString path_for_this_instrumentID = saveDepthMarketDataPath + "/" + instrumentID;
@@ -103,14 +104,12 @@ void MarketWatcher::setSaveDepthMarketData()
     auto keys = endPointsMap.keys();
     qSort(keys);
     foreach (const auto &item, keys) {
+        instrumentsToSave.append(endPointsMap[item]);
         saveBarTimePoints << item.addSecs(180); // Save data 3 minutes after market close
     }
 
-    saveBarTimeIndex = -1;
-    saveBarTimer = new QTimer(this);
-    saveBarTimer->setSingleShot(true);
-    connect(saveBarTimer, SIGNAL(timeout()), this, SLOT(saveBarsAndResetTimer()));
-    saveDepthMarketDataAndResetTimer();
+    auto saveBarTimer = new MultipleTimer(saveBarTimePoints, this);
+    connect(saveBarTimer, &MultipleTimer::timesUp, this, &MarketWatcher::saveDepthMarketDataToFile);
 }
 
 QDataStream& operator<<(QDataStream& s, const CThostFtdcDepthMarketDataField& dataField)
@@ -119,11 +118,10 @@ QDataStream& operator<<(QDataStream& s, const CThostFtdcDepthMarketDataField& da
     return s;
 }
 
-void MarketWatcher::saveDepthMarketDataAndResetTimer()
+void MarketWatcher::saveDepthMarketDataToFile(int index)
 {
-    const int size = saveBarTimePoints.size();
-    if (saveBarTimeIndex >= 0 && saveBarTimeIndex < size) {
-        for (const auto &instrumentID : subscribeSet) {
+    for (const auto &instrumentID : subscribeSet) {
+        if (instrumentsToSave[index].contains(instrumentID)) {
             auto &depthMarketDataList = depthMarketDataListMap[instrumentID];
             if (depthMarketDataList.length() > 0) {
                 QString file_name = saveDepthMarketDataPath + "/" + instrumentID + "/" + QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz") + ".data";
@@ -135,21 +133,6 @@ void MarketWatcher::saveDepthMarketDataAndResetTimer()
                 depthMarketDataList.clear();
             }
         }
-    }
-
-    int i;
-    for (i = 0; i < size; i++) {
-        int diff = QTime::currentTime().msecsTo(saveBarTimePoints[i]);
-        if (diff > 1000) {
-            saveBarTimer->start(diff);
-            saveBarTimeIndex = i;
-            break;
-        }
-    }
-    if (i == size) {
-        int diff = QTime::currentTime().msecsTo(saveBarTimePoints[0]);
-        saveBarTimer->start(diff + 86400000);   // diff should be negative, there are 86400 seconds in a day
-        saveBarTimeIndex = 0;
     }
 }
 

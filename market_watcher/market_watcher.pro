@@ -10,12 +10,14 @@ TEMPLATE = app
 SOURCES += main.cpp \
     ../common/market.cpp \
     ../common/utility.cpp \
+    ../common/multiple_timer.cpp \
     market_watcher.cpp \
     tick_receiver.cpp
 
 HEADERS += ../config.h \
     ../common/market.h \
     ../common/utility.h \
+    ../common/multiple_timer.h \
     market_watcher.h \
     tick_receiver.h
 
