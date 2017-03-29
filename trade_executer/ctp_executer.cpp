@@ -40,6 +40,7 @@ CtpExecuter::CtpExecuter(const CONFIG_ITEM &config, QObject *parent) :
     nRequestID = 0;
     FrontID = 0;
     SessionID = 0;
+    allowToTrade = false;
 
     QSettings settings(QSettings::IniFormat, QSettings::UserScope, config.organization, config.name);
     QByteArray flowPath = settings.value("FlowPath").toByteArray();
@@ -747,6 +748,10 @@ void analyzeOrderType(int orderType, bool &allOrAny, bool &gfdOrIoc)
  */
 void CtpExecuter::buyLimit(const QString& instrument, int volume, double price, int orderType)
 {
+    if (!allowToTrade) {
+        return;
+    }
+
     bool allOrAny, gfdOrIoc;
     analyzeOrderType(orderType, allOrAny, gfdOrIoc);
 
@@ -776,6 +781,10 @@ void CtpExecuter::buyLimit(const QString& instrument, int volume, double price, 
  */
 void CtpExecuter::sellLimit(const QString& instrument, int volume, double price, int orderType)
 {
+    if (!allowToTrade) {
+        return;
+    }
+
     bool allOrAny, gfdOrIoc;
     analyzeOrderType(orderType, allOrAny, gfdOrIoc);
 
@@ -854,6 +863,24 @@ int CtpExecuter::getPendingOrderVolume(const QString &instrument) const
         }
     }
     return sum;
+}
+
+/*!
+ * \brief CtpExecuter::switchOn
+ * 允许交易
+ */
+void CtpExecuter::switchOn()
+{
+    allowToTrade = true;
+}
+
+/*!
+ * \brief CtpExecuter::switchOff
+ * 禁止交易
+ */
+void CtpExecuter::switchOff()
+{
+    allowToTrade = false;
 }
 
 /*!

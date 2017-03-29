@@ -51,6 +51,8 @@ protected:
     template<typename T>
     int callTraderApi(int (CThostFtdcTraderApi::* pTraderApi)(T *,int), T * pField);
 
+    bool allowToTrade;
+
 private slots:
     int login();
     int qrySettlementInfo();
@@ -81,6 +83,8 @@ public slots:
     void setPosition(const QString& instrument, int new_position);
     int getPosition(const QString& instrument) const;
     int getPendingOrderVolume(const QString &instrument) const;
+    void switchOn();
+    void switchOff();
     void quit();
 };
 

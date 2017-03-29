@@ -1,8 +1,6 @@
 #ifndef OPTION_ARBITRAGEUR_H
 #define OPTION_ARBITRAGEUR_H
 
-#include <boost/optional.hpp>
-
 #include "market_watcher_interface.h"
 #include "trade_executer_interface.h"
 
@@ -23,8 +21,6 @@ class OptionArbitrageur : public QObject
 protected:
     com::lazzyquant::market_watcher *pWatcher;
     com::lazzyquant::trade_executer *pExecuter;
-
-    QMap<QString, boost::optional<int>> position_map;
 
     void loadOptionArbitrageurSettings();
     double threshold;

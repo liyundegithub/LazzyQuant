@@ -29,9 +29,6 @@ void OptionArbitrageur::loadOptionArbitrageurSettings()
     QSettings settings(QSettings::IniFormat, QSettings::UserScope, ORGANIZATION, "option_arbitrageur");
 
     threshold = settings.value("threshold", 1.0f).toDouble();
-    qDebug() << threshold;
-    //settings.beginGroup("");
-    //settings.endGroup();
 }
 
 /*!
@@ -91,8 +88,10 @@ void OptionArbitrageur::findInefficientPrices(const QString &futureID, OPTION_DI
     } else {
         if (dir == CALL_OPT) {
             checkCheapCallOptions(futureID, exercisePrice);
+            findReversedCallOptions(futureID, exercisePrice);
         } else if (dir == PUT_OPT) {
             checkCheapPutOptions(futureID, exercisePrice);
+            findReversedPutOptions(futureID, exercisePrice);
         }
     }
 }

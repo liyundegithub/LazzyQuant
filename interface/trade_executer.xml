@@ -45,6 +45,10 @@
       <arg type="i" direction="out"/>
       <arg name="instrument" type="s" direction="in"/>
     </method>
+    <method name="switchOn">
+    </method>
+    <method name="switchOff">
+    </method>
     <method name="quit">
     </method>
   </interface>
