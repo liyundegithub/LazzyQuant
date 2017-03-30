@@ -230,16 +230,16 @@ void OptionArbitrageur::checkReversedCallOptions(const QString &futureID, const 
  */
 void OptionArbitrageur::findReversedPutOptions(const QString &futureID, int exercisePriceToCheck)
 {
-    const auto & putOptionMap = option_market_data[futureID][CALL_OPT];
+    const auto & putOptionMap = option_market_data[futureID][PUT_OPT];
     const auto exercisePrices = putOptionMap.keys();
     for (const auto exercisePrice : exercisePrices) {
         auto epdiff = exercisePrice - exercisePriceToCheck;
         if (epdiff == 0) {
             continue;
         } else if (epdiff > 0) {
-            checkReversedCallOptions(futureID, putOptionMap, exercisePriceToCheck, exercisePrice);
+            checkReversedPutOptions(futureID, putOptionMap, exercisePriceToCheck, exercisePrice);
         } else { /* exercisePrice < exercisePriceToCheck */
-            checkReversedCallOptions(futureID, putOptionMap, exercisePrice, exercisePriceToCheck);
+            checkReversedPutOptions(futureID, putOptionMap, exercisePrice, exercisePriceToCheck);
         }
     }
 }
@@ -260,8 +260,8 @@ void OptionArbitrageur::checkReversedPutOptions(const QString &futureID, const Q
         auto diff = lowPremium - highPremium;
         if (diff > 2) {
             // Found
-            pExecuter->buyLimit(makeOptionID(futureID, CALL_OPT, highExercisePrice), 1, highPremium, 3);
-            pExecuter->sellLimit(makeOptionID(futureID, CALL_OPT, lowExercisePrice), 1, lowPremium, 3);
+            pExecuter->buyLimit(makeOptionID(futureID, PUT_OPT, highExercisePrice), 1, highPremium, 3);
+            pExecuter->sellLimit(makeOptionID(futureID, PUT_OPT, lowExercisePrice), 1, lowPremium, 3);
         }
     }
 }
