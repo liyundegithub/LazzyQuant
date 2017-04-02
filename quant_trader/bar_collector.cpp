@@ -37,7 +37,7 @@ BarCollector::BarCollector(const QString& instrumentID, const TimeFrames &time_f
         if (!dir.exists()) {
             bool ret = dir.mkpath(path_for_this_key);
             if (!ret) {
-                qDebug() << "Create directory failed!";
+                qCritical() << "Create directory failed!";
             }
         }
     }

@@ -134,13 +134,13 @@ void QuantTrader::loadTradeStrategySettings()
         const QMetaObject* strategy_meta_object = meta_object_map.value(strategy_name);
         QObject *object = strategy_meta_object->newInstance(Q_ARG(QString, group), Q_ARG(QString, instrument), Q_ARG(QString, time_frame), Q_ARG(QObject*, this));
         if (object == NULL) {
-            qDebug() << "Instantiating strategy" << group << "failed!";
+            qCritical() << "Instantiating strategy" << group << "failed!";
             continue;
         }
 
         auto *strategy = qobject_cast<AbstractStrategy*>(object);
         if (strategy == NULL) {
-            qDebug() << "Cast strategy" << group << "failed!";
+            qCritical() << "Cast strategy" << group << "failed!";
             delete object;
             continue;
         }
@@ -168,7 +168,7 @@ void QuantTrader::loadTradeStrategySettings()
  */
 static inline QString getKTExportName(const QString &instrumentID) {
     QString month = instrumentID.right(2);
-    return getInstrumentName(instrumentID) + month;
+    return getCode(instrumentID) + month;
 }
 
 /*!
@@ -219,7 +219,7 @@ QList<Bar>* QuantTrader::getBars(const QString &instrumentID, const QString &tim
     foreach (const QString &barfilename, entries) {
         QFile barfile(collector_bar_path + "/" + barfilename);
         if (!barfile.open(QFile::ReadOnly)) {
-            qDebug() << "Open file:" << (collector_bar_path + "/" + barfilename) << "failed!";
+            qCritical() << "Open file:" << (collector_bar_path + "/" + barfilename) << "failed!";
             continue;
         }
         QDataStream barStream(&barfile);
@@ -246,7 +246,7 @@ QList<Bar>* QuantTrader::getBars(const QString &instrumentID, const QString &tim
     }
 
     if (!collector_map.contains(instrumentID)) {
-        qDebug() << "Warning! Missing collector for" << instrumentID << "!";
+        qWarning() << "Warning! Missing collector for" << instrumentID << "!";
     }
 
     return &barList;
@@ -304,7 +304,7 @@ AbstractIndicator* QuantTrader::registerIndicator(const QString &instrumentID, c
 
     const QMetaObject * metaObject = meta_object_map.value(indicator_name, nullptr);
     if (metaObject == nullptr) {
-        qDebug() << "Indicator" << indicator_name << "not exist!";
+        qCritical() << "Indicator" << indicator_name << "not exist!";
         return nullptr;
     }
 
@@ -383,7 +383,7 @@ AbstractIndicator* QuantTrader::registerIndicator(const QString &instrumentID, c
                             args.value(6), args.value(7), args.value(8), args.value(9));
 
     if (obj == 0) {
-        qDebug() << "newInstance returns 0!";
+        qCritical() << "newInstance returns 0!";
         return nullptr;
     }
 

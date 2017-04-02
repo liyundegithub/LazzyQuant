@@ -3,14 +3,14 @@
 
 #include <QString>
 
-enum OPTION_DIR {
+enum OPTION_TYPE {
     CALL_OPT,
     PUT_OPT,
 };
 
-QString getInstrumentName(const QString &instrumentID);
-QString getFutureIDFromOptionID(const QString &instrumentID);
-QString makeOptionID(const QString &futureID, const OPTION_DIR dir, const int exercisePrice);
+QString getCode(const QString &instrumentID);
+bool parseOptionID(const QString &optionID, QString &futureID, OPTION_TYPE &type, int &exercisePrice);
+QString makeOptionID(const QString &futureID, const OPTION_TYPE type, const int exercisePrice);
 
 // 上海期货交易所                                   燃油, 线材
 const QString SQ[] = {"fu", "wr"};

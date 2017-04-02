@@ -65,12 +65,13 @@ void OptionArbitrageur::onMarketData(const QString& instrumentID, uint time, dou
         findInefficientPrices(instrumentID);
     } else {
         // option
-        QString futureID = getFutureIDFromOptionID(instrumentID);
-        QStringList parts = instrumentID.split('-');    // FIXME 兼容白糖期权等没有'-'的情况
-        OPTION_DIR dir = (parts[1] == "C") ? CALL_OPT : PUT_OPT;
-        int exercisePrice = parts[2].toInt();
-        option_market_data[futureID][dir][exercisePrice] = latest_market_data;
-        findInefficientPrices(futureID, dir, exercisePrice);
+        QString futureID;
+        OPTION_TYPE type;
+        int exercisePrice;
+        if (parseOptionID(instrumentID, futureID, type, exercisePrice)) {
+            option_market_data[futureID][type][exercisePrice] = latest_market_data;
+            findInefficientPrices(futureID, type, exercisePrice);
+        }
     }
 }
 
@@ -80,16 +81,16 @@ void OptionArbitrageur::onMarketData(const QString& instrumentID, uint time, dou
  *
  * \param futureID 期货合约代码
  */
-void OptionArbitrageur::findInefficientPrices(const QString &futureID, OPTION_DIR dir, int exercisePrice)
+void OptionArbitrageur::findInefficientPrices(const QString &futureID, OPTION_TYPE type, int exercisePrice)
 {
     if (exercisePrice == 0) {
         findCheapCallOptions(futureID);
         findCheapPutOptions(futureID);
     } else {
-        if (dir == CALL_OPT) {
+        if (type == CALL_OPT) {
             checkCheapCallOptions(futureID, exercisePrice);
             findReversedCallOptions(futureID, exercisePrice);
-        } else if (dir == PUT_OPT) {
+        } else if (type == PUT_OPT) {
             checkCheapPutOptions(futureID, exercisePrice);
             findReversedPutOptions(futureID, exercisePrice);
         }
@@ -125,7 +126,7 @@ void OptionArbitrageur::checkCheapCallOptions(const QString &futureID, int exerc
         auto diff = future_market_data[futureID].bidPrices[1] - exercisePrice;
         if (diff > 0) {    // 实值期权, diff = 实值额
             auto premium = callOptionMap[exercisePrice].askPrices[1];
-            if ((premium + 2 + 3) < (10 * diff)) {    // (权利金 + 手续费) < (合约乘数 * 实值额)
+            if ((premium + 2 + 3) < diff) {    // (权利金 + 手续费) < 实值额
                 // Found cheap call option
                 pExecuter->buyLimit(makeOptionID(futureID, CALL_OPT, exercisePrice), 1, premium, 3);
                 pExecuter->sellLimit(futureID, 1, future_market_data[futureID].bidPrices[1], 3);
@@ -163,7 +164,7 @@ void OptionArbitrageur::checkCheapPutOptions(const QString &futureID, int exerci
         auto diff = exercisePrice - future_market_data[futureID].askPrices[1];
         if (diff > 0) {    // 实值期权
             auto premium = putOptionMap[exercisePrice].askPrices[1];
-            if ((premium + 2 + 3) < (10 * diff)) {     // (权利金 + 手续费) < (合约乘数 * 实值额)
+            if ((premium + 2 + 3) < diff) {     // (权利金 + 手续费) < 实值额
                 // Found cheap put option
                 pExecuter->buyLimit(makeOptionID(futureID, PUT_OPT, exercisePrice), 1, premium, 3);
                 pExecuter->buyLimit(futureID, 1, future_market_data[futureID].askPrices[1], 3);

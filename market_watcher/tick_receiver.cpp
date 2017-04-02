@@ -42,7 +42,7 @@ void CTickReceiver::OnRspUserLogin(CThostFtdcRspUserLoginField *pRspUserLogin, C
         if (pRspInfo->ErrorID == 0) {
             postToReceiver(new UserLoginEvent());
         } else {
-            qDebug() << pRspInfo->ErrorMsg;
+            qCritical() << pRspInfo->ErrorMsg;
         }
     }
 }

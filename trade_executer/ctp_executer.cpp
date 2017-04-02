@@ -171,6 +171,7 @@ void CtpExecuter::customEvent(QEvent *event)
         auto *qievent = static_cast<RspQryInstrumentEvent*>(event);
         foreach (const auto &item, qievent->instrumentList) {
             qDebug() << item.InstrumentID << item.ExchangeID << item.VolumeMultiple;
+            instruments_cache_map[item.InstrumentID] = item;
         }
     }
         break;
@@ -473,6 +474,7 @@ int CtpExecuter::qryInstrumentCommissionRate(const QString &instrument)
 int CtpExecuter::qryInstrument(const QString &instrument, const QString &exchangeID)
 {
     auto * pField = (CThostFtdcQryInstrumentField*) malloc(sizeof(CThostFtdcQryInstrumentField));
+    memset(pField, 0, sizeof(CThostFtdcQryInstrumentField));
     strcpy(pField->InstrumentID, instrument.toLatin1().data());
     strcpy(pField->ExchangeID, exchangeID.toLatin1().data());
 
@@ -729,6 +731,37 @@ void CtpExecuter::operate(const QString &instrument, int new_position)
 QString CtpExecuter::getTradingDay() const
 {
     return pUserApi->GetTradingDay();
+}
+
+/*!
+ * \brief CtpExecuter::updateInstrumentsCache
+ * 调用ReqQryInstrument(请求查询合约), 返回结果将被存入缓存, 供盘中快速查询
+ *
+ * \param instruments 合约代码列表
+ */
+void CtpExecuter::updateInstrumentsCache(const QStringList &instruments)
+{
+    for (const auto &instrument : instruments) {
+        qryInstrument(instrument);
+    }
+}
+
+/*!
+ * \brief CtpExecuter::getCachedInstruments
+ * 返回缓存中所有以idPrefix开头的合约代码列表
+ *
+ * \param idPrefix 合约代码或其部分前缀 (默认值为空, 表示所有合约)
+ */
+QStringList CtpExecuter::getCachedInstruments(const QString &idPrefix) const
+{
+    const auto instruments = instruments_cache_map.keys();
+    QStringList ret;
+    for (const auto &instrument : instruments) {
+        if (instrument.startsWith(idPrefix)) {
+            ret.append(instrument);
+        }
+    }
+    return ret;
 }
 
 void analyzeOrderType(int orderType, bool &allOrAny, bool &gfdOrIoc)

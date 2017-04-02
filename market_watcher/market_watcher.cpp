@@ -20,8 +20,13 @@ MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, QObject *parent) :
     QByteArray flowPath = settings.value("FlowPath").toByteArray();
     saveDepthMarketData = settings.value("SaveDepthMarketData").toBool();
     saveDepthMarketDataPath = settings.value("SaveDepthMarketDataPath").toString();
-    if (saveDepthMarketDataPath == "") {    // FIXME check if saveDepthMarketDataPath is valid
-        saveDepthMarketData = false;
+    QDir dir(saveDepthMarketDataPath);
+    if (!dir.exists()) {
+        qWarning() << "SaveDepthMarketDataPath:" << saveDepthMarketDataPath << "does not exist!";
+        if (!dir.mkpath(saveDepthMarketDataPath)) {
+            qWarning() << "Create directory:" << saveDepthMarketDataPath << "failed! Depth market data will not be saved!";
+            saveDepthMarketData = false;
+        }
     }
 
     settings.beginGroup("AccountInfo");
@@ -47,7 +52,7 @@ MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, QObject *parent) :
 
     foreach (const QString &instrumentID, subscribeSet) {
         if (!checkTradingTimes(instrumentID)) {
-            qDebug() << instrumentID << "has no proper trading time!";
+            qCritical() << instrumentID << "has no proper trading time!";
         }
     }
 
@@ -88,7 +93,7 @@ void MarketWatcher::prepareSaveDepthMarketData()
         if (!dir.exists()) {
             bool ret = dir.mkpath(path_for_this_instrumentID);
             if (!ret) {
-                qDebug() << "Create directory" << path_for_this_instrumentID << "failed!";
+                qWarning() << "Create directory" << path_for_this_instrumentID << "failed!";
             }
         }
     }
@@ -233,7 +238,7 @@ void MarketWatcher::subscribe()
  */
 bool MarketWatcher::checkTradingTimes(const QString &instrumentID)
 {
-    const QString instrument = getInstrumentName(instrumentID);
+    const QString instrument = getCode(instrumentID);
     foreach (const auto &market, markets) {
         foreach (const auto &code, market.codes) {
             if (instrument == code) {
@@ -316,6 +321,28 @@ void MarketWatcher::processDepthMarketData(const CThostFtdcDepthMarketDataField&
 QString MarketWatcher::getTradingDay() const
 {
     return pUserApi->GetTradingDay();
+}
+
+/*!
+ * \brief MarketWatcher::subscribeInstruments
+ * 订阅合约
+ *
+ * \param instruments 合约列表
+ */
+void MarketWatcher::subscribeInstruments(const QStringList &instruments)
+{
+    const int num = instruments.size();
+    char* subscribe_array = new char[num * 32];
+    char** ppInstrumentID = new char*[num];
+
+    for (int i = 0; i < num; i++) {
+        subscribeSet.insert(instruments[i]);    // 更新订阅列表
+        ppInstrumentID[i] = strcpy(subscribe_array + 32 * i, instruments[i].toLatin1().data());
+    }
+
+    pUserApi->SubscribeMarketData(ppInstrumentID, num);
+    delete[] ppInstrumentID;
+    delete[] subscribe_array;
 }
 
 /*!

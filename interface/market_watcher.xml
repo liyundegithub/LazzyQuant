@@ -21,6 +21,9 @@
     <method name="getTradingDay">
       <arg type="s" direction="out"/>
     </method>
+    <method name="subscribeInstruments">
+      <arg name="instruments" type="as" direction="in"/>
+    </method>
     <method name="getSubscribeList">
       <arg type="as" direction="out"/>
     </method>

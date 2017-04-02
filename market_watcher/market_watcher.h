@@ -60,6 +60,7 @@ signals:
 
 public slots:
     QString getTradingDay() const;
+    void subscribeInstruments(const QStringList &instruments);
     QStringList getSubscribeList() const;
     void quit();
 };

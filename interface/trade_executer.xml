@@ -11,6 +11,16 @@
     <method name="getTradingDay">
       <arg type="s" direction="out"/>
     </method>
+    <method name="updateInstrumentsCache">
+      <arg name="instruments" type="as" direction="in"/>
+    </method>
+    <method name="getCachedInstruments">
+      <arg type="as" direction="out"/>
+      <arg name="idPrefix" type="s" direction="in"/>
+    </method>
+    <method name="getCachedInstruments">
+      <arg type="as" direction="out"/>
+    </method>
     <method name="buyLimit">
       <arg name="instrument" type="s" direction="in"/>
       <arg name="volume" type="i" direction="in"/>

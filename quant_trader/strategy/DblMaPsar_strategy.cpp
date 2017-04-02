@@ -23,11 +23,11 @@ void DblMaPsarStrategy::setParameter(const QVariant& param1, const QVariant& par
 
     int ma_method_value = MA::staticMetaObject.enumerator(MA_METHOD_enumIdx).keyToValue(param3.toString().trimmed().toLatin1().data());
     if (ma_method_value < 0) {
-        qDebug() << "Parameter3 ma_method error!";
+        qCritical() << "Parameter3 ma_method error!";
     }
     int applied_price_value = MQL5IndicatorOnSingleDataBuffer::staticMetaObject.enumerator(APPLIED_PRICE_enumIdx).keyToValue(param4.toString().trimmed().toLatin1().data());
     if (applied_price_value < 0) {
-        qDebug() << "Parameter4 applied_price error!";
+        qCritical() << "Parameter4 applied_price error!";
     }
 
     double SARStep = param5.toDouble();

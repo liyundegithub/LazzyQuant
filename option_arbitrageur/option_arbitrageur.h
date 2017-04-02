@@ -28,10 +28,10 @@ protected:
     //   期货合约    两档盘口
     QMap<QString, DepthMarket> future_market_data;
     //  标的期货合约       看涨/看跌       行权价   两档盘口
-    QMap<QString, QMap<OPTION_DIR, QMap<int, DepthMarket>>> option_market_data;
+    QMap<QString, QMap<OPTION_TYPE, QMap<int, DepthMarket>>> option_market_data;
 
     // Argitrage strategies
-    void findInefficientPrices(const QString &futureID, OPTION_DIR dir = CALL_OPT, int exercisePrice = 0);
+    void findInefficientPrices(const QString &futureID, OPTION_TYPE type = CALL_OPT, int exercisePrice = 0);
     void findCheapCallOptions(const QString &futureID);
     void checkCheapCallOptions(const QString &futureID, int exercisePrice);
     void findCheapPutOptions(const QString &futureID);

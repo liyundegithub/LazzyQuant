@@ -100,14 +100,14 @@ Market loadMkt(const QString &file_name)
  * \return 每个交易时段的结束时间点列表(未排序)
  */
 QList<QTime> getEndPoints(const QString &instrumentID) {
-    QString instrument = getInstrumentName(instrumentID);
+    QString code = getCode(instrumentID);
     QList<QTime> endPoints;
     foreach (const auto &market, markets) {
-        foreach (const auto &code, market.codes) {
-            if (instrument == code) {
+        foreach (const auto &marketCode, market.codes) {
+            if (code == marketCode) {
                 int i = 0, size = market.regexs.size();
                 for (; i < size; i++) {
-                    if (QRegExp(market.regexs[i]).exactMatch(instrument)) {
+                    if (QRegExp(market.regexs[i]).exactMatch(code)) {
                         auto tradeTimeList = market.tradetimeses[i];
                         foreach (const auto &item, tradeTimeList) {
                             endPoints << item.second;

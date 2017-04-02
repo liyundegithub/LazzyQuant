@@ -9,6 +9,7 @@
 #include <QDateTime>
 #include <QPair>
 
+struct CThostFtdcInstrumentField;
 class CThostFtdcTraderApi;
 class CTradeHandler;
 class Order;
@@ -45,6 +46,7 @@ protected:
     QDateTime pos_update_time;
     QMultiMap<QString, Expires<Order>> order_map;
     QMap<QString, Expires<QPair<double, double>>> upper_lower_limit_map;
+    QMap<QString, CThostFtdcInstrumentField> instruments_cache_map;
 
     void customEvent(QEvent *event) override;
 
@@ -78,6 +80,8 @@ signals:
     void dealMade(const QString& instrument, int volume);
 public slots:
     QString getTradingDay() const;
+    void updateInstrumentsCache(const QStringList& instruments);
+    QStringList getCachedInstruments(const QString &idPrefix = QString()) const;
     void buyLimit(const QString& instrument, int volume, double price, int orderType = 0);
     void sellLimit(const QString& instrument, int volume, double price, int orderType = 0);
     void setPosition(const QString& instrument, int new_position);
