@@ -23,6 +23,7 @@ protected:
     com::lazzyquant::trade_executer *pExecuter;
 
     void loadOptionArbitrageurSettings();
+    QSet<QString> subscribeFutureIDs;
     double threshold;
 
     //   期货合约    两档盘口

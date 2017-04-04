@@ -2,6 +2,9 @@
 #define UTILITY_H
 
 #include <QString>
+#include <QDateTime>
+
+#define DATE_TIME (QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz"))
 
 enum OPTION_TYPE {
     CALL_OPT,
@@ -11,6 +14,7 @@ enum OPTION_TYPE {
 QString getCode(const QString &instrumentID);
 bool parseOptionID(const QString &optionID, QString &futureID, OPTION_TYPE &type, int &exercisePrice);
 QString makeOptionID(const QString &futureID, const OPTION_TYPE type, const int exercisePrice);
+bool isOption(const QString &instrumentID);
 
 // 上海期货交易所                                   燃油, 线材
 const QString SQ[] = {"fu", "wr"};

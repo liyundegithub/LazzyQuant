@@ -1,4 +1,5 @@
 ﻿#include <QMap>
+#include <QTimer>
 #include <QSettings>
 #include <QStringList>
 
@@ -17,6 +18,20 @@ OptionArbitrageur::OptionArbitrageur(QObject *parent) :
     pExecuter = new com::lazzyquant::trade_executer(EXECUTER_DBUS_SERVICE, EXECUTER_DBUS_OBJECT, QDBusConnection::sessionBus(), this);
     pWatcher = new com::lazzyquant::market_watcher(WATCHER_DBUS_SERVICE, WATCHER_DBUS_OBJECT, QDBusConnection::sessionBus(), this);
     connect(pWatcher, SIGNAL(newMarketData(QString, uint, double, int, double, int, double, int, double, int, double, int)), this, SLOT(onMarketData(QString, uint, double, int, double, int, double, int, double, int, double, int)));
+
+    QTimer::singleShot(1000, [=]() -> void { pExecuter->updateInstrumentsCache(QStringList{"m1"}); }); // FIXME 白糖以及其它
+    QTimer::singleShot(5000, [=]() -> void {    // FIXME 4秒可能不够
+        const QStringList subscribedInstruments = pWatcher->getSubscribeList();
+        const QStringList cachedInstruments = pExecuter->getCachedInstruments();
+
+        QStringList instrumentsToSubscribe;
+        for (const auto &item : cachedInstruments) {
+            if (!subscribedInstruments.contains(item)) {
+                instrumentsToSubscribe << item;
+            }
+        }
+        pWatcher->subscribeInstruments(instrumentsToSubscribe);
+    });
 }
 
 OptionArbitrageur::~OptionArbitrageur()
@@ -26,9 +41,20 @@ OptionArbitrageur::~OptionArbitrageur()
 
 void OptionArbitrageur::loadOptionArbitrageurSettings()
 {
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, ORGANIZATION, "option_arbitrageur");
+    QSettings watcherSettings(QSettings::IniFormat, QSettings::UserScope, ORGANIZATION, WATCHER_NAME);
+    watcherSettings.beginGroup("SubscribeList");
+    QStringList subscribeList = watcherSettings.childKeys();
+    foreach (const QString &key, subscribeList) {
+        if (!isOption(key) < 8 && watcherSettings.value(key).toBool()) {
+            subscribeFutureIDs.insert(key);
+        }
+    }
+    watcherSettings.endGroup();
 
-    threshold = settings.value("threshold", 1.0f).toDouble();
+
+    QSettings arbitrageurSettings(QSettings::IniFormat, QSettings::UserScope, ORGANIZATION, "option_arbitrageur");
+
+    threshold = arbitrageurSettings.value("threshold", 1.0f).toDouble();
 }
 
 /*!
@@ -52,6 +78,10 @@ void OptionArbitrageur::onMarketData(const QString& instrumentID, uint time, dou
                                      double askPrice1, int askVolume1, double bidPrice1, int bidVolume1,
                                      double askPrice2, int askVolume2, double bidPrice2, int bidVolume2)
 {
+    Q_UNUSED(time)
+    Q_UNUSED(lastPrice)
+    Q_UNUSED(volume)
+
     const DepthMarket latest_market_data = {
         {askPrice1,  askPrice2 },
         {askVolume1, askVolume2},
@@ -59,11 +89,7 @@ void OptionArbitrageur::onMarketData(const QString& instrumentID, uint time, dou
         {bidVolume1, bidVolume2}
     };
 
-    if (instrumentID.length() < 8) {    // FIXME 快速判定合约代码是期货还是期权
-        // future
-        future_market_data[instrumentID] = latest_market_data;
-        findInefficientPrices(instrumentID);
-    } else {
+    if (isOption(instrumentID)) {
         // option
         QString futureID;
         OPTION_TYPE type;
@@ -72,6 +98,10 @@ void OptionArbitrageur::onMarketData(const QString& instrumentID, uint time, dou
             option_market_data[futureID][type][exercisePrice] = latest_market_data;
             findInefficientPrices(futureID, type, exercisePrice);
         }
+    } else {
+        // future
+        future_market_data[instrumentID] = latest_market_data;
+        findInefficientPrices(instrumentID);
     }
 }
 

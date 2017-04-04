@@ -1,10 +1,10 @@
 #include <QMetaEnum>
 #include <QSettings>
-#include <QDateTime>
 #include <QStringList>
 #include <QDebug>
 
 #include "config.h"
+#include "utility.h"
 #include "abstract_strategy.h"
 #include "../bar.h"
 #include "../indicator/abstract_indicator.h"
@@ -55,7 +55,7 @@ inline void AbstractStrategy::resetPosition()
 inline void AbstractStrategy::saveResult()
 {
     result->beginGroup(stratety_id);
-    result->setValue("lastSave", QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz"));
+    result->setValue("lastSave", DATE_TIME);
     result->setValue("position", position.get());
 
     if (tp_price.is_initialized()) {
@@ -118,5 +118,6 @@ void AbstractStrategy::checkIfNewBar()
 
 void AbstractStrategy::onNewTick(uint time, double lastPrice)
 {
+    Q_UNUSED(time)
     checkTPSL(lastPrice);
 }

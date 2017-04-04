@@ -1,4 +1,5 @@
 #include "parabolicsar.h"
+#include <QDebug>
 
 ParabolicSAR::ParabolicSAR(double SARStep, double SARMaximum, QObject *parent) :
     QObject(parent),
@@ -9,7 +10,7 @@ ParabolicSAR::ParabolicSAR(double SARStep, double SARMaximum, QObject *parent) :
     ExtEPBuffer(),
     ExtAFBuffer()
 {
-    //
+    qDebug() << "PSAR: Step =" << SARStep << ", Maximum =" << SARMaximum;
 }
 
 //+------------------------------------------------------------------+

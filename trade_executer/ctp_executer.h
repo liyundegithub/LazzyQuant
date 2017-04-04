@@ -53,14 +53,13 @@ protected:
     template<typename T>
     int callTraderApi(int (CThostFtdcTraderApi::* pTraderApi)(T *,int), T * pField);
 
+    double available;
     bool allowToTrade;
 
 private slots:
     int login();
     int qrySettlementInfo();
-    int confirmSettlementInfo();
     int qrySettlementInfoConfirm();
-    int qryTradingAccount();
     int qryInstrumentCommissionRate(const QString &instrument = QString());
     int qryInstrument(const QString &instrument = QString(), const QString &exchangeID = QString());
     int qryDepthMarketData(const QString &instrument = QString());
@@ -80,6 +79,9 @@ signals:
     void dealMade(const QString& instrument, int volume);
 public slots:
     QString getTradingDay() const;
+    int confirmSettlementInfo();
+    int qryTradingAccount();
+    double getAvailable() const { return available; }
     void updateInstrumentsCache(const QStringList& instruments);
     QStringList getCachedInstruments(const QString &idPrefix = QString()) const;
     void buyLimit(const QString& instrument, int volume, double price, int orderType = 0);

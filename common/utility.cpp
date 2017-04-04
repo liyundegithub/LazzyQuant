@@ -87,6 +87,18 @@ QString makeOptionID(const QString &futureID, const OPTION_TYPE type, const int 
     return optionIdPatternMap[getCode(futureID)].arg(futureID).arg(middle).arg(exercisePrice);
 }
 
+/*!
+ * \brief isOption
+ * 判断一个合约代码是否是期权合约
+ *
+ * \param instrumentID 合约代码
+ * \return 是否是期权合约
+ */
+bool isOption(const QString &instrumentID)
+{
+    return instrumentID.length() >= 8;  // FIXME
+}
+
 
 #define String const QString&
 

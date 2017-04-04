@@ -6,6 +6,7 @@
 #include <QtConcurrentRun>
 
 #include "config_struct.h"
+#include "utility.h"
 #include "ctp_executer.h"
 #include "trade_executer_adaptor.h"
 #include "trade_handler.h"
@@ -31,8 +32,6 @@ static inline void _sleep(int ms)
     nanosleep(&ts, NULL);
 #endif
 }
-
-#define DATE_TIME (QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz"))
 
 CtpExecuter::CtpExecuter(const CONFIG_ITEM &config, QObject *parent) :
     QObject(parent)
@@ -154,7 +153,7 @@ void CtpExecuter::customEvent(QEvent *event)
     case RSP_TRADING_ACCOUNT:
     {
         auto *tevent = static_cast<TradingAccountEvent*>(event);
-        double available = tevent->tradingAccount.Available;
+        available = tevent->tradingAccount.Available;
         qDebug() << "available = " << available;
     }
         break;

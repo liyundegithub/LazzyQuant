@@ -11,6 +11,15 @@
     <method name="getTradingDay">
       <arg type="s" direction="out"/>
     </method>
+    <method name="confirmSettlementInfo">
+      <arg type="i" direction="out"/>
+    </method>
+    <method name="qryTradingAccount">
+      <arg type="i" direction="out"/>
+    </method>
+    <method name="getAvailable">
+      <arg type="d" direction="out"/>
+    </method>
     <method name="updateInstrumentsCache">
       <arg name="instruments" type="as" direction="in"/>
     </method>
