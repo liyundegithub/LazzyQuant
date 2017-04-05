@@ -30,7 +30,9 @@ OptionArbitrageur::OptionArbitrageur(QObject *parent) :
                 instrumentsToSubscribe << item;
             }
         }
-        pWatcher->subscribeInstruments(instrumentsToSubscribe);
+        if (instrumentsToSubscribe.length() > 0) {
+            pWatcher->subscribeInstruments(instrumentsToSubscribe);
+        }
     });
 }
 
@@ -158,6 +160,7 @@ void OptionArbitrageur::checkCheapCallOptions(const QString &futureID, int exerc
             auto premium = callOptionMap[exercisePrice].askPrices[1];
             if ((premium + 2 + 3) < diff) {    // (权利金 + 手续费) < 实值额
                 // Found cheap call option
+                qDebug() << DATE_TIME << "Found cheap call option";
                 pExecuter->buyLimit(makeOptionID(futureID, CALL_OPT, exercisePrice), 1, premium, 3);
                 pExecuter->sellLimit(futureID, 1, future_market_data[futureID].bidPrices[1], 3);
             }
@@ -196,6 +199,7 @@ void OptionArbitrageur::checkCheapPutOptions(const QString &futureID, int exerci
             auto premium = putOptionMap[exercisePrice].askPrices[1];
             if ((premium + 2 + 3) < diff) {     // (权利金 + 手续费) < 实值额
                 // Found cheap put option
+                qDebug() << DATE_TIME << "Found cheap put option";
                 pExecuter->buyLimit(makeOptionID(futureID, PUT_OPT, exercisePrice), 1, premium, 3);
                 pExecuter->buyLimit(futureID, 1, future_market_data[futureID].askPrices[1], 3);
             }
@@ -244,6 +248,7 @@ void OptionArbitrageur::checkReversedCallOptions(const QString &futureID, const 
         auto diff = highPremium - lowPremium;
         if (diff > 2) {
             // Found
+            qDebug() << DATE_TIME << "Found reversed call options";
             pExecuter->buyLimit(makeOptionID(futureID, CALL_OPT, lowExercisePrice), 1, lowPremium, 3);
             pExecuter->sellLimit(makeOptionID(futureID, CALL_OPT, highExercisePrice), 1, highPremium, 3);
         }
@@ -291,6 +296,7 @@ void OptionArbitrageur::checkReversedPutOptions(const QString &futureID, const Q
         auto diff = lowPremium - highPremium;
         if (diff > 2) {
             // Found
+            qDebug() << DATE_TIME << "Found reversed put options";
             pExecuter->buyLimit(makeOptionID(futureID, PUT_OPT, highExercisePrice), 1, highPremium, 3);
             pExecuter->sellLimit(makeOptionID(futureID, PUT_OPT, lowExercisePrice), 1, lowPremium, 3);
         }

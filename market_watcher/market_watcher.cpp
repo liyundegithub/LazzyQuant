@@ -69,7 +69,8 @@ MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, QObject *parent) :
     }
     settings.endGroup();
 
-    prepareSaveDepthMarketData();
+    if (saveDepthMarketData)
+        prepareSaveDepthMarketData();
 
     new Market_watcherAdaptor(this);
     QDBusConnection dbus = QDBusConnection::sessionBus();
@@ -343,6 +344,19 @@ void MarketWatcher::subscribeInstruments(const QStringList &instruments)
     pUserApi->SubscribeMarketData(ppInstrumentID, num);
     delete[] ppInstrumentID;
     delete[] subscribe_array;
+
+    if (saveDepthMarketData) {
+        for (const QString &instrumentID : instruments) {
+            const QString path_for_this_instrumentID = saveDepthMarketDataPath + "/" + instrumentID;
+            QDir dir(path_for_this_instrumentID);
+            if (!dir.exists()) {
+                bool ret = dir.mkpath(path_for_this_instrumentID);
+                if (!ret) {
+                    qWarning() << "Create directory" << path_for_this_instrumentID << "failed!";
+                }
+            }
+        }
+    }
 }
 
 /*!

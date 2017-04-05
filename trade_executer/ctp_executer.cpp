@@ -780,7 +780,10 @@ void analyzeOrderType(int orderType, bool &allOrAny, bool &gfdOrIoc)
  */
 void CtpExecuter::buyLimit(const QString& instrument, int volume, double price, int orderType)
 {
+    qDebug() << "buyLimit" << instrument << ": volume =" << volume << ", price =" << price << "orderType =" << orderType;
+
     if (!allowToTrade) {
+        qDebug() << "But not allowed";
         return;
     }
 
@@ -813,7 +816,10 @@ void CtpExecuter::buyLimit(const QString& instrument, int volume, double price, 
  */
 void CtpExecuter::sellLimit(const QString& instrument, int volume, double price, int orderType)
 {
+    qDebug() << "sellLimit" << instrument << ": volume =" << volume << ", price =" << price << "orderType =" << orderType;
+
     if (!allowToTrade) {
+        qDebug() << "But not allowed";
         return;
     }
 
@@ -903,6 +909,7 @@ int CtpExecuter::getPendingOrderVolume(const QString &instrument) const
  */
 void CtpExecuter::switchOn()
 {
+    qDebug() << "switchOn";
     allowToTrade = true;
 }
 
@@ -912,6 +919,7 @@ void CtpExecuter::switchOn()
  */
 void CtpExecuter::switchOff()
 {
+    qDebug() << "switchOff";
     allowToTrade = false;
 }
 

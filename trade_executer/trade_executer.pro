@@ -1,7 +1,5 @@
-QT += core dbus
+QT += core dbus concurrent
 QT -= gui
-
-greaterThan(QT_MAJOR_VERSION, 4): QT += concurrent
 
 TARGET = ctp_executer
 CONFIG += console c++11
