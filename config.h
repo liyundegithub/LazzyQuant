@@ -3,6 +3,8 @@
 
 #include "config_struct.h"
 
+#define VERSION_STR                 "1.0"
+
 #define PROJECT_NAME                "LazzyQuant"
 #define LOWER_CASE_NAME             "lazzyquant"
 #define UNIQ_PREFIX                 "com." LOWER_CASE_NAME "."

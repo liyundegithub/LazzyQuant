@@ -9,11 +9,14 @@
 template <typename Key, typename T> class QMap;
 
 struct DepthMarket {
-    double askPrices[2];
-    int askVolumes[2];
-    double bidPrices[2];
-    int bidVolumes[2];
+    uint time;
+    double askPrices;
+    int askVolumes;
+    double bidPrices;
+    int bidVolumes;
 };
+
+QDebug operator<<(QDebug dbg, const DepthMarket &depthMarket);
 
 class OptionArbitrageur : public QObject
 {
@@ -51,8 +54,7 @@ signals:
 
 private slots:
     void onMarketData(const QString& instrumentID, uint time, double lastPrice, int volume,
-                      double askPrice1, int askVolume1, double bidPrice1, int bidVolume1,
-                      double askPrice2, int askVolume2, double bidPrice2, int bidVolume2);
+                      double askPrice1, int askVolume1, double bidPrice1, int bidVolume1);
 };
 
 #endif // OPTION_ARBITRAGEUR_H

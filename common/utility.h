@@ -16,6 +16,17 @@ bool parseOptionID(const QString &optionID, QString &futureID, OPTION_TYPE &type
 QString makeOptionID(const QString &futureID, const OPTION_TYPE type, const int exercisePrice);
 bool isOption(const QString &instrumentID);
 
+template<class T>
+static inline bool isWithinRange(const T &t, const T &rangeStart, const T &rangeEnd)
+{
+    if (rangeStart < rangeEnd) {
+        return rangeStart <= t && t <= rangeEnd;
+    } else {
+        return rangeStart <= t || t <= rangeEnd;
+    }
+}
+
+
 // 上海期货交易所                                   燃油, 线材
 const QString SQ[] = {"fu", "wr"};
 // 上海期货交易所 (夜盘)              铜,   铝,   锌,   铅,   镍,   锡,   金,   银,螺纹钢,热轧卷板,沥青,天然橡胶

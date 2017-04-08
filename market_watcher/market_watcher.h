@@ -17,14 +17,18 @@ struct CONFIG_ITEM;
 class MarketWatcher : public QObject {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "com.lazzyquant.market_watcher")
+
 public:
-    explicit MarketWatcher(const CONFIG_ITEM &config, QObject *parent = 0);
+    explicit MarketWatcher(const CONFIG_ITEM &config, const bool replayMode = false, QObject *parent = 0);
     ~MarketWatcher();
 
 protected:
+    const bool replayMode;
+
     QAtomicInt nRequestID;
     CThostFtdcMdApi *pUserApi;
     CTickReceiver *pReceiver;
+
     QSet<QString> subscribeSet;
     QMap<QString, QList<QPair<QTime, QTime>>> tradingTimeMap;
 
@@ -55,13 +59,14 @@ protected:
 signals:
     void heartBeatWarning(int nTimeLapse);
     void newMarketData(const QString& instrumentID, uint time, double lastPrice, int volume,
-                       double askPrice1, int askVolume1, double bidPrice1, int bidVolume1,
-                       double askPrice2, int askVolume2, double bidPrice2, int bidVolume2);
+                       double askPrice1, int askVolume1, double bidPrice1, int bidVolume1);
 
 public slots:
+    bool isReplayMode() const { return replayMode; }
     QString getTradingDay() const;
     void subscribeInstruments(const QStringList &instruments);
     QStringList getSubscribeList() const;
+    void startReplay(const QString &date, bool realSpeed = false);
     void quit();
 };
 

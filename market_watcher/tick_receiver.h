@@ -61,7 +61,7 @@ class DepthMarketDataEvent : public QEvent {
 public:
     const CThostFtdcDepthMarketDataField DepthMarketDataField;
 
-    explicit DepthMarketDataEvent(CThostFtdcDepthMarketDataField *pDepthMarketDataField) :
+    explicit DepthMarketDataEvent(const CThostFtdcDepthMarketDataField *pDepthMarketDataField) :
         QEvent(QEvent::Type(DEPTH_MARKET_DATA)),
         DepthMarketDataField(*pDepthMarketDataField) {}
 };

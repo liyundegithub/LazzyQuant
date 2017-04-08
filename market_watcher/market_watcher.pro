@@ -1,8 +1,8 @@
-QT += core dbus xml
+QT += core dbus xml concurrent
 QT -= gui
 
 TARGET = market_watcher
-CONFIG += console c++11
+CONFIG += console c++14
 CONFIG -= app_bundle
 
 TEMPLATE = app

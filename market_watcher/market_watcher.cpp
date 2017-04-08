@@ -1,4 +1,5 @@
-﻿#include <QSettings>
+﻿#include <QtConcurrentRun>
+#include <QSettings>
 #include <QDebug>
 
 #include "config_struct.h"
@@ -11,8 +12,8 @@
 
 extern QList<Market> markets;
 
-MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, QObject *parent) :
-    QObject(parent)
+MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, const bool replayMode, QObject *parent) :
+    replayMode(replayMode), QObject(parent)
 {
     nRequestID = 0;
 
@@ -23,12 +24,40 @@ MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, QObject *parent) :
     QDir dir(saveDepthMarketDataPath);
     if (!dir.exists()) {
         qWarning() << "SaveDepthMarketDataPath:" << saveDepthMarketDataPath << "does not exist!";
+        if (replayMode) {
+            qFatal("Can not replay without SaveDepthMarketDataPath!");
+            return;
+        }
         if (!dir.mkpath(saveDepthMarketDataPath)) {
             qWarning() << "Create directory:" << saveDepthMarketDataPath << "failed! Depth market data will not be saved!";
             saveDepthMarketData = false;
         }
     }
 
+    settings.beginGroup("SubscribeList");
+    QStringList subscribeList = settings.childKeys();
+    foreach (const QString &key, subscribeList) {
+        if (settings.value(key).toBool()) {
+            subscribeSet.insert(key);
+        }
+    }
+    settings.endGroup();
+
+    foreach (const QString &instrumentID, subscribeSet) {
+        if (!checkTradingTimes(instrumentID)) {
+            qCritical() << instrumentID << "has no proper trading time!";
+        }
+    }
+
+    new Market_watcherAdaptor(this);
+    QDBusConnection dbus = QDBusConnection::sessionBus();
+    dbus.registerObject(config.dbusObject, this);
+    dbus.registerService(config.dbusService);
+// 复盘模式到此为止 -------------------------------------------------------
+    if (replayMode) {
+        return;
+    }
+// 以下是实盘模式的相关设置 -------------------------------------------------
     settings.beginGroup("AccountInfo");
     brokerID = settings.value("BrokerID").toByteArray();
     userID = settings.value("UserID").toByteArray();
@@ -39,22 +68,6 @@ MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, QObject *parent) :
     c_brokerID = brokerID.data();
     c_userID = userID.data();
     c_password = password.data();
-
-    settings.beginGroup("SubscribeList");
-    QStringList subscribeList = settings.childKeys();
-    foreach (const QString &key, subscribeList) {
-        if (settings.value(key).toBool()) {
-            subscribeSet.insert(key);
-        }
-    }
-
-    settings.endGroup();
-
-    foreach (const QString &instrumentID, subscribeSet) {
-        if (!checkTradingTimes(instrumentID)) {
-            qCritical() << instrumentID << "has no proper trading time!";
-        }
-    }
 
     pUserApi = CThostFtdcMdApi::CreateFtdcMdApi(flowPath.data());
     pReceiver = new CTickReceiver(this);
@@ -72,18 +85,15 @@ MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, QObject *parent) :
     if (saveDepthMarketData)
         prepareSaveDepthMarketData();
 
-    new Market_watcherAdaptor(this);
-    QDBusConnection dbus = QDBusConnection::sessionBus();
-    dbus.registerObject(config.dbusObject, this);
-    dbus.registerService(config.dbusService);
-
     pUserApi->Init();
 }
 
 MarketWatcher::~MarketWatcher()
 {
-    pUserApi->Release();
-    delete pReceiver;
+    if (!replayMode) {
+        pUserApi->Release();
+        delete pReceiver;
+    }
 }
 
 void MarketWatcher::prepareSaveDepthMarketData()
@@ -121,6 +131,12 @@ void MarketWatcher::prepareSaveDepthMarketData()
 QDataStream& operator<<(QDataStream& s, const CThostFtdcDepthMarketDataField& dataField)
 {
     s.writeRawData((const char*)&dataField, sizeof(CThostFtdcDepthMarketDataField));
+    return s;
+}
+
+QDataStream& operator>>(QDataStream& s, CThostFtdcDepthMarketDataField& dataField)
+{
+    s.readRawData((char*)&dataField, sizeof(CThostFtdcDepthMarketDataField));
     return s;
 }
 
@@ -257,20 +273,6 @@ bool MarketWatcher::checkTradingTimes(const QString &instrumentID)
     return false;
 }
 
-static inline quint8 charToDigit(const char ten, const char one)
-{
-    return quint8(10 * (ten - '0') + one - '0');
-}
-
-static inline bool isWithinRange(const QTime &t, const QTime &rangeStart, const QTime &rangeEnd)
-{
-    if (rangeStart < rangeEnd) {
-        return rangeStart <= t && t <= rangeEnd;
-    } else {
-        return rangeStart <= t || t <= rangeEnd;
-    }
-}
-
 /*!
  * \brief MarketWatcher::processDepthMarketData
  * 处理深度市场数据:
@@ -282,13 +284,8 @@ static inline bool isWithinRange(const QTime &t, const QTime &rangeStart, const 
  */
 void MarketWatcher::processDepthMarketData(const CThostFtdcDepthMarketDataField& depthMarketDataField)
 {
-    quint8 hour, minute, second;
-    hour   = charToDigit(depthMarketDataField.UpdateTime[0], depthMarketDataField.UpdateTime[1]);
-    minute = charToDigit(depthMarketDataField.UpdateTime[3], depthMarketDataField.UpdateTime[4]);
-    second = charToDigit(depthMarketDataField.UpdateTime[6], depthMarketDataField.UpdateTime[7]);
-
-    QString instrumentID(depthMarketDataField.InstrumentID);
-    QTime time(hour, minute, second);
+    const QString instrumentID(depthMarketDataField.InstrumentID);
+    QTime time = QTime::fromString(depthMarketDataField.UpdateTime, "hh:mm:ss");
 
     foreach (const auto &tradetime, tradingTimeMap[instrumentID]) {
         if (isWithinRange(time, tradetime.first, tradetime.second)) {
@@ -300,11 +297,7 @@ void MarketWatcher::processDepthMarketData(const CThostFtdcDepthMarketDataField&
                                depthMarketDataField.AskPrice1,
                                depthMarketDataField.AskVolume1,
                                depthMarketDataField.BidPrice1,
-                               depthMarketDataField.BidVolume1,
-                               depthMarketDataField.AskPrice2,
-                               depthMarketDataField.AskVolume2,
-                               depthMarketDataField.BidPrice2,
-                               depthMarketDataField.BidVolume2);
+                               depthMarketDataField.BidVolume1);
 
             if (saveDepthMarketData)
                 depthMarketDataListMap[instrumentID].append(depthMarketDataField);
@@ -321,7 +314,11 @@ void MarketWatcher::processDepthMarketData(const CThostFtdcDepthMarketDataField&
  */
 QString MarketWatcher::getTradingDay() const
 {
-    return pUserApi->GetTradingDay();
+    if (replayMode) {
+        // TODO
+    } else {
+        return pUserApi->GetTradingDay();
+    }
 }
 
 /*!
@@ -332,6 +329,11 @@ QString MarketWatcher::getTradingDay() const
  */
 void MarketWatcher::subscribeInstruments(const QStringList &instruments)
 {
+    if (replayMode) {
+        qWarning() << "Can not subscribe instruments in replay mode!";
+        return;
+    }
+
     const int num = instruments.size();
     char* subscribe_array = new char[num * 32];
     char** ppInstrumentID = new char*[num];
@@ -368,6 +370,82 @@ void MarketWatcher::subscribeInstruments(const QStringList &instruments)
 QStringList MarketWatcher::getSubscribeList() const
 {
     return subscribeSet.toList();
+}
+
+/*!
+ * \brief MarketWatcher::startReplay
+ * 复盘某一天的行情
+ *
+ * \param date 希望复盘的日期 (格式YYYYMMDD)
+ * \param realSpeed 是否以实际速度复盘 (默认false)
+ */
+void MarketWatcher::startReplay(const QString &date, bool realSpeed)
+{
+    if (!replayMode) {
+        qWarning() << "Not in replay mode!";
+        return;
+    }
+
+    qDebug() << "Start replaying" << date;
+
+    // TODO realSpeed = true
+
+    depthMarketDataListMap.clear();
+
+    for (const auto &instrumentID : subscribeSet) {
+        QDir dir(saveDepthMarketDataPath + "/" + instrumentID);
+        auto marketDataFiles = dir.entryList(QStringList({date + "*"}), QDir::Files | QDir::NoDotAndDotDot, QDir::Name);
+        for (const auto &fileName : marketDataFiles) {
+            QString mdFileFullName = saveDepthMarketDataPath + "/" + instrumentID + "/" + fileName;
+            QFile mdFile(mdFileFullName);
+            if (!mdFile.open(QFile::ReadOnly)) {
+                qCritical() << "Open file:" << mdFileFullName << "failed!";
+                continue;
+            }
+            QDataStream mdStream(&mdFile);
+            QList<CThostFtdcDepthMarketDataField> tmpList;
+            mdStream >> tmpList;
+            qDebug() << tmpList.size() << "in" << mdFileFullName;
+            if (tmpList.length() > 0) {
+                depthMarketDataListMap[instrumentID].append(tmpList);
+            }
+        }
+    }
+
+    QtConcurrent::run([=]() -> void {
+                          QList<CThostFtdcDepthMarketDataField> beforeMidnight;
+                          QList<CThostFtdcDepthMarketDataField> afterMidnight;
+
+                          for (const auto &mdList : depthMarketDataListMap) {
+                              for (const auto &md : mdList) {
+                                  if (QTime::fromString(md.UpdateTime, "hh:mm:ss") > QTime(17, 0)) {
+                                      beforeMidnight.append(md);
+                                  } else {
+                                      afterMidnight.append(md);
+                                  }
+                              }
+                          }
+
+                          const auto mdLessThen = [](auto item1, auto item2) -> bool {
+                              QTime time1 = QTime::fromString(item1.UpdateTime, "hh:mm:ss");
+                              QTime time2 = QTime::fromString(item2.UpdateTime, "hh:mm:ss");
+                              time1.addMSecs(item1.UpdateMillisec);
+                              time2.addMSecs(item2.UpdateMillisec);
+                              return time1 < time2;
+                          };
+
+                          std::stable_sort(beforeMidnight.begin(), beforeMidnight.end(), mdLessThen);
+                          std::stable_sort(afterMidnight.begin(), afterMidnight.end(), mdLessThen);
+
+                          for (const auto &md : beforeMidnight) {
+                              DepthMarketDataEvent *event = new DepthMarketDataEvent(&md);
+                              QCoreApplication::postEvent(this, event);
+                          }
+                          for (const auto &md : afterMidnight) {
+                              DepthMarketDataEvent *event = new DepthMarketDataEvent(&md);
+                              QCoreApplication::postEvent(this, event);
+                          }
+                      });
 }
 
 /*!

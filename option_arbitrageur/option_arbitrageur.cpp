@@ -9,6 +9,14 @@
 
 extern QList<Market> markets;
 
+QDebug operator<<(QDebug dbg, const DepthMarket &depthMarket)
+{
+    dbg.nospace() << "ask1:\t" << depthMarket.askPrices << '\t' << depthMarket.askVolumes << '\n'
+                  << " ------- " << QTime(0, 0).addSecs(depthMarket.time) <<  " ------- " << '\n'
+                  << "bid1:\t" << depthMarket.bidPrices << '\t' << depthMarket.bidVolumes;
+    return dbg.space();
+}
+
 OptionArbitrageur::OptionArbitrageur(QObject *parent) :
     QObject(parent)
 {
@@ -17,7 +25,7 @@ OptionArbitrageur::OptionArbitrageur(QObject *parent) :
 
     pExecuter = new com::lazzyquant::trade_executer(EXECUTER_DBUS_SERVICE, EXECUTER_DBUS_OBJECT, QDBusConnection::sessionBus(), this);
     pWatcher = new com::lazzyquant::market_watcher(WATCHER_DBUS_SERVICE, WATCHER_DBUS_OBJECT, QDBusConnection::sessionBus(), this);
-    connect(pWatcher, SIGNAL(newMarketData(QString, uint, double, int, double, int, double, int, double, int, double, int)), this, SLOT(onMarketData(QString, uint, double, int, double, int, double, int, double, int, double, int)));
+    connect(pWatcher, SIGNAL(newMarketData(QString, uint, double, int, double, int, double, int)), this, SLOT(onMarketData(QString, uint, double, int, double, int, double, int)));
 
     QTimer::singleShot(1000, [=]() -> void { pExecuter->updateInstrumentsCache(QStringList{"m1"}); }); // FIXME 白糖以及其它
     QTimer::singleShot(5000, [=]() -> void {    // FIXME 4秒可能不够
@@ -71,24 +79,19 @@ void OptionArbitrageur::loadOptionArbitrageurSettings()
  * \param askVolume1 卖一量
  * \param bidPrice1  买一价
  * \param bidVolume1 买一量
- * \param askPrice2  卖二价
- * \param askVolume2 卖二量
- * \param bidPrice2  买二价
- * \param bidVolume2 买二量
  */
 void OptionArbitrageur::onMarketData(const QString& instrumentID, uint time, double lastPrice, int volume,
-                                     double askPrice1, int askVolume1, double bidPrice1, int bidVolume1,
-                                     double askPrice2, int askVolume2, double bidPrice2, int bidVolume2)
+                                     double askPrice1, int askVolume1, double bidPrice1, int bidVolume1)
 {
-    Q_UNUSED(time)
     Q_UNUSED(lastPrice)
     Q_UNUSED(volume)
 
     const DepthMarket latest_market_data = {
-        {askPrice1,  askPrice2 },
-        {askVolume1, askVolume2},
-        {bidPrice1,  bidPrice2 },
-        {bidVolume1, bidVolume2}
+        time,
+        askPrice1,
+        askVolume1,
+        bidPrice1,
+        bidVolume1
     };
 
     if (isOption(instrumentID)) {
@@ -154,15 +157,17 @@ void OptionArbitrageur::findCheapCallOptions(const QString &futureID)
 void OptionArbitrageur::checkCheapCallOptions(const QString &futureID, int exercisePrice)
 {
     const auto & callOptionMap = option_market_data[futureID][CALL_OPT];
-    if (callOptionMap[exercisePrice].askVolumes[1] > 0 && future_market_data[futureID].bidVolumes[1] > 0) { // 保证至少两档流动性
-        auto diff = future_market_data[futureID].bidPrices[1] - exercisePrice;
+    if (callOptionMap[exercisePrice].askVolumes > 1 && future_market_data[futureID].bidVolumes > 1) { // 保证至少两手流动性
+        auto diff = future_market_data[futureID].bidPrices - exercisePrice;
         if (diff > 0) {    // 实值期权, diff = 实值额
-            auto premium = callOptionMap[exercisePrice].askPrices[1];
+            auto premium = callOptionMap[exercisePrice].askPrices;
             if ((premium + 2 + 3) < diff) {    // (权利金 + 手续费) < 实值额
                 // Found cheap call option
                 qDebug() << DATE_TIME << "Found cheap call option";
+                qDebug() << futureID; qDebug() << future_market_data[futureID];
+                qDebug() << makeOptionID(futureID, CALL_OPT, exercisePrice); qDebug() << callOptionMap[exercisePrice];
                 pExecuter->buyLimit(makeOptionID(futureID, CALL_OPT, exercisePrice), 1, premium, 3);
-                pExecuter->sellLimit(futureID, 1, future_market_data[futureID].bidPrices[1], 3);
+                pExecuter->sellLimit(futureID, 1, future_market_data[futureID].bidPrices, 3);
             }
         }
     }
@@ -193,15 +198,17 @@ void OptionArbitrageur::findCheapPutOptions(const QString &futureID)
 void OptionArbitrageur::checkCheapPutOptions(const QString &futureID, int exercisePrice)
 {
     const auto & putOptionMap = option_market_data[futureID][PUT_OPT];
-    if (putOptionMap[exercisePrice].askVolumes[1] > 0 && future_market_data[futureID].askVolumes[1] > 0) {  // 保证至少两档流动性
-        auto diff = exercisePrice - future_market_data[futureID].askPrices[1];
+    if (putOptionMap[exercisePrice].askVolumes > 1 && future_market_data[futureID].askVolumes > 1) {  // 保证至少两手流动性
+        auto diff = exercisePrice - future_market_data[futureID].askPrices;
         if (diff > 0) {    // 实值期权
-            auto premium = putOptionMap[exercisePrice].askPrices[1];
+            auto premium = putOptionMap[exercisePrice].askPrices;
             if ((premium + 2 + 3) < diff) {     // (权利金 + 手续费) < 实值额
                 // Found cheap put option
                 qDebug() << DATE_TIME << "Found cheap put option";
+                qDebug() << futureID; qDebug() << future_market_data[futureID];
+                qDebug() << makeOptionID(futureID, PUT_OPT, exercisePrice); qDebug() << putOptionMap[exercisePrice];
                 pExecuter->buyLimit(makeOptionID(futureID, PUT_OPT, exercisePrice), 1, premium, 3);
-                pExecuter->buyLimit(futureID, 1, future_market_data[futureID].askPrices[1], 3);
+                pExecuter->buyLimit(futureID, 1, future_market_data[futureID].askPrices, 3);
             }
         }
     }
@@ -242,9 +249,9 @@ void OptionArbitrageur::findReversedCallOptions(const QString &futureID, int exe
  */
 void OptionArbitrageur::checkReversedCallOptions(const QString &futureID, const QMap<int, DepthMarket> &callOptionMap, int lowExercisePrice, int highExercisePrice)
 {
-    if (callOptionMap[highExercisePrice].bidVolumes[1] > 0 && callOptionMap[lowExercisePrice].askVolumes[1] > 0) {  // 保证至少两档流动性
-        auto lowPremium = callOptionMap[lowExercisePrice].askPrices[1];
-        auto highPremium = callOptionMap[highExercisePrice].bidPrices[1];
+    if (callOptionMap[highExercisePrice].bidVolumes > 1 && callOptionMap[lowExercisePrice].askVolumes > 1) {  // 保证至少两手流动性
+        auto lowPremium = callOptionMap[lowExercisePrice].askPrices;
+        auto highPremium = callOptionMap[highExercisePrice].bidPrices;
         auto diff = highPremium - lowPremium;
         if (diff > 2) {
             // Found
@@ -290,9 +297,9 @@ void OptionArbitrageur::findReversedPutOptions(const QString &futureID, int exer
  */
 void OptionArbitrageur::checkReversedPutOptions(const QString &futureID, const QMap<int, DepthMarket> &putOptionMap, int lowExercisePrice, int highExercisePrice)
 {
-    if (putOptionMap[highExercisePrice].askVolumes[1] > 0 && putOptionMap[lowExercisePrice].bidVolumes[1] > 0) {  // 保证至少两档流动性
-        auto lowPremium = putOptionMap[lowExercisePrice].bidPrices[1];
-        auto highPremium = putOptionMap[highExercisePrice].askPrices[1];
+    if (putOptionMap[highExercisePrice].askVolumes > 1 && putOptionMap[lowExercisePrice].bidVolumes > 1) {  // 保证至少两手流动性
+        auto lowPremium = putOptionMap[lowExercisePrice].bidPrices;
+        auto highPremium = putOptionMap[highExercisePrice].askPrices;
         auto diff = lowPremium - highPremium;
         if (diff > 2) {
             // Found
