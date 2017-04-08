@@ -22,6 +22,10 @@
     </method>
     <method name="subscribeInstruments">
       <arg name="instruments" type="as" direction="in"/>
+      <arg name="updateIni" type="b" direction="in"/>
+    </method>
+    <method name="subscribeInstruments">
+      <arg name="instruments" type="as" direction="in"/>
     </method>
     <method name="getSubscribeList">
       <arg type="as" direction="out"/>

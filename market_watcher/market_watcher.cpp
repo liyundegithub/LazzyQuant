@@ -17,10 +17,10 @@ MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, const bool replayMode, Q
 {
     nRequestID = 0;
 
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, config.organization, config.name);
-    QByteArray flowPath = settings.value("FlowPath").toByteArray();
-    saveDepthMarketData = settings.value("SaveDepthMarketData").toBool();
-    saveDepthMarketDataPath = settings.value("SaveDepthMarketDataPath").toString();
+    settings = new QSettings(QSettings::IniFormat, QSettings::UserScope, config.organization, config.name, this);
+    QByteArray flowPath = settings->value("FlowPath").toByteArray();
+    saveDepthMarketData = settings->value("SaveDepthMarketData").toBool();
+    saveDepthMarketDataPath = settings->value("SaveDepthMarketDataPath").toString();
     QDir dir(saveDepthMarketDataPath);
     if (!dir.exists()) {
         qWarning() << "SaveDepthMarketDataPath:" << saveDepthMarketDataPath << "does not exist!";
@@ -34,14 +34,14 @@ MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, const bool replayMode, Q
         }
     }
 
-    settings.beginGroup("SubscribeList");
-    QStringList subscribeList = settings.childKeys();
+    settings->beginGroup("SubscribeList");
+    QStringList subscribeList = settings->childKeys();
     foreach (const QString &key, subscribeList) {
-        if (settings.value(key).toBool()) {
+        if (settings->value(key).toBool()) {
             subscribeSet.insert(key);
         }
     }
-    settings.endGroup();
+    settings->endGroup();
 
     foreach (const QString &instrumentID, subscribeSet) {
         if (!checkTradingTimes(instrumentID)) {
@@ -58,11 +58,11 @@ MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, const bool replayMode, Q
         return;
     }
 // 以下是实盘模式的相关设置 -------------------------------------------------
-    settings.beginGroup("AccountInfo");
-    brokerID = settings.value("BrokerID").toByteArray();
-    userID = settings.value("UserID").toByteArray();
-    password = settings.value("Password").toByteArray();
-    settings.endGroup();
+    settings->beginGroup("AccountInfo");
+    brokerID = settings->value("BrokerID").toByteArray();
+    userID = settings->value("UserID").toByteArray();
+    password = settings->value("Password").toByteArray();
+    settings->endGroup();
 
     // Pre-convert QString to char*
     c_brokerID = brokerID.data();
@@ -73,14 +73,14 @@ MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, const bool replayMode, Q
     pReceiver = new CTickReceiver(this);
     pUserApi->RegisterSpi(pReceiver);
 
-    settings.beginGroup("FrontSites");
-    QStringList keys = settings.childKeys();
+    settings->beginGroup("FrontSites");
+    QStringList keys = settings->childKeys();
     const QString protocol = "tcp://";
     foreach (const QString &str, keys) {
-        QString address = settings.value(str).toString();
+        QString address = settings->value(str).toString();
         pUserApi->RegisterFront((protocol + address).toLatin1().data());
     }
-    settings.endGroup();
+    settings->endGroup();
 
     if (saveDepthMarketData)
         prepareSaveDepthMarketData();
@@ -326,8 +326,9 @@ QString MarketWatcher::getTradingDay() const
  * 订阅合约
  *
  * \param instruments 合约列表
+ * \param updateIni 是否将订阅的合约列表更新到配置文件
  */
-void MarketWatcher::subscribeInstruments(const QStringList &instruments)
+void MarketWatcher::subscribeInstruments(const QStringList &instruments, bool updateIni)
 {
     if (replayMode) {
         qWarning() << "Can not subscribe instruments in replay mode!";
@@ -358,6 +359,24 @@ void MarketWatcher::subscribeInstruments(const QStringList &instruments)
                 }
             }
         }
+    }
+
+    if (updateIni) {
+        settings->beginGroup("SubscribeList");
+        QStringList subscribeList = settings->childKeys();
+        QStringList enabledSubscribeList;
+        foreach (const QString &key, subscribeList) {
+            if (settings->value(key).toBool()) {
+                enabledSubscribeList.append(key);
+            }
+        }
+
+        for (const auto &instrument : instruments) {
+            if (!enabledSubscribeList.contains(instrument)) {
+                settings->setValue(instrument, "1");
+            }
+        }
+        settings->endGroup();
     }
 }
 

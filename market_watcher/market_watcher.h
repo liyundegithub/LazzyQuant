@@ -7,6 +7,7 @@
 #include <QSet>
 #include <QMap>
 
+class QSettings;
 class QTimer;
 class QTime;
 class CThostFtdcMdApi;
@@ -24,6 +25,7 @@ public:
 
 protected:
     const bool replayMode;
+    QSettings *settings;
 
     QAtomicInt nRequestID;
     CThostFtdcMdApi *pUserApi;
@@ -64,7 +66,7 @@ signals:
 public slots:
     bool isReplayMode() const { return replayMode; }
     QString getTradingDay() const;
-    void subscribeInstruments(const QStringList &instruments);
+    void subscribeInstruments(const QStringList &instruments, bool updateIni = true);
     QStringList getSubscribeList() const;
     void startReplay(const QString &date, bool realSpeed = false);
     void quit();

@@ -51,20 +51,17 @@ OptionArbitrageur::~OptionArbitrageur()
 
 void OptionArbitrageur::loadOptionArbitrageurSettings()
 {
-    QSettings watcherSettings(QSettings::IniFormat, QSettings::UserScope, ORGANIZATION, WATCHER_NAME);
-    watcherSettings.beginGroup("SubscribeList");
-    QStringList subscribeList = watcherSettings.childKeys();
+    QSettings settings(QSettings::IniFormat, QSettings::UserScope, ORGANIZATION, "option_arbitrageur");
+    threshold = settings.value("threshold", 1.0f).toDouble();
+
+    settings.beginGroup("ObjectFutures");
+    QStringList subscribeList = settings.childKeys();
     foreach (const QString &key, subscribeList) {
-        if (!isOption(key) < 8 && watcherSettings.value(key).toBool()) {
-            subscribeFutureIDs.insert(key);
+        if (settings.value(key).toBool()) {
+            objectFutureIDs.insert(key);
         }
     }
-    watcherSettings.endGroup();
-
-
-    QSettings arbitrageurSettings(QSettings::IniFormat, QSettings::UserScope, ORGANIZATION, "option_arbitrageur");
-
-    threshold = arbitrageurSettings.value("threshold", 1.0f).toDouble();
+    settings.endGroup();
 }
 
 /*!
@@ -114,7 +111,7 @@ void OptionArbitrageur::onMarketData(const QString& instrumentID, uint time, dou
  * \brief OptionArbitrageur::findInefficientPrices
  * 寻找市场中期权的无效率价格
  *
- * \param futureID 期货合约代码
+ * \param futureID 标的期货合约代码
  */
 void OptionArbitrageur::findInefficientPrices(const QString &futureID, OPTION_TYPE type, int exercisePrice)
 {
@@ -136,7 +133,7 @@ void OptionArbitrageur::findInefficientPrices(const QString &futureID, OPTION_TY
  * \brief OptionArbitrageur::findCheapCallOptions
  * 寻找所有权利金小于实值额的看涨期权
  *
- * \param futureID 期货合约代码
+ * \param futureID 标的期货合约代码
  */
 void OptionArbitrageur::findCheapCallOptions(const QString &futureID)
 {
@@ -151,7 +148,7 @@ void OptionArbitrageur::findCheapCallOptions(const QString &futureID)
  * \brief OptionArbitrageur::checkCheapCallOptions
  * 检查看涨期权定价是否合理
  *
- * \param futureID 期货合约代码
+ * \param futureID 标的期货合约代码
  * \param exercisePrice 行权价
  */
 void OptionArbitrageur::checkCheapCallOptions(const QString &futureID, int exercisePrice)
@@ -177,7 +174,7 @@ void OptionArbitrageur::checkCheapCallOptions(const QString &futureID, int exerc
  * \brief OptionArbitrageur::findCheapPutOptions
  * 寻找权利金小于实值额的看跌期权
  *
- * \param futureID 期货合约代码
+ * \param futureID 标的期货合约代码
  */
 void OptionArbitrageur::findCheapPutOptions(const QString &futureID)
 {
@@ -192,7 +189,7 @@ void OptionArbitrageur::findCheapPutOptions(const QString &futureID)
  * \brief OptionArbitrageur::checkCheapPutOptions
  * 检查看跌期权定价是否合理
  *
- * \param futureID 期货合约代码
+ * \param futureID 标的期货合约代码
  * \param exercisePrice 行权价
  */
 void OptionArbitrageur::checkCheapPutOptions(const QString &futureID, int exercisePrice)
@@ -318,7 +315,7 @@ void OptionArbitrageur::checkReversedPutOptions(const QString &futureID, const Q
  * 例如，假设CF505C13200的权利金价格为170，CF505P13600的权利金价格为190，符合上述条件，那么买入1手CF505C13200，买入1手CF505P13600，同时行权，收益=（CF505P13600行权价- CF505C13200行权价）-（CF505P13600 权利金价格+CF505C13200权利金价格）=（13600-13200）+（170+190）=40，再乘以5等于200。
  * 此种套利出现的概率很低，临近期权到期日时有可能会出现。
  *
- * \param futureID 期货合约代码
+ * \param futureID 标的期货合约代码
  */
 void OptionArbitrageur::findCheapStrangles(const QString &futureID)
 {
