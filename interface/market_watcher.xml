@@ -17,6 +17,9 @@
     <method name="isReplayMode">
       <arg type="b" direction="out"/>
     </method>
+    <method name="isLoggedIn">
+      <arg type="b" direction="out"/>
+    </method>
     <method name="getTradingDay">
       <arg type="s" direction="out"/>
     </method>

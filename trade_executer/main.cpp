@@ -6,6 +6,8 @@
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
+    QCoreApplication::setApplicationName("trade_executer");
+    QCoreApplication::setApplicationVersion(VERSION_STR);
 
     QList<CtpExecuter*> executerList;
     for (const auto & config : executerConfigs) {

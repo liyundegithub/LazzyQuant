@@ -53,6 +53,7 @@ protected:
     template<typename T>
     int callTraderApi(int (CThostFtdcTraderApi::* pTraderApi)(T *,int), T * pField);
 
+    bool loggedIn;
     double available;
     bool allowToTrade;
 
@@ -77,7 +78,9 @@ private slots:
 signals:
     void heartBeatWarning(int nTimeLapse);
     void dealMade(const QString& instrument, int volume);
+
 public slots:
+    bool isLoggedIn() const { return loggedIn; }
     QString getTradingDay() const;
     int confirmSettlementInfo();
     int qryTradingAccount();

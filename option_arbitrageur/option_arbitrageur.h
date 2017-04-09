@@ -25,8 +25,12 @@ protected:
     com::lazzyquant::market_watcher *pWatcher;
     com::lazzyquant::trade_executer *pExecuter;
 
+    void updateOptions();
+    void timesUp(int index);
     void loadOptionArbitrageurSettings();
+
     QSet<QString> objectFutureIDs;
+    int updateRetryCounter;
     double threshold;
 
     //   期货合约    两档盘口

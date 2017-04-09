@@ -39,6 +39,9 @@ CtpExecuter::CtpExecuter(const CONFIG_ITEM &config, QObject *parent) :
     nRequestID = 0;
     FrontID = 0;
     SessionID = 0;
+
+    loggedIn = false;
+    available = 0;
     allowToTrade = false;
 
     QSettings settings(QSettings::IniFormat, QSettings::UserScope, config.organization, config.name);
@@ -65,7 +68,7 @@ CtpExecuter::CtpExecuter(const CONFIG_ITEM &config, QObject *parent) :
     settings.beginGroup("FrontSites");
     QStringList keys = settings.childKeys();
     const QString protocol = "tcp://";
-    foreach (const QString &str, keys) {
+    for (const QString &str : keys) {
         QString address = settings.value(str).toString();
         pUserApi->RegisterFront((protocol + address).toLatin1().data());
     }
@@ -94,6 +97,7 @@ void CtpExecuter::customEvent(QEvent *event)
         break;
     case FRONT_DISCONNECTED:
     {
+        loggedIn = false;
         auto *fevent = static_cast<FrontDisconnectedEvent*>(event);
         // TODO reset position maps, make update times invalid
         switch (fevent->getReason()) {
@@ -124,7 +128,10 @@ void CtpExecuter::customEvent(QEvent *event)
         if (uevent->errorID == 0) {
             FrontID = uevent->rspUserLogin.FrontID;
             SessionID = uevent->rspUserLogin.SessionID;
+            loggedIn = true;
+
             qDebug() << DATE_TIME << "OnUserLogin OK! FrontID = " << FrontID << ", SessionID = " << SessionID;
+
             confirmSettlementInfo();
             QTimer::singleShot(1000, this, SLOT(qryOrder()));
             QTimer::singleShot(2000, this, SLOT(qryPositionDetail()));
@@ -143,7 +150,7 @@ void CtpExecuter::customEvent(QEvent *event)
         if (sevent->errorID == 0) {
             auto &list = sevent->settlementInfoList;
             QString msg;
-            foreach (const auto & item, list) {
+            for (const auto & item : list) {
                 msg += QTextCodec::codecForName("GBK")->toUnicode(item.Content);
             }
             qDebug() << msg;
@@ -160,7 +167,7 @@ void CtpExecuter::customEvent(QEvent *event)
     case RSP_QRY_INSTRUMENT_CR:
     {
         auto *qcevent = static_cast<RspQryInstrumentCommissionRateEvent*>(event);
-        foreach (const auto &item, qcevent->instrumentCommissionRateList) {
+        for (const auto &item : qcevent->instrumentCommissionRateList) {
             qDebug() << item.InstrumentID << item.OpenRatioByMoney << item.OpenRatioByVolume;
         }
     }
@@ -168,7 +175,7 @@ void CtpExecuter::customEvent(QEvent *event)
     case RSP_QRY_INSTRUMENT:
     {
         auto *qievent = static_cast<RspQryInstrumentEvent*>(event);
-        foreach (const auto &item, qievent->instrumentList) {
+        for (const auto &item : qievent->instrumentList) {
             qDebug() << item.InstrumentID << item.ExchangeID << item.VolumeMultiple;
             instruments_cache_map[item.InstrumentID] = item;
         }
@@ -177,7 +184,7 @@ void CtpExecuter::customEvent(QEvent *event)
     case RSP_DEPTH_MARKET_DATA:
     {
         auto *devent = static_cast<DepthMarketDataEvent*>(event);
-        foreach (const auto &item, devent->depthMarketDataList) {
+        for (const auto &item : devent->depthMarketDataList) {
             QString instrument = item.InstrumentID;
             qDebug() << instrument << qMakePair(item.UpperLimitPrice, item.LowerLimitPrice);
             upper_lower_limit_map.insert(instrument, make_expires(qMakePair(item.UpperLimitPrice, item.LowerLimitPrice), getExpireTime()));
@@ -244,7 +251,7 @@ void CtpExecuter::customEvent(QEvent *event)
     {
         auto *qoevent = static_cast<QryOrderEvent*>(event);
         order_map.clear();
-        foreach (const auto &item, qoevent->orderList) {
+        for (const auto &item : qoevent->orderList) {
             order_map.insert(item.InstrumentID, Expires<Order>(item, getExpireTime()));
             qDebug() << item.OrderStatus << QTextCodec::codecForName("GBK")->toUnicode(item.StatusMsg);
         }
@@ -261,7 +268,7 @@ void CtpExecuter::customEvent(QEvent *event)
         yd_pos_map.clear();
         td_pos_map.clear();
 
-        foreach (const auto &item, pevent->positionList) {
+        for (const auto &item : pevent->positionList) {
             int YdPosition = item.YdPosition;   // 昨仓数据不会更新
             int TdPosition = item.TodayPosition;
             if (item.PosiDirection == THOST_FTDC_PD_Short) {
@@ -279,16 +286,16 @@ void CtpExecuter::customEvent(QEvent *event)
         auto *pevent = static_cast<PositionDetailEvent*>(event);
 
         QSet<QString> updateSet;
-        foreach (const auto &item, pevent->positionDetailList) {
+        for (const auto &item : pevent->positionDetailList) {
             updateSet.insert(item.InstrumentID);
         }
 
-        foreach (const auto &item, updateSet) {
+        for (const auto &item : updateSet) {
             yd_pos_map.remove(item);
             td_pos_map.remove(item);
         }
 
-        foreach (const auto &item, pevent->positionDetailList) {
+        for (const auto &item : pevent->positionDetailList) {
             qDebug() << item.InstrumentID << "position:" << item.Volume << item.OpenDate << item.TradingDay << item.ExchangeID;
             int volume = item.Volume;
             if (item.Direction == THOST_FTDC_D_Sell) {
@@ -888,7 +895,7 @@ int CtpExecuter::getPendingOrderVolume(const QString &instrument) const
 {
     int sum = 0;
     const auto orderList = order_map.values(instrument);
-    foreach (const auto& item, orderList) {
+    for (const auto& item : orderList) {
         if (item.expired()) {
             continue;
         }

@@ -36,14 +36,14 @@ MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, const bool replayMode, Q
 
     settings->beginGroup("SubscribeList");
     QStringList subscribeList = settings->childKeys();
-    foreach (const QString &key, subscribeList) {
+    for (const QString &key : subscribeList) {
         if (settings->value(key).toBool()) {
             subscribeSet.insert(key);
         }
     }
     settings->endGroup();
 
-    foreach (const QString &instrumentID, subscribeSet) {
+    for (const QString &instrumentID : subscribeSet) {
         if (!checkTradingTimes(instrumentID)) {
             qCritical() << instrumentID << "has no proper trading time!";
         }
@@ -76,7 +76,7 @@ MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, const bool replayMode, Q
     settings->beginGroup("FrontSites");
     QStringList keys = settings->childKeys();
     const QString protocol = "tcp://";
-    foreach (const QString &str, keys) {
+    for (const QString &str : keys) {
         QString address = settings->value(str).toString();
         pUserApi->RegisterFront((protocol + address).toLatin1().data());
     }
@@ -84,6 +84,8 @@ MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, const bool replayMode, Q
 
     if (saveDepthMarketData)
         prepareSaveDepthMarketData();
+
+    loggedIn = false;
 
     pUserApi->Init();
 }
@@ -110,16 +112,16 @@ void MarketWatcher::prepareSaveDepthMarketData()
     }
 
     QMap<QTime, QStringList> endPointsMap;
-    foreach (const QString &instrumentID, subscribeSet) {
+    for (const QString &instrumentID : subscribeSet) {
         auto endPoints = getEndPoints(instrumentID);
-        foreach (const auto &item, endPoints) {
+        for (const auto &item : endPoints) {
             endPointsMap[item] << instrumentID;
         }
     }
 
     auto keys = endPointsMap.keys();
     qSort(keys);
-    foreach (const auto &item, keys) {
+    for (const auto &item : keys) {
         instrumentsToSave.append(endPointsMap[item]);
         saveBarTimePoints << item.addSecs(180); // Save data 3 minutes after market close
     }
@@ -167,6 +169,7 @@ void MarketWatcher::customEvent(QEvent *event)
         break;
     case FRONT_DISCONNECTED:
     {
+        loggedIn = false;
         auto *fevent = static_cast<FrontDisconnectedEvent*>(event);
         // TODO
         switch (fevent->getReason()) {
@@ -192,6 +195,7 @@ void MarketWatcher::customEvent(QEvent *event)
     }
         break;
     case RSP_USER_LOGIN:
+        loggedIn = true;
         subscribe();
         break;
     case RSP_USER_LOGOUT:
@@ -256,8 +260,8 @@ void MarketWatcher::subscribe()
 bool MarketWatcher::checkTradingTimes(const QString &instrumentID)
 {
     const QString instrument = getCode(instrumentID);
-    foreach (const auto &market, markets) {
-        foreach (const auto &code, market.codes) {
+    for (const auto &market : markets) {
+        for (const auto &code : market.codes) {
             if (instrument == code) {
                 int i = 0, size = market.regexs.size();
                 for (; i < size; i++) {
@@ -287,7 +291,7 @@ void MarketWatcher::processDepthMarketData(const CThostFtdcDepthMarketDataField&
     const QString instrumentID(depthMarketDataField.InstrumentID);
     QTime time = QTime::fromString(depthMarketDataField.UpdateTime, "hh:mm:ss");
 
-    foreach (const auto &tradetime, tradingTimeMap[instrumentID]) {
+    for (const auto &tradetime : tradingTimeMap[instrumentID]) {
         if (isWithinRange(time, tradetime.first, tradetime.second)) {
             QTime emitTime = (time == tradetime.second) ? time.addSecs(-1) : time;
             emit newMarketData(instrumentID,
@@ -310,7 +314,7 @@ void MarketWatcher::processDepthMarketData(const CThostFtdcDepthMarketDataField&
  * \brief MarketWatcher::getTradingDay
  * 获取交易日
  *
- * \return 交易日(YYYYMMDD)
+ * \return 交易日(格式YYYYMMDD)
  */
 QString MarketWatcher::getTradingDay() const
 {
@@ -344,7 +348,9 @@ void MarketWatcher::subscribeInstruments(const QStringList &instruments, bool up
         ppInstrumentID[i] = strcpy(subscribe_array + 32 * i, instruments[i].toLatin1().data());
     }
 
-    pUserApi->SubscribeMarketData(ppInstrumentID, num);
+    if (loggedIn) {
+        pUserApi->SubscribeMarketData(ppInstrumentID, num);
+    }
     delete[] ppInstrumentID;
     delete[] subscribe_array;
 
@@ -365,7 +371,7 @@ void MarketWatcher::subscribeInstruments(const QStringList &instruments, bool up
         settings->beginGroup("SubscribeList");
         QStringList subscribeList = settings->childKeys();
         QStringList enabledSubscribeList;
-        foreach (const QString &key, subscribeList) {
+        for (const QString &key : subscribeList) {
             if (settings->value(key).toBool()) {
                 enabledSubscribeList.append(key);
             }
@@ -396,7 +402,7 @@ QStringList MarketWatcher::getSubscribeList() const
  * 复盘某一天的行情
  *
  * \param date 希望复盘的日期 (格式YYYYMMDD)
- * \param realSpeed 是否以实际速度复盘 (默认false)
+ * \param realSpeed 是否以实际速度复盘 (默认为false)
  */
 void MarketWatcher::startReplay(const QString &date, bool realSpeed)
 {

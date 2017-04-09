@@ -31,6 +31,7 @@ protected:
     CThostFtdcMdApi *pUserApi;
     CTickReceiver *pReceiver;
 
+    bool loggedIn;
     QSet<QString> subscribeSet;
     QMap<QString, QList<QPair<QTime, QTime>>> tradingTimeMap;
 
@@ -65,6 +66,7 @@ signals:
 
 public slots:
     bool isReplayMode() const { return replayMode; }
+    bool isLoggedIn() const { return loggedIn; }
     QString getTradingDay() const;
     void subscribeInstruments(const QStringList &instruments, bool updateIni = true);
     QStringList getSubscribeList() const;
