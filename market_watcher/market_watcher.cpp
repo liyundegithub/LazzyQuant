@@ -438,39 +438,28 @@ void MarketWatcher::startReplay(const QString &date, bool realSpeed)
     }
 
     QtConcurrent::run([=]() -> void {
-                          QList<CThostFtdcDepthMarketDataField> beforeMidnight;
-                          QList<CThostFtdcDepthMarketDataField> afterMidnight;
+        // TODO 过午夜零点的情况
+        QList<CThostFtdcDepthMarketDataField> beforeMidnight;
 
-                          for (const auto &mdList : depthMarketDataListMap) {
-                              for (const auto &md : mdList) {
-                                  if (QTime::fromString(md.UpdateTime, "hh:mm:ss") > QTime(17, 0)) {
-                                      beforeMidnight.append(md);
-                                  } else {
-                                      afterMidnight.append(md);
-                                  }
-                              }
-                          }
+        for (const auto &mdList : depthMarketDataListMap) {
+            beforeMidnight.append(mdList);
+        }
 
-                          const auto mdLessThen = [](auto item1, auto item2) -> bool {
-                              QTime time1 = QTime::fromString(item1.UpdateTime, "hh:mm:ss");
-                              QTime time2 = QTime::fromString(item2.UpdateTime, "hh:mm:ss");
-                              time1.addMSecs(item1.UpdateMillisec);
-                              time2.addMSecs(item2.UpdateMillisec);
-                              return time1 < time2;
-                          };
+        const auto mdLessThen = [](auto item1, auto item2) -> bool {
+            QTime time1 = QTime::fromString(item1.UpdateTime, "hh:mm:ss");
+            QTime time2 = QTime::fromString(item2.UpdateTime, "hh:mm:ss");
+            time1.addMSecs(item1.UpdateMillisec);
+            time2.addMSecs(item2.UpdateMillisec);
+            return time1 < time2;
+        };
 
-                          std::stable_sort(beforeMidnight.begin(), beforeMidnight.end(), mdLessThen);
-                          std::stable_sort(afterMidnight.begin(), afterMidnight.end(), mdLessThen);
+        std::stable_sort(beforeMidnight.begin(), beforeMidnight.end(), mdLessThen);
 
-                          for (const auto &md : beforeMidnight) {
-                              DepthMarketDataEvent *event = new DepthMarketDataEvent(&md);
-                              QCoreApplication::postEvent(this, event);
-                          }
-                          for (const auto &md : afterMidnight) {
-                              DepthMarketDataEvent *event = new DepthMarketDataEvent(&md);
-                              QCoreApplication::postEvent(this, event);
-                          }
-                      });
+        for (const auto &md : beforeMidnight) {
+            DepthMarketDataEvent *event = new DepthMarketDataEvent(&md);
+            QCoreApplication::postEvent(this, event);
+        }
+    });
 }
 
 /*!

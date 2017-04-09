@@ -13,7 +13,7 @@ extern QList<Market> markets;
 QDebug operator<<(QDebug dbg, const DepthMarket &depthMarket)
 {
     dbg.nospace() << "Ask 1:\t" << depthMarket.askPrices << '\t' << depthMarket.askVolumes << '\n'
-                  << " ------ " << QTime(0, 0).addSecs(depthMarket.time) <<  " ------ " << '\n'
+                  << " ------ " << QTime(0, 0).addSecs(depthMarket.time).toString() <<  " ------ " << '\n'
                   << "Bid 1:\t" << depthMarket.bidPrices << '\t' << depthMarket.bidVolumes;
     return dbg.space();
 }
