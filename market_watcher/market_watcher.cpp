@@ -455,9 +455,18 @@ void MarketWatcher::startReplay(const QString &date, bool realSpeed)
 
         std::stable_sort(beforeMidnight.begin(), beforeMidnight.end(), mdLessThen);
 
-        for (const auto &md : beforeMidnight) {
-            DepthMarketDataEvent *event = new DepthMarketDataEvent(&md);
-            QCoreApplication::postEvent(this, event);
+        for (const auto &depthMarketDataField : beforeMidnight) {
+            const QString instrumentID(depthMarketDataField.InstrumentID);
+            QTime time = QTime::fromString(depthMarketDataField.UpdateTime, "hh:mm:ss");
+
+            emit newMarketData(instrumentID,
+                               QTime(0, 0).secsTo(time),
+                               depthMarketDataField.LastPrice,
+                               depthMarketDataField.Volume,
+                               depthMarketDataField.AskPrice1,
+                               depthMarketDataField.AskVolume1,
+                               depthMarketDataField.BidPrice1,
+                               depthMarketDataField.BidVolume1);
         }
     });
 }

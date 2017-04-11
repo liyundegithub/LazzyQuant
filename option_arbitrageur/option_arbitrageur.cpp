@@ -43,7 +43,7 @@ OptionArbitrageur::~OptionArbitrageur()
 
 void OptionArbitrageur::updateOptions()
 {
-    if (!pWatcher->isValid() || !pExecuter->isLoggedIn()) {
+    if (!pWatcher->isValid() || !pExecuter->isValid()) {
         if (updateRetryCounter < 3) {
             qWarning() << "Either Watcher or Executer is not ready! Will try update options later!";
             QTimer::singleShot(10000, this, &OptionArbitrageur::updateOptions);
