@@ -57,7 +57,8 @@ protected:
     void login();
     void subscribe();
     bool checkTradingTimes(const QString &instrumentID);
-    void processDepthMarketData(const CThostFtdcDepthMarketDataField&);
+    void processDepthMarketData(const CThostFtdcDepthMarketDataField& depthMarketDataField);
+    void emitNewMarketData(const CThostFtdcDepthMarketDataField& depthMarketDataField);
 
 signals:
     void heartBeatWarning(int nTimeLapse);
