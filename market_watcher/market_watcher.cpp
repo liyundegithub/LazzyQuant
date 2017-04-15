@@ -431,14 +431,10 @@ void MarketWatcher::startReplay(const QString &date, bool realSpeed)
         return;
     }
 
+    Q_UNUSED(realSpeed) // TODO realSpeed = true
+
     qDebug() << "Start replaying" << date;
-
-    Q_UNUSED(realSpeed)
-    // TODO realSpeed = true
-
-    QList<CThostFtdcDepthMarketDataField> morning;      // 上午(商品期货包括两个交易小节)
-    QList<CThostFtdcDepthMarketDataField> afternoon;    // 下午
-    QList<CThostFtdcDepthMarketDataField> night;        // 夜盘
+    QList<CThostFtdcDepthMarketDataField> mdList;
 
     for (const auto &instrumentID : subscribeSet) {
         QDir dir(saveDepthMarketDataPath + "/" + instrumentID);
@@ -455,51 +451,21 @@ void MarketWatcher::startReplay(const QString &date, bool realSpeed)
             mdStream >> tmpList;
             if (tmpList.length() > 0) {
                 qDebug() << tmpList.size() << "in" << mdFileFullName;
-                QStringList items = fileName.split('_');
-                int fileTime = items[1].toInt();
-                // TODO 夜盘过午夜零点的情况
-                if (50000 < fileTime && fileTime < 120000) {
-                    morning.append(tmpList);
-                } else if (120000 < fileTime && fileTime < 170000) {
-                    afternoon.append(tmpList);
-                } else if (170000 < fileTime) {
-                    night.append(tmpList);
-                }
+                mdList.append(tmpList);
             }
         }
     }
 
-    const auto mdLessThen = [](const auto &item1, const auto &item2) -> bool {
-        QTime time1 = QTime::fromString(item1.UpdateTime, "hh:mm:ss");
-        QTime time2 = QTime::fromString(item2.UpdateTime, "hh:mm:ss");
-        time1.addMSecs(item1.UpdateMillisec);
-        time2.addMSecs(item2.UpdateMillisec);
-        return time1 < time2;
-    };
+    std::stable_sort(mdList.begin(), mdList.end(), [](const auto &item1, const auto &item2) -> bool {
+        int ret = QString::compare(item1.UpdateTime, item2.UpdateTime);
+        if (ret == 0) {
+            return item1.UpdateMillisec < item2.UpdateMillisec;
+        } else {
+            return ret < 0;
+        }
+    });
 
-    auto am_sort = QtConcurrent::run([&morning, mdLessThen]() -> void {
-                                         std::stable_sort(morning.begin(), morning.end(), mdLessThen);
-                                     });
-
-    auto pm_sort = QtConcurrent::run([&afternoon, mdLessThen]() -> void {
-                                         std::stable_sort(afternoon.begin(), afternoon.end(), mdLessThen);
-                                     });
-
-    auto night_sort = QtConcurrent::run([&night, mdLessThen]() -> void {
-                                            std::stable_sort(night.begin(), night.end(), mdLessThen);
-                                        });
-
-    am_sort.waitForFinished();
-    pm_sort.waitForFinished();
-    night_sort.waitForFinished();
-
-    for (const auto &md : morning) {
-        emitNewMarketData(md);
-    }
-    for (const auto &md : afternoon) {
-        emitNewMarketData(md);
-    }
-    for (const auto &md : night) {
+    for (const auto &md : mdList) {
         emitNewMarketData(md);
     }
 }

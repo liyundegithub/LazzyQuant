@@ -6,6 +6,11 @@
 
 #define DATE_TIME (QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz"))
 
+#define TM1 \
+    QTime t1 = QTime::currentTime();
+#define TM2 \
+    qDebug() << t1.msecsTo(QTime::currentTime()) << "ms";
+
 enum OPTION_TYPE {
     CALL_OPT,
     PUT_OPT,
