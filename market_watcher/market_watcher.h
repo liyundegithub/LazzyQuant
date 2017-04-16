@@ -33,17 +33,19 @@ protected:
 
     bool loggedIn;
     QSet<QString> subscribeSet;
-    QMap<QString, QList<QPair<QTime, QTime>>> tradingTimeMap;
+    QMap<QString, QList<QPair<QTime, QTime>>> tradingTimeMap;   // 交易时间段总表
+    QMap<QString, QPair<QTime, QTime>> currentTradingTimeMap;   // 当前, 或下一交易时段表
 
     bool saveDepthMarketData;
     QString saveDepthMarketDataPath;
     QMap<QString, QList<CThostFtdcDepthMarketDataField>> depthMarketDataListMap;
 
     QList<QTime> saveBarTimePoints;
-    QList<QStringList> instrumentsToSave;
+    QList<QStringList> instrumentsToProcess;
     int saveBarTimeIndex;
-    void prepareSaveDepthMarketData();
-    void saveDepthMarketDataToFile(int index);
+    void setupTimers();
+    void timesUp(int index);
+    void setCurrentTradingTime(const QString &instrumentID);
 
     QByteArray brokerID;
     QByteArray userID;

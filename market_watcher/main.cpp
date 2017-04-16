@@ -25,7 +25,8 @@ int main(int argc, char *argv[])
     parser.process(a);
     bool replayMode = parser.isSet("replay");
 
-    loadCommonMarketData();
+    if (!replayMode)
+        loadCommonMarketData();
 
     QList<MarketWatcher*> watcherList;
     for (const auto & config : watcherConfigs) {
@@ -35,7 +36,7 @@ int main(int argc, char *argv[])
 
     int ret = a.exec();
 
-    for (const auto & pWatcher : watcherList) {
+    for (const auto & pWatcher : qAsConst(watcherList)) {
         delete pWatcher;
     }
     return ret;

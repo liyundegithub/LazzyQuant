@@ -15,8 +15,6 @@ extern QList<Market> markets;
 MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, const bool replayMode, QObject *parent) :
     replayMode(replayMode), QObject(parent)
 {
-    nRequestID = 0;
-
     settings = new QSettings(QSettings::IniFormat, QSettings::UserScope, config.organization, config.name, this);
     QByteArray flowPath = settings->value("FlowPath").toByteArray();
     saveDepthMarketData = settings->value("SaveDepthMarketData").toBool();
@@ -35,19 +33,13 @@ MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, const bool replayMode, Q
     }
 
     settings->beginGroup("SubscribeList");
-    QStringList subscribeList = settings->childKeys();
-    for (const QString &key : subscribeList) {
+    const auto subscribeList = settings->childKeys();
+    for (const auto &key : subscribeList) {
         if (settings->value(key).toBool()) {
             subscribeSet.insert(key);
         }
     }
     settings->endGroup();
-
-    for (const QString &instrumentID : subscribeSet) {
-        if (!checkTradingTimes(instrumentID)) {
-            qCritical() << instrumentID << "has no proper trading time!";
-        }
-    }
 
     new Market_watcherAdaptor(this);
     QDBusConnection dbus = QDBusConnection::sessionBus();
@@ -55,9 +47,20 @@ MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, const bool replayMode, Q
     dbus.registerService(config.dbusService);
 // 复盘模式到此为止 -------------------------------------------------------
     if (replayMode) {
+        qDebug() << "Relay mode is ready!";
         return;
     }
 // 以下是实盘模式的相关设置 -------------------------------------------------
+    nRequestID = 0;
+
+    for (const QString &instrumentID : subscribeSet) {
+        if (checkTradingTimes(instrumentID)) {
+            setCurrentTradingTime(instrumentID);
+        } else {
+            qCritical() << instrumentID << "has no proper trading time!";
+        }
+    }
+
     settings->beginGroup("AccountInfo");
     brokerID = settings->value("BrokerID").toByteArray();
     userID = settings->value("UserID").toByteArray();
@@ -82,8 +85,21 @@ MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, const bool replayMode, Q
     }
     settings->endGroup();
 
-    if (saveDepthMarketData)
-        prepareSaveDepthMarketData();
+    if (saveDepthMarketData) {
+        // Check the directories for saving market data
+        for (const auto &instrumentID : qAsConst(subscribeSet)) {
+            const QString path_for_this_instrumentID = saveDepthMarketDataPath + "/" + instrumentID;
+            QDir dir(path_for_this_instrumentID);
+            if (!dir.exists()) {
+                bool ret = dir.mkpath(path_for_this_instrumentID);
+                if (!ret) {
+                    qWarning() << "Create directory" << path_for_this_instrumentID << "failed!";
+                }
+            }
+        }
+    }
+
+    setupTimers();
 
     loggedIn = false;
 
@@ -98,22 +114,11 @@ MarketWatcher::~MarketWatcher()
     }
 }
 
-void MarketWatcher::prepareSaveDepthMarketData()
+void MarketWatcher::setupTimers()
 {
-    for (const QString &instrumentID : subscribeSet) {
-        const QString path_for_this_instrumentID = saveDepthMarketDataPath + "/" + instrumentID;
-        QDir dir(path_for_this_instrumentID);
-        if (!dir.exists()) {
-            bool ret = dir.mkpath(path_for_this_instrumentID);
-            if (!ret) {
-                qWarning() << "Create directory" << path_for_this_instrumentID << "failed!";
-            }
-        }
-    }
-
     QMap<QTime, QStringList> endPointsMap;
-    for (const QString &instrumentID : subscribeSet) {
-        auto endPoints = getEndPoints(instrumentID);
+    for (const auto &instrumentID : qAsConst(subscribeSet)) {
+        const auto endPoints = getEndPoints(instrumentID);
         for (const auto &item : endPoints) {
             endPointsMap[item] << instrumentID;
         }
@@ -121,13 +126,13 @@ void MarketWatcher::prepareSaveDepthMarketData()
 
     auto keys = endPointsMap.keys();
     qSort(keys);
-    for (const auto &item : keys) {
-        instrumentsToSave.append(endPointsMap[item]);
-        saveBarTimePoints << item.addSecs(180); // Save data 3 minutes after market close
+    for (const auto &timePoint : qAsConst(keys)) {
+        instrumentsToProcess.append(endPointsMap[timePoint]);
+        saveBarTimePoints << timePoint.addSecs(180); // Save data 3 minutes after market close
     }
 
-    auto saveBarTimer = new MultipleTimer(saveBarTimePoints, this);
-    connect(saveBarTimer, &MultipleTimer::timesUp, this, &MarketWatcher::saveDepthMarketDataToFile);
+    auto multiTimer = new MultipleTimer(saveBarTimePoints, this);
+    connect(multiTimer, &MultipleTimer::timesUp, this, &MarketWatcher::timesUp);
 }
 
 QDataStream& operator<<(QDataStream& s, const CThostFtdcDepthMarketDataField& dataField)
@@ -142,21 +147,53 @@ QDataStream& operator>>(QDataStream& s, CThostFtdcDepthMarketDataField& dataFiel
     return s;
 }
 
-void MarketWatcher::saveDepthMarketDataToFile(int index)
+void MarketWatcher::timesUp(int index)
 {
-    for (const auto &instrumentID : subscribeSet) {
-        if (instrumentsToSave[index].contains(instrumentID)) {
-            auto &depthMarketDataList = depthMarketDataListMap[instrumentID];
-            if (depthMarketDataList.length() > 0) {
-                QString file_name = saveDepthMarketDataPath + "/" + instrumentID + "/" + QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz") + ".data";
-                QFile depthMarketDataFile(file_name);
-                depthMarketDataFile.open(QFile::WriteOnly);
-                QDataStream wstream(&depthMarketDataFile);
-                wstream << depthMarketDataList;
-                depthMarketDataFile.close();
-                depthMarketDataList.clear();
+    for (const auto &instrumentID : qAsConst(subscribeSet)) {
+        if (instrumentsToProcess[index].contains(instrumentID)) {
+            setCurrentTradingTime(instrumentID);
+
+            if (saveDepthMarketData) {
+                auto &depthMarketDataList = depthMarketDataListMap[instrumentID];
+                if (depthMarketDataList.length() > 0) {
+                    QString fileName = saveDepthMarketDataPath + "/" + instrumentID + "/" + QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz") + ".data";
+                    QFile depthMarketDataFile(fileName);
+                    depthMarketDataFile.open(QFile::WriteOnly);
+                    QDataStream wstream(&depthMarketDataFile);
+                    wstream << depthMarketDataList;
+                    depthMarketDataFile.close();
+                    depthMarketDataList.clear();
+                }
             }
         }
+    }
+}
+
+void MarketWatcher::setCurrentTradingTime(const QString &instrumentID)
+{
+    const int len = tradingTimeMap[instrumentID].length();
+    QList<int> timeDiffs;
+    for (const auto & timePair : qAsConst(tradingTimeMap[instrumentID])) {
+        auto diff = QTime::currentTime().secsTo(timePair.second);
+        if (diff <= 0) {
+            diff += 86400;
+        }
+        timeDiffs.append(diff);
+    }
+
+    int min = INT_MAX;
+    int minIdx = -1;
+    for (int i = 0; i < len; i++) {
+        if (timeDiffs[i] < min) {
+            min = timeDiffs[i];
+            minIdx = i;
+        }
+    }
+
+    if (minIdx > 0 && minIdx < len) {
+        currentTradingTimeMap[instrumentID] = tradingTimeMap[instrumentID][minIdx];
+    } else {
+        qFatal("Should never see this!");
     }
 }
 
@@ -259,11 +296,12 @@ void MarketWatcher::subscribe()
  */
 bool MarketWatcher::checkTradingTimes(const QString &instrumentID)
 {
-    const QString instrument = getCode(instrumentID);
-    for (const auto &market : markets) {
-        for (const auto &code : market.codes) {
-            if (instrument == code) {
-                int i = 0, size = market.regexs.size();
+    const QString code = getCode(instrumentID);
+    for (const auto &market : qAsConst(markets)) {
+        for (const auto &marketCode : qAsConst(market.codes)) {
+            if (code == marketCode) {
+                const int size = market.regexs.size();
+                int i = 0;
                 for (; i < size; i++) {
                     if (QRegExp(market.regexs[i]).exactMatch(instrumentID)) {
                         tradingTimeMap[instrumentID] = market.tradetimeses[i];
@@ -291,22 +329,20 @@ void MarketWatcher::processDepthMarketData(const CThostFtdcDepthMarketDataField&
     const QString instrumentID(depthMarketDataField.InstrumentID);
     QTime time = QTime::fromString(depthMarketDataField.UpdateTime, "hh:mm:ss");
 
-    for (const auto &tradetime : tradingTimeMap[instrumentID]) {
-        if (isWithinRange(time, tradetime.first, tradetime.second)) {
-            QTime emitTime = (time == tradetime.second) ? time.addSecs(-1) : time;
-            emit newMarketData(instrumentID,
-                               QTime(0, 0).secsTo(emitTime),
-                               depthMarketDataField.LastPrice,
-                               depthMarketDataField.Volume,
-                               depthMarketDataField.AskPrice1,
-                               depthMarketDataField.AskVolume1,
-                               depthMarketDataField.BidPrice1,
-                               depthMarketDataField.BidVolume1);
+    const auto &tradetime = currentTradingTimeMap[instrumentID];
+    if (isWithinRange(time, tradetime.first, tradetime.second)) {
+        QTime emitTime = (time == tradetime.second) ? time.addSecs(-1) : time;
+        emit newMarketData(instrumentID,
+                           QTime(0, 0).secsTo(emitTime),
+                           depthMarketDataField.LastPrice,
+                           depthMarketDataField.Volume,
+                           depthMarketDataField.AskPrice1,
+                           depthMarketDataField.AskVolume1,
+                           depthMarketDataField.BidPrice1,
+                           depthMarketDataField.BidVolume1);
 
-            if (saveDepthMarketData)
-                depthMarketDataListMap[instrumentID].append(depthMarketDataField);
-            break;
-        }
+        if (saveDepthMarketData)
+            depthMarketDataListMap[instrumentID].append(depthMarketDataField);
     }
 }
 
@@ -389,9 +425,9 @@ void MarketWatcher::subscribeInstruments(const QStringList &instruments, bool up
 
     if (updateIni) {
         settings->beginGroup("SubscribeList");
-        QStringList subscribeList = settings->childKeys();
+        const auto subscribeList = settings->childKeys();
         QStringList enabledSubscribeList;
-        for (const QString &key : subscribeList) {
+        for (const auto &key : subscribeList) {
             if (settings->value(key).toBool()) {
                 enabledSubscribeList.append(key);
             }
@@ -438,7 +474,7 @@ void MarketWatcher::startReplay(const QString &date, bool realSpeed)
 
     for (const auto &instrumentID : subscribeSet) {
         QDir dir(saveDepthMarketDataPath + "/" + instrumentID);
-        auto marketDataFiles = dir.entryList(QStringList({date + "*"}), QDir::Files | QDir::NoDotAndDotDot, QDir::Name);
+        const auto marketDataFiles = dir.entryList(QStringList({date + "*"}), QDir::Files | QDir::NoDotAndDotDot, QDir::Name);
         for (const auto &fileName : marketDataFiles) {
             QString mdFileFullName = saveDepthMarketDataPath + "/" + instrumentID + "/" + fileName;
             QFile mdFile(mdFileFullName);

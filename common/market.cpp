@@ -14,12 +14,13 @@ void loadCommonMarketData()
     QSettings settings(QSettings::IniFormat, QSettings::UserScope, ORGANIZATION, "common");
 
     settings.beginGroup("Markets");
-    QStringList marketsKey = settings.childKeys();
-    foreach (const auto &key, marketsKey) {
+    const auto marketsKey = settings.childKeys();
+    for (const auto &key : marketsKey) {
         QString market_xml_file = settings.value(key).toString();
         auto market = loadMkt(market_xml_file);
         markets << market;
     }
+    settings.endGroup();
 }
 
 Market loadMkt(const QString &file_name)
@@ -55,8 +56,8 @@ Market loadMkt(const QString &file_name)
 
             QString tradetime = e.attribute("tradetime");
             QList<QPair<QTime, QTime>> tradetimes;
-            QStringList list1 = tradetime.trimmed().split(';');
-            foreach (const auto &item, list1) {
+            const auto list1 = tradetime.trimmed().split(';');
+            for (const auto &item : list1) {
                 QStringList list2 = item.trimmed().split('-');
 
                 QStringList list3 = list2[0].trimmed().split(':');
@@ -102,14 +103,14 @@ Market loadMkt(const QString &file_name)
 QList<QTime> getEndPoints(const QString &instrumentID) {
     QString code = getCode(instrumentID);
     QList<QTime> endPoints;
-    foreach (const auto &market, markets) {
-        foreach (const auto &marketCode, market.codes) {
+    for (const auto &market : qAsConst(markets)) {
+        for (const auto &marketCode : qAsConst(market.codes)) {
             if (code == marketCode) {
-                int i = 0, size = market.regexs.size();
+                const int size = market.regexs.size();
+                int i = 0;
                 for (; i < size; i++) {
                     if (QRegExp(market.regexs[i]).exactMatch(code)) {
-                        auto tradeTimeList = market.tradetimeses[i];
-                        foreach (const auto &item, tradeTimeList) {
+                        for (const auto &item : qAsConst(market.tradetimeses[i])) {
                             endPoints << item.second;
                         }
                         return endPoints;
