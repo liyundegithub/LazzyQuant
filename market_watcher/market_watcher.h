@@ -14,6 +14,7 @@ class CThostFtdcMdApi;
 class CTickReceiver;
 struct CThostFtdcDepthMarketDataField;
 struct CONFIG_ITEM;
+class MultipleTimer;
 
 class MarketWatcher : public QObject {
     Q_OBJECT
@@ -40,6 +41,7 @@ protected:
     QString saveDepthMarketDataPath;
     QMap<QString, QList<CThostFtdcDepthMarketDataField>> depthMarketDataListMap;
 
+    MultipleTimer *multiTimer;
     QList<QTime> saveBarTimePoints;
     QList<QStringList> instrumentsToProcess;
     int saveBarTimeIndex;

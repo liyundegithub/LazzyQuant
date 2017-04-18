@@ -104,8 +104,8 @@ void OptionArbitrageur::loadOptionArbitrageurSettings()
     threshold = settings.value("threshold", 1.0f).toDouble();
 
     settings.beginGroup("ObjectFutures");
-    QStringList subscribeList = settings.childKeys();
-    for (const QString &key : subscribeList) {
+    const auto subscribeList = settings.childKeys();
+    for (const auto &key : subscribeList) {
         if (settings.value(key).toBool()) {
             objectFutureIDs.insert(key);
         }

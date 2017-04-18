@@ -45,15 +45,15 @@ MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, const bool replayMode, Q
     QDBusConnection dbus = QDBusConnection::sessionBus();
     dbus.registerObject(config.dbusObject, this);
     dbus.registerService(config.dbusService);
-// 复盘模式到此为止 -------------------------------------------------------
+// 复盘模式和实盘模式共用的部分到此为止 ---------------------------------------
     if (replayMode) {
         qDebug() << "Relay mode is ready!";
         return;
     }
-// 以下是实盘模式的相关设置 -------------------------------------------------
+// 以下设置仅用于实盘模式 --------------------------------------------------
     nRequestID = 0;
 
-    for (const QString &instrumentID : subscribeSet) {
+    for (const auto &instrumentID : qAsConst(subscribeSet)) {
         if (checkTradingTimes(instrumentID)) {
             setCurrentTradingTime(instrumentID);
         } else {
@@ -77,9 +77,9 @@ MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, const bool replayMode, Q
     pUserApi->RegisterSpi(pReceiver);
 
     settings->beginGroup("FrontSites");
-    QStringList keys = settings->childKeys();
+    const auto keys = settings->childKeys();
     const QString protocol = "tcp://";
-    for (const QString &str : keys) {
+    for (const auto &str : keys) {
         QString address = settings->value(str).toString();
         pUserApi->RegisterFront((protocol + address).toLatin1().data());
     }
@@ -99,6 +99,7 @@ MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, const bool replayMode, Q
         }
     }
 
+    multiTimer = nullptr;
     setupTimers();
 
     loggedIn = false;
@@ -131,7 +132,11 @@ void MarketWatcher::setupTimers()
         saveBarTimePoints << timePoint.addSecs(180); // Save data 3 minutes after market close
     }
 
-    auto multiTimer = new MultipleTimer(saveBarTimePoints, this);
+    if (multiTimer != nullptr) {
+        disconnect(multiTimer, &MultipleTimer::timesUp, this, &MarketWatcher::timesUp);
+        delete multiTimer;
+    }
+    multiTimer = new MultipleTimer(saveBarTimePoints);
     connect(multiTimer, &MultipleTimer::timesUp, this, &MarketWatcher::timesUp);
 }
 
@@ -190,9 +195,10 @@ void MarketWatcher::setCurrentTradingTime(const QString &instrumentID)
         }
     }
 
-    if (minIdx > 0 && minIdx < len) {
+    if (minIdx >= 0 && minIdx < len) {
         currentTradingTimeMap[instrumentID] = tradingTimeMap[instrumentID][minIdx];
     } else {
+        qDebug() << "minIdx =" << minIdx;
         qFatal("Should never see this!");
     }
 }
@@ -422,6 +428,8 @@ void MarketWatcher::subscribeInstruments(const QStringList &instruments, bool up
             }
         }
     }
+
+    setupTimers();
 
     if (updateIni) {
         settings->beginGroup("SubscribeList");
