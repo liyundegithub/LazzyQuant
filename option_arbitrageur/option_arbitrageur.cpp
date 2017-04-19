@@ -207,12 +207,12 @@ void OptionArbitrageur::checkCheapCallOptions(const QString &futureID, int exerc
         auto diff = future_market_data[futureID].bidPrices - exercisePrice;
         if (diff > 0) {    // 实值期权, diff = 实值额
             auto premium = callOptionMap[exercisePrice].askPrices;
-            if ((premium + 2 + 3) < diff) {    // (权利金 + 手续费) < 实值额
+            if ((premium + 2.5) < diff) {   // (权利金 x 合约乘数 + 手续费) < 实值额 x 合约乘数
+                pExecuter->buyLimit(makeOptionID(futureID, CALL_OPT, exercisePrice), 1, premium);
+                pExecuter->sellLimit(futureID, 1, future_market_data[futureID].bidPrices);
                 qDebug() << DATE_TIME << "Found cheap call option";
                 qDebug() << futureID; qDebug() << future_market_data[futureID];
                 qDebug() << makeOptionID(futureID, CALL_OPT, exercisePrice); qDebug() << callOptionMap[exercisePrice];
-                pExecuter->buyLimit(makeOptionID(futureID, CALL_OPT, exercisePrice), 1, premium, 3);
-                pExecuter->sellLimit(futureID, 1, future_market_data[futureID].bidPrices, 3);
             }
         }
     }
@@ -247,12 +247,12 @@ void OptionArbitrageur::checkCheapPutOptions(const QString &futureID, int exerci
         auto diff = exercisePrice - future_market_data[futureID].askPrices;
         if (diff > 0) {    // 实值期权
             auto premium = putOptionMap[exercisePrice].askPrices;
-            if ((premium + 2 + 3) < diff) {     // (权利金 + 手续费) < 实值额
+            if ((premium + 2.5) < diff) {   // (权利金 x 合约乘数 + 手续费) < 实值额 x 合约乘数
+                pExecuter->buyLimit(makeOptionID(futureID, PUT_OPT, exercisePrice), 1, premium);
+                pExecuter->buyLimit(futureID, 1, future_market_data[futureID].askPrices);
                 qDebug() << DATE_TIME << "Found cheap put option";
                 qDebug() << futureID; qDebug() << future_market_data[futureID];
                 qDebug() << makeOptionID(futureID, PUT_OPT, exercisePrice); qDebug() << putOptionMap[exercisePrice];
-                pExecuter->buyLimit(makeOptionID(futureID, PUT_OPT, exercisePrice), 1, premium, 3);
-                pExecuter->buyLimit(futureID, 1, future_market_data[futureID].askPrices, 3);
             }
         }
     }
@@ -299,11 +299,11 @@ void OptionArbitrageur::checkReversedCallOptions(const QString &futureID, const 
         auto highPremium = callOptionMap[highExercisePrice].bidPrices;
         auto diff = highPremium - lowPremium;
         if (diff > 2) {
+            pExecuter->buyLimit(makeOptionID(futureID, CALL_OPT, lowExercisePrice), 1, lowPremium);
+            pExecuter->sellLimit(makeOptionID(futureID, CALL_OPT, highExercisePrice), 1, highPremium);
             qDebug() << DATE_TIME << "Found reversed call options";
             qDebug() << makeOptionID(futureID, CALL_OPT, lowExercisePrice); qDebug() << callOptionMap[lowExercisePrice];
             qDebug() << makeOptionID(futureID, CALL_OPT, highExercisePrice); qDebug() << callOptionMap[highExercisePrice];
-            pExecuter->buyLimit(makeOptionID(futureID, CALL_OPT, lowExercisePrice), 1, lowPremium, 3);
-            pExecuter->sellLimit(makeOptionID(futureID, CALL_OPT, highExercisePrice), 1, highPremium, 3);
         }
     }
 }
@@ -349,11 +349,11 @@ void OptionArbitrageur::checkReversedPutOptions(const QString &futureID, const Q
         auto highPremium = putOptionMap[highExercisePrice].askPrices;
         auto diff = lowPremium - highPremium;
         if (diff > 2) {
+            pExecuter->buyLimit(makeOptionID(futureID, PUT_OPT, highExercisePrice), 1, highPremium);
+            pExecuter->sellLimit(makeOptionID(futureID, PUT_OPT, lowExercisePrice), 1, lowPremium);
             qDebug() << DATE_TIME << "Found reversed put options";
             qDebug() << makeOptionID(futureID, PUT_OPT, highExercisePrice); qDebug() << putOptionMap[highExercisePrice];
             qDebug() << makeOptionID(futureID, PUT_OPT, lowExercisePrice); qDebug() << putOptionMap[lowExercisePrice];
-            pExecuter->buyLimit(makeOptionID(futureID, PUT_OPT, highExercisePrice), 1, highPremium, 3);
-            pExecuter->sellLimit(makeOptionID(futureID, PUT_OPT, lowExercisePrice), 1, lowPremium, 3);
         }
     }
 }

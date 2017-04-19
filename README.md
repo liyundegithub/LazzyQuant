@@ -6,3 +6,7 @@
 3. 根据决策自动执行报, 撤单操作  
 4. 支持上期CTP接口  
 5. 支持盘后复盘  
+
+## 开发环境:
+&emsp;&emsp;Windows: Visual Studio 2015 + Qt 5.8.0 (32bit / 64bit)  
+&emsp;&emsp;Linux: GCC 4.8 + Qt 5.8.0 (64bit)  
