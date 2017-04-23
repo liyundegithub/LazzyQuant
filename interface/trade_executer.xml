@@ -33,6 +33,30 @@
     <method name="getCachedInstruments">
       <arg type="as" direction="out"/>
     </method>
+    <method name="qryParkedOrder">
+      <arg type="i" direction="out"/>
+      <arg name="instrument" type="s" direction="in"/>
+      <arg name="exchangeID" type="s" direction="in"/>
+    </method>
+    <method name="qryParkedOrder">
+      <arg type="i" direction="out"/>
+      <arg name="instrument" type="s" direction="in"/>
+    </method>
+    <method name="qryParkedOrder">
+      <arg type="i" direction="out"/>
+    </method>
+    <method name="qryParkedOrderAction">
+      <arg type="i" direction="out"/>
+      <arg name="instrument" type="s" direction="in"/>
+      <arg name="exchangeID" type="s" direction="in"/>
+    </method>
+    <method name="qryParkedOrderAction">
+      <arg type="i" direction="out"/>
+      <arg name="instrument" type="s" direction="in"/>
+    </method>
+    <method name="qryParkedOrderAction">
+      <arg type="i" direction="out"/>
+    </method>
     <method name="buyLimit">
       <arg name="instrument" type="s" direction="in"/>
       <arg name="volume" type="i" direction="in"/>
@@ -51,6 +75,28 @@
       <arg name="orderType" type="i" direction="in"/>
     </method>
     <method name="sellLimit">
+      <arg name="instrument" type="s" direction="in"/>
+      <arg name="volume" type="i" direction="in"/>
+      <arg name="price" type="d" direction="in"/>
+    </method>
+    <method name="parkBuyLimit">
+      <arg name="instrument" type="s" direction="in"/>
+      <arg name="volume" type="i" direction="in"/>
+      <arg name="price" type="d" direction="in"/>
+      <arg name="orderType" type="i" direction="in"/>
+    </method>
+    <method name="parkBuyLimit">
+      <arg name="instrument" type="s" direction="in"/>
+      <arg name="volume" type="i" direction="in"/>
+      <arg name="price" type="d" direction="in"/>
+    </method>
+    <method name="parkSellLimit">
+      <arg name="instrument" type="s" direction="in"/>
+      <arg name="volume" type="i" direction="in"/>
+      <arg name="price" type="d" direction="in"/>
+      <arg name="orderType" type="i" direction="in"/>
+    </method>
+    <method name="parkSellLimit">
       <arg name="instrument" type="s" direction="in"/>
       <arg name="volume" type="i" direction="in"/>
       <arg name="price" type="d" direction="in"/>
@@ -66,10 +112,6 @@
     <method name="getPendingOrderVolume">
       <arg type="i" direction="out"/>
       <arg name="instrument" type="s" direction="in"/>
-    </method>
-    <method name="switchOn">
-    </method>
-    <method name="switchOff">
     </method>
     <method name="quit">
     </method>

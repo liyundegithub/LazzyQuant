@@ -42,7 +42,6 @@ CtpExecuter::CtpExecuter(const CONFIG_ITEM &config, QObject *parent) :
 
     loggedIn = false;
     available = 0;
-    allowToTrade = false;
 
     QSettings settings(QSettings::IniFormat, QSettings::UserScope, config.organization, config.name);
     QByteArray flowPath = settings.value("FlowPath").toByteArray();
@@ -66,9 +65,9 @@ CtpExecuter::CtpExecuter(const CONFIG_ITEM &config, QObject *parent) :
     pUserApi->SubscribePublicTopic(THOST_TERT_QUICK);
 
     settings.beginGroup("FrontSites");
-    QStringList keys = settings.childKeys();
+    const auto keys = settings.childKeys();
     const QString protocol = "tcp://";
-    for (const QString &str : keys) {
+    for (const auto &str : keys) {
         QString address = settings.value(str).toString();
         pUserApi->RegisterFront((protocol + address).toLatin1().data());
     }
@@ -148,7 +147,7 @@ void CtpExecuter::customEvent(QEvent *event)
     {
         auto *sevent = static_cast<SettlementInfoEvent*>(event);
         if (sevent->errorID == 0) {
-            auto &list = sevent->settlementInfoList;
+            const auto &list = sevent->settlementInfoList;
             QString msg;
             for (const auto & item : list) {
                 msg += QTextCodec::codecForName("GBK")->toUnicode(item.Content);
@@ -164,7 +163,7 @@ void CtpExecuter::customEvent(QEvent *event)
         qDebug() << "available = " << available;
     }
         break;
-    case RSP_QRY_INSTRUMENT_CR:
+    case RSP_QRY_INSTRUMENT_COMMISSION_RATE:
     {
         auto *qcevent = static_cast<RspQryInstrumentCommissionRateEvent*>(event);
         for (const auto &item : qcevent->instrumentCommissionRateList) {
@@ -194,11 +193,33 @@ void CtpExecuter::customEvent(QEvent *event)
     case RSP_ORDER_INSERT:
     {
         auto *ievent = static_cast<RspOrderInsertEvent*>(event);
+        qDebug() << (ievent->errorID);
     }
         break;
     case RSP_ORDER_ACTION:
     {
         auto *aevent = static_cast<RspOrderActionEvent*>(event);
+    }
+        break;
+    case RSP_PARKED_ORDER_INSERT:
+    {
+        auto *pievent = static_cast<RspParkedOrderInsertEvent*>(event);
+        qDebug() << (pievent->errorID);
+    }
+        break;
+    case RSP_PARKED_ORDER_ACTION:
+    {
+        auto *paevent = static_cast<RspParkedOrderActionEvent*>(event);
+    }
+        break;
+    case RSP_REMOVE_PARKED_ORDER:
+    {
+        auto *rpevent = static_cast<RspRemoveParkedOrderEvent*>(event);
+    }
+        break;
+    case RSP_REMOVE_PARKED_ORDER_ACTION:
+    {
+        auto *rpaevent = static_cast<RspRemoveParkedOrderActionEvent*>(event);
     }
         break;
     case ERR_RTN_ORDER_INSERT:
@@ -260,6 +281,21 @@ void CtpExecuter::customEvent(QEvent *event)
     case RSP_QRY_TRADE:
     {
         auto *qtevent = static_cast<QryTradeEvent*>(event);
+    }
+        break;
+    case RSP_QRY_PARKED_ORDER:
+    {
+        auto *qpevent = static_cast<QryParkedOrderEvent*>(event);
+        parkedOrders = qpevent->parkedOrderList;
+        for (const auto &item : parkedOrders) {
+            qDebug() << item.ParkedOrderID << item.InstrumentID << item.Direction << item.LimitPrice << item.VolumeTotalOriginal;
+        }
+    }
+        break;
+    case RSP_QRY_PARKED_ORDER_ACTION:
+    {
+        auto *qpaevent = static_cast<QryParkedOrderActionEvent*>(event);
+        parkedOrderActions = qpaevent->parkedOrderActionList;
     }
         break;
     case RSP_QRY_POSITION:
@@ -462,6 +498,7 @@ int CtpExecuter::qryTradingAccount()
 int CtpExecuter::qryInstrumentCommissionRate(const QString &instrument)
 {
     auto * pField = (CThostFtdcQryInstrumentCommissionRateField*) malloc(sizeof(CThostFtdcQryInstrumentCommissionRateField));
+    memset(pField, 0, sizeof (CThostFtdcQryInstrumentCommissionRateField));
     strcpy(pField->BrokerID, c_brokerID);
     strcpy(pField->InvestorID, c_userID);
     strcpy(pField->InstrumentID, instrument.toLatin1().data());
@@ -514,7 +551,7 @@ int CtpExecuter::qryDepthMarketData(const QString &instrument)
  */
 int CtpExecuter::insertLimitOrder(const QString &instrument, bool open, int volume, double price, bool allOrAny, bool gfdOrIoc)
 {
-    Q_ASSERT(volume != 0 && price > 0.0);
+    Q_ASSERT(volume != 0);
 
     CThostFtdcInputOrderField inputOrder;
     memset(&inputOrder, 0, sizeof (CThostFtdcInputOrderField));
@@ -572,6 +609,51 @@ int CtpExecuter::cancelOrder(char* orderRef, int frontID, int sessionID, const Q
     int id = nRequestID.fetchAndAddRelaxed(1);
     traderApiMutex.lock();
     int ret = pUserApi->ReqOrderAction(&orderAction, id);
+    traderApiMutex.unlock();
+    Q_UNUSED(ret);
+    return id;
+}
+
+/*!
+ * \brief CtpExecuter::insertParkedLimitOrder
+ * 预埋限价单 (包括FOK, FAK)
+ *
+ * \param instrument 合约代码
+ * \param open 开仓(true)/平仓(false)
+ * \param volume 手数(非零整数, 正数代表开多/平空, 负数代表开空/平多)
+ * \param price 价格(限价, 不得超出涨跌停范围)
+ * \return nRequestID
+ */
+int CtpExecuter::insertParkedLimitOrder(const QString &instrument, bool open, int volume, double price, bool allOrAny, bool gfdOrIoc)
+{
+    Q_ASSERT(volume != 0);
+
+    CThostFtdcParkedOrderField parkedOrder;
+    memset(&parkedOrder, 0, sizeof (CThostFtdcInputOrderField));
+    strcpy(parkedOrder.BrokerID, c_brokerID);
+    strcpy(parkedOrder.InvestorID, c_userID);
+    strcpy(parkedOrder.InstrumentID, instrument.toLatin1().data());
+    strcpy(parkedOrder.OrderRef, "");
+//	sprintf(inputOrder.OrderRef, "%12d", orderRef);
+//	orderRef++;
+
+    parkedOrder.Direction = volume > 0 ? THOST_FTDC_D_Buy : THOST_FTDC_D_Sell;
+    parkedOrder.CombOffsetFlag[0] = open ? THOST_FTDC_OF_Open : THOST_FTDC_OF_Close;
+    parkedOrder.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+    parkedOrder.VolumeTotalOriginal = qAbs(volume);
+    parkedOrder.VolumeCondition = allOrAny ? THOST_FTDC_VC_CV : THOST_FTDC_VC_AV;
+    parkedOrder.MinVolume = 1;
+    parkedOrder.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+    parkedOrder.IsAutoSuspend = 0;
+    parkedOrder.UserForceClose = 0;
+    parkedOrder.ContingentCondition = THOST_FTDC_CC_Immediately;
+    parkedOrder.OrderPriceType = THOST_FTDC_OPT_LimitPrice;
+    parkedOrder.LimitPrice = price;
+    parkedOrder.TimeCondition = gfdOrIoc ? THOST_FTDC_TC_GFD : THOST_FTDC_TC_IOC;
+
+    int id = nRequestID.fetchAndAddRelaxed(1);
+    traderApiMutex.lock();
+    int ret = pUserApi->ReqParkedOrderInsert(&parkedOrder, id);
     traderApiMutex.unlock();
     Q_UNUSED(ret);
     return id;
@@ -646,6 +728,7 @@ int CtpExecuter::qryTrade(const QString &instrument)
 int CtpExecuter::qryPosition(const QString &instrument)
 {
     auto *pField = (CThostFtdcQryInvestorPositionField*) malloc(sizeof(CThostFtdcQryInvestorPositionField));
+    memset(pField, 0, sizeof(CThostFtdcQryInvestorPositionField));
     strcpy(pField->BrokerID, c_brokerID);
     strcpy(pField->InvestorID, c_userID);
     strcpy(pField->InstrumentID, instrument.toLatin1().data());
@@ -663,6 +746,7 @@ int CtpExecuter::qryPosition(const QString &instrument)
 int CtpExecuter::qryPositionDetail(const QString &instrument)
 {
     auto *pField = (CThostFtdcQryInvestorPositionDetailField*) malloc(sizeof(CThostFtdcQryInvestorPositionDetailField));
+    memset(pField, 0, sizeof(CThostFtdcQryInvestorPositionDetailField));
     strcpy(pField->BrokerID, c_brokerID);
     strcpy(pField->InvestorID, c_userID);
     strcpy(pField->InstrumentID, instrument.toLatin1().data());
@@ -770,6 +854,30 @@ QStringList CtpExecuter::getCachedInstruments(const QString &idPrefix) const
     return ret;
 }
 
+int CtpExecuter::qryParkedOrder(const QString &instrument, const QString &exchangeID)
+{
+    auto *pField = (CThostFtdcQryParkedOrderField*) malloc(sizeof (CThostFtdcQryParkedOrderField));
+    memset(pField, 0, sizeof(CThostFtdcQryParkedOrderField));
+    strcpy(pField->BrokerID, c_brokerID);
+    strcpy(pField->InvestorID, c_userID);
+    strcpy(pField->InstrumentID, instrument.toLatin1().data());
+    strcpy(pField->ExchangeID, exchangeID.toLatin1().data());
+
+    return callTraderApi(&CThostFtdcTraderApi::ReqQryParkedOrder, pField);
+}
+
+int CtpExecuter::qryParkedOrderAction(const QString &instrument, const QString &exchangeID)
+{
+    auto *pField = (CThostFtdcQryParkedOrderActionField*) malloc(sizeof (CThostFtdcQryParkedOrderActionField));
+    memset(pField, 0, sizeof(CThostFtdcQryParkedOrderActionField));
+    strcpy(pField->BrokerID, c_brokerID);
+    strcpy(pField->InvestorID, c_userID);
+    strcpy(pField->InstrumentID, instrument.toLatin1().data());
+    strcpy(pField->ExchangeID, exchangeID.toLatin1().data());
+
+    return callTraderApi(&CThostFtdcTraderApi::ReqQryParkedOrderAction, pField);
+}
+
 void analyzeOrderType(int orderType, bool &allOrAny, bool &gfdOrIoc)
 {
     allOrAny = (orderType == 2);
@@ -787,13 +895,6 @@ void analyzeOrderType(int orderType, bool &allOrAny, bool &gfdOrIoc)
  */
 void CtpExecuter::buyLimit(const QString& instrument, int volume, double price, int orderType)
 {
-    qDebug() << DATE_TIME << "buyLimit" << instrument << ": volume =" << volume << ", price =" << price << ", orderType =" << orderType;
-
-    if (!allowToTrade) {
-        qDebug() << "But not allowed!";
-        return;
-    }
-
     bool allOrAny, gfdOrIoc;
     analyzeOrderType(orderType, allOrAny, gfdOrIoc);
 
@@ -810,6 +911,8 @@ void CtpExecuter::buyLimit(const QString& instrument, int volume, double price, 
     if (remain_volume > 0) {
         insertLimitOrder(instrument, true, remain_volume, price, allOrAny, gfdOrIoc);
     }
+
+    qDebug() << DATE_TIME << "buyLimit" << instrument << ": volume =" << volume << ", price =" << price << ", orderType =" << orderType;
 }
 
 /*!
@@ -823,13 +926,6 @@ void CtpExecuter::buyLimit(const QString& instrument, int volume, double price, 
  */
 void CtpExecuter::sellLimit(const QString& instrument, int volume, double price, int orderType)
 {
-    qDebug() << DATE_TIME << "sellLimit" << instrument << ": volume =" << volume << ", price =" << price << ", orderType =" << orderType;
-
-    if (!allowToTrade) {
-        qDebug() << "But not allowed!";
-        return;
-    }
-
     bool allOrAny, gfdOrIoc;
     analyzeOrderType(orderType, allOrAny, gfdOrIoc);
 
@@ -846,6 +942,46 @@ void CtpExecuter::sellLimit(const QString& instrument, int volume, double price,
     if (remain_volume > 0) {
         insertLimitOrder(instrument, true, - remain_volume, price, allOrAny, gfdOrIoc);
     }
+
+    qDebug() << DATE_TIME << "sellLimit" << instrument << ": volume =" << volume << ", price =" << price << ", orderType =" << orderType;
+}
+
+/*!
+ * \brief CtpExecuter::parkBuyLimit
+ * 预埋限价开多单, 不管已有持仓与否
+ *
+ * \param instrument 合约代码
+ * \param volume 买进数量 (大于零)
+ * \param price 买进价格 (必须在涨跌停范围内)
+ * \param orderType 订单类型 (0:普通限价单, 1:FAK, 2:FOK)
+ */
+void CtpExecuter::parkBuyLimit(const QString& instrument, int volume, double price, int orderType)
+{
+    qDebug() << DATE_TIME << "parkBuyLimit" << instrument << ": volume =" << volume << ", price =" << price << ", orderType =" << orderType;
+
+    bool allOrAny, gfdOrIoc;
+    analyzeOrderType(orderType, allOrAny, gfdOrIoc);
+
+    insertParkedLimitOrder(instrument, true, volume, price, allOrAny, gfdOrIoc);
+}
+
+/*!
+ * \brief CtpExecuter::parkSellLimit
+ * 预埋限价开空单, 不管已有持仓与否
+ *
+ * \param instrument 合约代码
+ * \param volume 卖出数量 (大于零)
+ * \param price 卖出价格 (必须在涨跌停范围内)
+ * \param orderType 订单类型 (0:普通限价单, 1:FAK, 2:FOK)
+ */
+void CtpExecuter::parkSellLimit(const QString& instrument, int volume, double price, int orderType)
+{
+    qDebug() << DATE_TIME << "parkSellLimit" << instrument << ": volume =" << volume << ", price =" << price << ", orderType =" << orderType;
+
+    bool allOrAny, gfdOrIoc;
+    analyzeOrderType(orderType, allOrAny, gfdOrIoc);
+
+    insertParkedLimitOrder(instrument, true, - volume, price, allOrAny, gfdOrIoc);
 }
 
 /*!
@@ -908,26 +1044,6 @@ int CtpExecuter::getPendingOrderVolume(const QString &instrument) const
         }
     }
     return sum;
-}
-
-/*!
- * \brief CtpExecuter::switchOn
- * 允许交易
- */
-void CtpExecuter::switchOn()
-{
-    qDebug() << "switchOn";
-    allowToTrade = true;
-}
-
-/*!
- * \brief CtpExecuter::switchOff
- * 禁止交易
- */
-void CtpExecuter::switchOff()
-{
-    qDebug() << "switchOff";
-    allowToTrade = false;
 }
 
 /*!

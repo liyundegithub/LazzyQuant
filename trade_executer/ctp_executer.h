@@ -10,6 +10,9 @@
 #include <QPair>
 
 struct CThostFtdcInstrumentField;
+struct CThostFtdcParkedOrderField;
+struct CThostFtdcParkedOrderActionField;
+
 class CThostFtdcTraderApi;
 class CTradeHandler;
 class Order;
@@ -48,6 +51,9 @@ protected:
     QMap<QString, Expires<QPair<double, double>>> upper_lower_limit_map;
     QMap<QString, CThostFtdcInstrumentField> instruments_cache_map;
 
+    QList<CThostFtdcParkedOrderField> parkedOrders;
+    QList<CThostFtdcParkedOrderActionField> parkedOrderActions;
+
     void customEvent(QEvent *event) override;
 
     template<typename T>
@@ -55,7 +61,6 @@ protected:
 
     bool loggedIn;
     double available;
-    bool allowToTrade;
 
 private slots:
     int login();
@@ -66,6 +71,7 @@ private slots:
     int qryDepthMarketData(const QString &instrument = QString());
     int insertLimitOrder(const QString &instrument, bool open, int volume, double price, bool allOrAny = false, bool gfdOrIoc = true);
     int cancelOrder(char* orderRef, int frontID, int sessionID, const QString &instrument);
+    int insertParkedLimitOrder(const QString &instrument, bool open, int volume, double price, bool allOrAny = false, bool gfdOrIoc = true);
     int qryMaxOrderVolume(const QString &instrument, bool buy, char offsetFlag);
     int qryOrder(const QString &instrument = QString());
     int qryTrade(const QString &instrument = QString());
@@ -87,13 +93,17 @@ public slots:
     double getAvailable() const { return available; }
     void updateInstrumentsCache(const QStringList& instruments);
     QStringList getCachedInstruments(const QString &idPrefix = QString()) const;
+
+    int qryParkedOrder(const QString &instrument = QString(), const QString &exchangeID = QString());
+    int qryParkedOrderAction(const QString &instrument = QString(), const QString &exchangeID = QString());
+
     void buyLimit(const QString& instrument, int volume, double price, int orderType = 0);
     void sellLimit(const QString& instrument, int volume, double price, int orderType = 0);
+    void parkBuyLimit(const QString& instrument, int volume, double price, int orderType = 0);
+    void parkSellLimit(const QString& instrument, int volume, double price, int orderType = 0);
     void setPosition(const QString& instrument, int new_position);
     int getPosition(const QString& instrument) const;
     int getPendingOrderVolume(const QString &instrument) const;
-    void switchOn();
-    void switchOff();
     void quit();
 };
 

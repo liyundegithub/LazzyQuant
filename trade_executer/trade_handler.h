@@ -5,29 +5,35 @@
 
 #include "ThostFtdcTraderApi.h"
 
-#define FRONT_CONNECTED         (QEvent::User + 0)
-#define FRONT_DISCONNECTED      (QEvent::User + 1)
-#define HEARTBEAT_WARNING       (QEvent::User + 2)
-#define RSP_USER_LOGIN          (QEvent::User + 3)
-#define RSP_USER_LOGOUT         (QEvent::User + 4)
-#define RSP_ERROR               (QEvent::User + 5)
-#define RSP_SETTLEMENT_INFO     (QEvent::User + 6)
-#define RSP_SETTLEMENT_CONFIRM  (QEvent::User + 7)
-#define RSP_TRADING_ACCOUNT     (QEvent::User + 8)
-#define RSP_QRY_INSTRUMENT_CR   (QEvent::User + 9)  // commistion_rate
-#define RSP_QRY_INSTRUMENT      (QEvent::User + 10)
-#define RSP_DEPTH_MARKET_DATA   (QEvent::User + 11)
-#define RSP_ORDER_INSERT        (QEvent::User + 12)
-#define RSP_ORDER_ACTION        (QEvent::User + 13)
-#define ERR_RTN_ORDER_INSERT    (QEvent::User + 14)
-#define ERR_RTN_ORDER_ACTION    (QEvent::User + 15)
-#define RTN_ORDER               (QEvent::User + 16)
-#define RTN_TRADE               (QEvent::User + 17)
-#define RSP_QRY_ORDER           (QEvent::User + 18)
-#define RSP_QRY_TRADE           (QEvent::User + 19)
-#define RSP_QRY_POSITION        (QEvent::User + 20)
-#define RSP_QRY_POSITION_DETAIL (QEvent::User + 21)
-#define RSP_QRY_MAX_ORDER_VOL   (QEvent::User + 22)
+#define FRONT_CONNECTED                     (QEvent::User + 0)
+#define FRONT_DISCONNECTED                  (QEvent::User + 1)
+#define HEARTBEAT_WARNING                   (QEvent::User + 2)
+#define RSP_USER_LOGIN                      (QEvent::User + 3)
+#define RSP_USER_LOGOUT                     (QEvent::User + 4)
+#define RSP_ERROR                           (QEvent::User + 5)
+#define RSP_SETTLEMENT_INFO                 (QEvent::User + 6)
+#define RSP_SETTLEMENT_CONFIRM              (QEvent::User + 7)
+#define RSP_TRADING_ACCOUNT                 (QEvent::User + 8)
+#define RSP_QRY_INSTRUMENT_COMMISSION_RATE  (QEvent::User + 9)
+#define RSP_QRY_INSTRUMENT                  (QEvent::User + 10)
+#define RSP_DEPTH_MARKET_DATA               (QEvent::User + 11)
+#define RSP_ORDER_INSERT                    (QEvent::User + 12)
+#define RSP_ORDER_ACTION                    (QEvent::User + 13)
+#define RSP_PARKED_ORDER_INSERT             (QEvent::User + 14)
+#define RSP_PARKED_ORDER_ACTION             (QEvent::User + 15)
+#define RSP_REMOVE_PARKED_ORDER             (QEvent::User + 16)
+#define RSP_REMOVE_PARKED_ORDER_ACTION      (QEvent::User + 17)
+#define ERR_RTN_ORDER_INSERT                (QEvent::User + 18)
+#define ERR_RTN_ORDER_ACTION                (QEvent::User + 19)
+#define RTN_ORDER                           (QEvent::User + 20)
+#define RTN_TRADE                           (QEvent::User + 21)
+#define RSP_QRY_ORDER                       (QEvent::User + 22)
+#define RSP_QRY_TRADE                       (QEvent::User + 23)
+#define RSP_QRY_PARKED_ORDER                (QEvent::User + 24)
+#define RSP_QRY_PARKED_ORDER_ACTION         (QEvent::User + 25)
+#define RSP_QRY_POSITION                    (QEvent::User + 26)
+#define RSP_QRY_POSITION_DETAIL             (QEvent::User + 27)
+#define RSP_QRY_MAX_ORDER_VOL               (QEvent::User + 28)
 
 struct RspInfo {
     const int errorID;
@@ -112,7 +118,7 @@ public:
     const QList<CThostFtdcInstrumentCommissionRateField> instrumentCommissionRateList;
 
     RspQryInstrumentCommissionRateEvent(const QList<CThostFtdcInstrumentCommissionRateField> &list, int err, int id) :
-        QEvent(QEvent::Type(RSP_QRY_INSTRUMENT_CR)),
+        QEvent(QEvent::Type(RSP_QRY_INSTRUMENT_COMMISSION_RATE)),
         RspInfo(err, id),
         instrumentCommissionRateList(list) {}
 };
@@ -155,6 +161,46 @@ public:
         QEvent(QEvent::Type(RSP_ORDER_ACTION)),
         RspInfo(err, id),
         inputOrderActionField(*pInputOrderAction) {}
+};
+
+class RspParkedOrderInsertEvent : public QEvent, public RspInfo {
+public:
+    const CThostFtdcParkedOrderField parkedOrderField;
+
+    RspParkedOrderInsertEvent(CThostFtdcParkedOrderField *pInputOrder, int err, int id) :
+        QEvent(QEvent::Type(RSP_PARKED_ORDER_INSERT)),
+        RspInfo(err, id),
+        parkedOrderField(*pInputOrder) {}
+};
+
+class RspParkedOrderActionEvent : public QEvent, public RspInfo {
+public:
+    const CThostFtdcParkedOrderActionField parkedOrderActionField;
+
+    RspParkedOrderActionEvent(CThostFtdcParkedOrderActionField *pInputOrderAction, int err, int id) :
+        QEvent(QEvent::Type(RSP_PARKED_ORDER_ACTION)),
+        RspInfo(err, id),
+        parkedOrderActionField(*pInputOrderAction) {}
+};
+
+class RspRemoveParkedOrderEvent : public QEvent, public RspInfo {
+public:
+    const CThostFtdcRemoveParkedOrderField removeParkedOrderField;
+
+    RspRemoveParkedOrderEvent(CThostFtdcRemoveParkedOrderField *pRemoveParkedOrder, int err, int id) :
+        QEvent(QEvent::Type(RSP_REMOVE_PARKED_ORDER)),
+        RspInfo(err, id),
+        removeParkedOrderField(*pRemoveParkedOrder) {}
+};
+
+class RspRemoveParkedOrderActionEvent : public QEvent, public RspInfo {
+public:
+    const CThostFtdcRemoveParkedOrderActionField removeParkedOrderField;
+
+    RspRemoveParkedOrderActionEvent(CThostFtdcRemoveParkedOrderActionField *pRemoveParkedOrderAction, int err, int id) :
+        QEvent(QEvent::Type(RSP_REMOVE_PARKED_ORDER)),
+        RspInfo(err, id),
+        removeParkedOrderField(*pRemoveParkedOrderAction) {}
 };
 
 class ErrRtnOrderInsertEvent: public QEvent, public RspInfo {
@@ -215,6 +261,26 @@ public:
         tradeList(list) {}
 };
 
+class QryParkedOrderEvent : public QEvent, public RspInfo {
+public:
+    const QList<CThostFtdcParkedOrderField> parkedOrderList;
+
+    QryParkedOrderEvent(const QList<CThostFtdcParkedOrderField> &list, int err, int id) :
+        QEvent(QEvent::Type(RSP_QRY_PARKED_ORDER)),
+        RspInfo(err, id),
+        parkedOrderList(list) {}
+};
+
+class QryParkedOrderActionEvent : public QEvent, public RspInfo {
+public:
+    const QList<CThostFtdcParkedOrderActionField> parkedOrderActionList;
+
+    QryParkedOrderActionEvent(const QList<CThostFtdcParkedOrderActionField> &list, int err, int id) :
+        QEvent(QEvent::Type(RSP_QRY_PARKED_ORDER_ACTION)),
+        RspInfo(err, id),
+        parkedOrderActionList(list) {}
+};
+
 class PositionEvent : public QEvent, public RspInfo {
 public:
     const QList<CThostFtdcInvestorPositionField> positionList;
@@ -255,6 +321,8 @@ class CTradeHandler : public CThostFtdcTraderSpi {
     QList<CThostFtdcDepthMarketDataField> depthMarketDataList;
     QList<CThostFtdcOrderField> orderList;
     QList<CThostFtdcTradeField> tradeList;
+    QList<CThostFtdcParkedOrderField> parkedOrderList;
+    QList<CThostFtdcParkedOrderActionField> parkedOrderActionList;
     QList<CThostFtdcInvestorPositionField> positionList;
     QList<CThostFtdcInvestorPositionDetailField> positionDetailList;
 
@@ -289,6 +357,11 @@ public:
 
     void OnRspOrderInsert(CThostFtdcInputOrderField *pInputOrder, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
     void OnRspOrderAction(CThostFtdcInputOrderActionField *pInputOrderAction, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
+    void OnRspParkedOrderInsert(CThostFtdcParkedOrderField *pParkedOrder, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
+    void OnRspParkedOrderAction(CThostFtdcParkedOrderActionField *pParkedOrderAction, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
+    void OnRspRemoveParkedOrder(CThostFtdcRemoveParkedOrderField *pRemoveParkedOrder, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
+    void OnRspRemoveParkedOrderAction(CThostFtdcRemoveParkedOrderActionField *pRemoveParkedOrderAction, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
+
     void OnErrRtnOrderInsert(CThostFtdcInputOrderField *pInputOrder, CThostFtdcRspInfoField *pRspInfo);
     void OnErrRtnOrderAction(CThostFtdcOrderActionField *pOrderAction, CThostFtdcRspInfoField *pRspInfo);
     void OnRspError(CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
@@ -297,6 +370,8 @@ public:
 
     void OnRspQryOrder(CThostFtdcOrderField *pOrder, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
     void OnRspQryTrade(CThostFtdcTradeField *pTrade, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
+    void OnRspQryParkedOrder(CThostFtdcParkedOrderField *pParkedOrder, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
+    void OnRspQryParkedOrderAction(CThostFtdcParkedOrderActionField *pParkedOrderAction, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
 
     void OnRspQryInvestorPosition(CThostFtdcInvestorPositionField *pInvestorPosition, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
     void OnRspQryInvestorPositionDetail(CThostFtdcInvestorPositionDetailField *pInvestorPositionDetail, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);

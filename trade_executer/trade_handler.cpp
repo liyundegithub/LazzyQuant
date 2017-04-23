@@ -128,6 +128,30 @@ void CTradeHandler::OnRspOrderAction(CThostFtdcInputOrderActionField *pInputOrde
     handleSingleRsp<RspOrderActionEvent>(pInputOrderAction, pRspInfo, nRequestID);
 }
 
+void CTradeHandler::OnRspParkedOrderInsert(CThostFtdcParkedOrderField *pParkedOrder, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
+{
+    Q_UNUSED(bIsLast);
+    handleSingleRsp<RspParkedOrderInsertEvent>(pParkedOrder, pRspInfo, nRequestID);
+}
+
+void CTradeHandler::OnRspParkedOrderAction(CThostFtdcParkedOrderActionField *pParkedOrderAction, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
+{
+    Q_UNUSED(bIsLast);
+    handleSingleRsp<RspParkedOrderActionEvent>(pParkedOrderAction, pRspInfo, nRequestID);
+}
+
+void CTradeHandler::OnRspRemoveParkedOrder(CThostFtdcRemoveParkedOrderField *pRemoveParkedOrder, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
+{
+    Q_UNUSED(bIsLast);
+    handleSingleRsp<RspRemoveParkedOrderEvent>(pRemoveParkedOrder, pRspInfo, nRequestID);
+}
+
+void CTradeHandler::OnRspRemoveParkedOrderAction(CThostFtdcRemoveParkedOrderActionField *pRemoveParkedOrderAction, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
+{
+    Q_UNUSED(bIsLast);
+    handleSingleRsp<RspRemoveParkedOrderActionEvent>(pRemoveParkedOrderAction, pRspInfo, nRequestID);
+}
+
 void CTradeHandler::OnErrRtnOrderInsert(CThostFtdcInputOrderField *pInputOrder, CThostFtdcRspInfoField *pRspInfo)
 {
     handleSingleRsp<ErrRtnOrderInsertEvent>(pInputOrder, pRspInfo);
@@ -164,6 +188,16 @@ void CTradeHandler::OnRspQryOrder(CThostFtdcOrderField *pOrder, CThostFtdcRspInf
 void CTradeHandler::OnRspQryTrade(CThostFtdcTradeField *pTrade, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
     handleMultiRsp<QryTradeEvent>(&tradeList, pTrade, pRspInfo, nRequestID, bIsLast);
+}
+
+void CTradeHandler::OnRspQryParkedOrder(CThostFtdcParkedOrderField *pParkedOrder, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
+{
+    handleMultiRsp<QryParkedOrderEvent>(&parkedOrderList, pParkedOrder, pRspInfo, nRequestID, bIsLast);
+}
+
+void CTradeHandler::OnRspQryParkedOrderAction(CThostFtdcParkedOrderActionField *pParkedOrderAction, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
+{
+    handleMultiRsp<QryParkedOrderActionEvent>(&parkedOrderActionList, pParkedOrderAction, pRspInfo, nRequestID, bIsLast);
 }
 
 void CTradeHandler::OnRspQryInvestorPosition(CThostFtdcInvestorPositionField *pInvestorPosition, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
