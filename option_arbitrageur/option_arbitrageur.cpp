@@ -12,17 +12,32 @@ extern QList<Market> markets;
 
 QDebug operator<<(QDebug dbg, const DepthMarket &depthMarket)
 {
-    dbg.nospace() << "Ask 1:\t" << depthMarket.askPrices << '\t' << depthMarket.askVolumes << '\n'
+    dbg.nospace() << "Ask 1:\t" << depthMarket.askPrice << '\t' << depthMarket.askVolume << '\n'
                   << " ------ " << QTime(0, 0).addSecs(depthMarket.time).toString() <<  " ------ " << '\n'
-                  << "Bid 1:\t" << depthMarket.bidPrices << '\t' << depthMarket.bidVolumes;
+                  << "Bid 1:\t" << depthMarket.bidPrice << '\t' << depthMarket.bidVolume;
     return dbg.space();
 }
 
-OptionArbitrageur::OptionArbitrageur(QObject *parent) :
+static inline bool isTimeCloseEnouogh(const DepthMarket &md1, const DepthMarket &md2)
+{
+    // 两个无符号数不能用qAbs(md1.time - md2.time) < 120;
+    if (md1.time > md2.time) {
+        return (md1.time - md2.time) < 120;
+    } else {
+        return (md2.time - md1.time) < 120;
+    }
+}
+
+OptionArbitrageur::OptionArbitrageur(int number, QObject *parent) :
     QObject(parent)
 {
     loadCommonMarketData();
     loadOptionArbitrageurSettings();
+
+    Q_ASSERT(number > 0);
+    Q_ASSERT(allowTradeNumber > 0);
+    // 取命令行参数number和配置文件中AllowTradeNumber当中较小的那个值
+    allowTradeNumber = qMin(allowTradeNumber, number);
 
     pExecuter = new com::lazzyquant::trade_executer(EXECUTER_DBUS_SERVICE, EXECUTER_DBUS_OBJECT, QDBusConnection::sessionBus(), this);
     pWatcher = new com::lazzyquant::market_watcher(WATCHER_DBUS_SERVICE, WATCHER_DBUS_OBJECT, QDBusConnection::sessionBus(), this);
@@ -101,7 +116,8 @@ void OptionArbitrageur::timesUp(int index)
 void OptionArbitrageur::loadOptionArbitrageurSettings()
 {
     QSettings settings(QSettings::IniFormat, QSettings::UserScope, ORGANIZATION, "option_arbitrageur");
-    threshold = settings.value("threshold", 1.0f).toDouble();
+    threshold = settings.value("Threshold", 1.0f).toDouble();
+    allowTradeNumber = settings.value("AllowTradeNumber").toInt();
 
     settings.beginGroup("ObjectFutures");
     const auto subscribeList = settings.childKeys();
@@ -186,7 +202,7 @@ void OptionArbitrageur::findInefficientPrices(const QString &futureID, OPTION_TY
  */
 void OptionArbitrageur::findCheapCallOptions(const QString &futureID)
 {
-    const auto & callOptionData = option_market_data[futureID][CALL_OPT];
+    auto & callOptionData = option_market_data[futureID][CALL_OPT];
     const auto exercisePrices = callOptionData.keys();
     for (const auto exercisePrice : exercisePrices) {
         checkCheapCallOptions(futureID, exercisePrice);
@@ -202,17 +218,23 @@ void OptionArbitrageur::findCheapCallOptions(const QString &futureID)
  */
 void OptionArbitrageur::checkCheapCallOptions(const QString &futureID, int exercisePrice)
 {
-    const auto & callOptionMap = option_market_data[futureID][CALL_OPT];
-    if (callOptionMap[exercisePrice].askVolumes > 1 && future_market_data[futureID].bidVolumes > 1) { // 保证至少两手流动性
-        auto diff = future_market_data[futureID].bidPrices - exercisePrice;
-        if (diff > 0) {    // 实值期权, diff = 实值额
-            auto premium = callOptionMap[exercisePrice].askPrices;
-            if ((premium + 2.5) < diff) {   // (权利金 x 合约乘数 + 手续费) < 实值额 x 合约乘数
+    auto & callOptionMap = option_market_data[futureID][CALL_OPT];
+    if (callOptionMap[exercisePrice].askVolume > 1 && future_market_data[futureID].bidVolume > 1) { // 保证至少两手流动性
+        auto diff = future_market_data[futureID].bidPrice - exercisePrice;
+        if (diff > 0 && isTimeCloseEnouogh(future_market_data[futureID], callOptionMap[exercisePrice])) {    // 实值期权, diff = 实值额
+            auto premium = callOptionMap[exercisePrice].askPrice;
+            if ((premium + 2.5) < diff) {
                 pExecuter->buyLimit(makeOptionID(futureID, CALL_OPT, exercisePrice), 1, premium);
-                pExecuter->sellLimit(futureID, 1, future_market_data[futureID].bidPrices);
+                pExecuter->sellLimit(futureID, 1, future_market_data[futureID].bidPrice);
+                manageMoney();
+
                 qDebug() << DATE_TIME << "Found cheap call option";
                 qDebug() << futureID; qDebug() << future_market_data[futureID];
                 qDebug() << makeOptionID(futureID, CALL_OPT, exercisePrice); qDebug() << callOptionMap[exercisePrice];
+
+                // Make market data invalid
+                callOptionMap[exercisePrice].time = 0;
+                future_market_data[futureID].time = 0;
             }
         }
     }
@@ -226,7 +248,7 @@ void OptionArbitrageur::checkCheapCallOptions(const QString &futureID, int exerc
  */
 void OptionArbitrageur::findCheapPutOptions(const QString &futureID)
 {
-    const auto & putOptionMap = option_market_data[futureID][PUT_OPT];
+    auto & putOptionMap = option_market_data[futureID][PUT_OPT];
     const auto exercisePrices = putOptionMap.keys();
     for (const auto exercisePrice : exercisePrices) {
         checkCheapPutOptions(futureID, exercisePrice);
@@ -242,17 +264,22 @@ void OptionArbitrageur::findCheapPutOptions(const QString &futureID)
  */
 void OptionArbitrageur::checkCheapPutOptions(const QString &futureID, int exercisePrice)
 {
-    const auto & putOptionMap = option_market_data[futureID][PUT_OPT];
-    if (putOptionMap[exercisePrice].askVolumes > 1 && future_market_data[futureID].askVolumes > 1) {  // 保证至少两手流动性
-        auto diff = exercisePrice - future_market_data[futureID].askPrices;
-        if (diff > 0) {    // 实值期权
-            auto premium = putOptionMap[exercisePrice].askPrices;
-            if ((premium + 2.5) < diff) {   // (权利金 x 合约乘数 + 手续费) < 实值额 x 合约乘数
+    auto & putOptionMap = option_market_data[futureID][PUT_OPT];
+    if (putOptionMap[exercisePrice].askVolume > 1 && future_market_data[futureID].askVolume > 1) {  // 保证至少两手流动性
+        auto diff = exercisePrice - future_market_data[futureID].askPrice;
+        if (diff > 0 && isTimeCloseEnouogh(future_market_data[futureID], putOptionMap[exercisePrice])) {    // 实值期权
+            auto premium = putOptionMap[exercisePrice].askPrice;
+            if ((premium + 2.5) < diff) {
                 pExecuter->buyLimit(makeOptionID(futureID, PUT_OPT, exercisePrice), 1, premium);
-                pExecuter->buyLimit(futureID, 1, future_market_data[futureID].askPrices);
+                pExecuter->buyLimit(futureID, 1, future_market_data[futureID].askPrice);
+                manageMoney();
+
                 qDebug() << DATE_TIME << "Found cheap put option";
                 qDebug() << futureID; qDebug() << future_market_data[futureID];
                 qDebug() << makeOptionID(futureID, PUT_OPT, exercisePrice); qDebug() << putOptionMap[exercisePrice];
+
+                putOptionMap[exercisePrice].time = 0;
+                future_market_data[futureID].time = 0;
             }
         }
     }
@@ -269,7 +296,7 @@ void OptionArbitrageur::checkCheapPutOptions(const QString &futureID, int exerci
  */
 void OptionArbitrageur::findReversedCallOptions(const QString &futureID, int exercisePriceToCheck)
 {
-    const auto & callOptionMap = option_market_data[futureID][CALL_OPT];
+    auto & callOptionMap = option_market_data[futureID][CALL_OPT];
     const auto exercisePrices = callOptionMap.keys();
     for (const auto exercisePrice : exercisePrices) {
         auto epdiff = exercisePrice - exercisePriceToCheck;
@@ -292,18 +319,23 @@ void OptionArbitrageur::findReversedCallOptions(const QString &futureID, int exe
  * \param lowExercisePrice 低行权价
  * \param highExercisePrice 高行权价
  */
-void OptionArbitrageur::checkReversedCallOptions(const QString &futureID, const QMap<int, DepthMarket> &callOptionMap, int lowExercisePrice, int highExercisePrice)
+void OptionArbitrageur::checkReversedCallOptions(const QString &futureID, QMap<int, DepthMarket> &callOptionMap, int lowExercisePrice, int highExercisePrice)
 {
-    if (callOptionMap[highExercisePrice].bidVolumes > 1 && callOptionMap[lowExercisePrice].askVolumes > 1) {  // 保证至少两手流动性
-        auto lowPremium = callOptionMap[lowExercisePrice].askPrices;
-        auto highPremium = callOptionMap[highExercisePrice].bidPrices;
+    if (callOptionMap[highExercisePrice].bidVolume > 1 && callOptionMap[lowExercisePrice].askVolume > 1) {  // 保证至少两手流动性
+        auto lowPremium = callOptionMap[lowExercisePrice].askPrice;
+        auto highPremium = callOptionMap[highExercisePrice].bidPrice;
         auto diff = highPremium - lowPremium;
-        if (diff > 2) {
+        if (diff > 1 && isTimeCloseEnouogh(callOptionMap[lowExercisePrice], callOptionMap[highExercisePrice])) {
             pExecuter->buyLimit(makeOptionID(futureID, CALL_OPT, lowExercisePrice), 1, lowPremium);
             pExecuter->sellLimit(makeOptionID(futureID, CALL_OPT, highExercisePrice), 1, highPremium);
+            manageMoney();
+
             qDebug() << DATE_TIME << "Found reversed call options";
             qDebug() << makeOptionID(futureID, CALL_OPT, lowExercisePrice); qDebug() << callOptionMap[lowExercisePrice];
             qDebug() << makeOptionID(futureID, CALL_OPT, highExercisePrice); qDebug() << callOptionMap[highExercisePrice];
+
+            callOptionMap[lowExercisePrice].time = 0;
+            callOptionMap[highExercisePrice].time = 0;
         }
     }
 }
@@ -319,7 +351,7 @@ void OptionArbitrageur::checkReversedCallOptions(const QString &futureID, const 
  */
 void OptionArbitrageur::findReversedPutOptions(const QString &futureID, int exercisePriceToCheck)
 {
-    const auto & putOptionMap = option_market_data[futureID][PUT_OPT];
+    auto & putOptionMap = option_market_data[futureID][PUT_OPT];
     const auto exercisePrices = putOptionMap.keys();
     for (const auto exercisePrice : exercisePrices) {
         auto epdiff = exercisePrice - exercisePriceToCheck;
@@ -342,18 +374,23 @@ void OptionArbitrageur::findReversedPutOptions(const QString &futureID, int exer
  * \param lowExercisePrice 低行权价
  * \param highExercisePrice 高行权价
  */
-void OptionArbitrageur::checkReversedPutOptions(const QString &futureID, const QMap<int, DepthMarket> &putOptionMap, int lowExercisePrice, int highExercisePrice)
+void OptionArbitrageur::checkReversedPutOptions(const QString &futureID, QMap<int, DepthMarket> &putOptionMap, int lowExercisePrice, int highExercisePrice)
 {
-    if (putOptionMap[highExercisePrice].askVolumes > 1 && putOptionMap[lowExercisePrice].bidVolumes > 1) {  // 保证至少两手流动性
-        auto lowPremium = putOptionMap[lowExercisePrice].bidPrices;
-        auto highPremium = putOptionMap[highExercisePrice].askPrices;
+    if (putOptionMap[highExercisePrice].askVolume > 1 && putOptionMap[lowExercisePrice].bidVolume > 1) {  // 保证至少两手流动性
+        auto lowPremium = putOptionMap[lowExercisePrice].bidPrice;
+        auto highPremium = putOptionMap[highExercisePrice].askPrice;
         auto diff = lowPremium - highPremium;
-        if (diff > 2) {
+        if (diff > 1 && isTimeCloseEnouogh(putOptionMap[lowExercisePrice], putOptionMap[highExercisePrice])) {
             pExecuter->buyLimit(makeOptionID(futureID, PUT_OPT, highExercisePrice), 1, highPremium);
             pExecuter->sellLimit(makeOptionID(futureID, PUT_OPT, lowExercisePrice), 1, lowPremium);
+            manageMoney();
+
             qDebug() << DATE_TIME << "Found reversed put options";
             qDebug() << makeOptionID(futureID, PUT_OPT, highExercisePrice); qDebug() << putOptionMap[highExercisePrice];
             qDebug() << makeOptionID(futureID, PUT_OPT, lowExercisePrice); qDebug() << putOptionMap[lowExercisePrice];
+
+            putOptionMap[highExercisePrice].time = 0;
+            putOptionMap[lowExercisePrice].time = 0;
         }
     }
 }
@@ -370,5 +407,22 @@ void OptionArbitrageur::checkReversedPutOptions(const QString &futureID, const Q
  */
 void OptionArbitrageur::findCheapStrangles(const QString &futureID)
 {
+    Q_UNUSED(futureID)
     // TODO
+}
+
+void OptionArbitrageur::fishing(const QStringList &options, int vol, double price)
+{
+    for (const auto &optionID : options) {
+        pExecuter->parkBuyLimit(optionID, vol, price);
+    }
+}
+
+void OptionArbitrageur::manageMoney()
+{
+    static int count = 0;
+    if (++count >= allowTradeNumber) {
+        qDebug() << "Enough trades made! Let's quit!";
+        QCoreApplication::quit();
+    }
 }

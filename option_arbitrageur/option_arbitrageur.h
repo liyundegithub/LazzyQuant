@@ -10,10 +10,10 @@ template <typename Key, typename T> class QMap;
 
 struct DepthMarket {
     uint time;
-    double askPrices;
-    int askVolumes;
-    double bidPrices;
-    int bidVolumes;
+    double askPrice;
+    int askVolume;
+    double bidPrice;
+    int bidVolume;
 };
 
 QDebug operator<<(QDebug dbg, const DepthMarket &depthMarket);
@@ -32,6 +32,7 @@ protected:
     QSet<QString> objectFutureIDs;
     int updateRetryCounter;
     double threshold;
+    int allowTradeNumber;
 
     //   期货合约    两档盘口
     QMap<QString, DepthMarket> future_market_data;
@@ -45,13 +46,16 @@ protected:
     void findCheapPutOptions(const QString &futureID);
     void checkCheapPutOptions(const QString &futureID, int exercisePrice);
     void findReversedCallOptions(const QString &futureID, int exercisePriceToCheck);
-    void checkReversedCallOptions(const QString &futureID, const QMap<int, DepthMarket> &callOptionMap, int lowExercisePrice, int highExercisePrice);
+    void checkReversedCallOptions(const QString &futureID, QMap<int, DepthMarket> &callOptionMap, int lowExercisePrice, int highExercisePrice);
     void findReversedPutOptions(const QString &futureID, int exercisePriceToCheck);
-    void checkReversedPutOptions(const QString &futureID, const QMap<int, DepthMarket> &putOptionMap, int lowExercisePrice, int highExercisePrice);
+    void checkReversedPutOptions(const QString &futureID, QMap<int, DepthMarket> &putOptionMap, int lowExercisePrice, int highExercisePrice);
     void findCheapStrangles(const QString &futureID);
 
+    void fishing(const QStringList &options, int vol, double price);
+    void manageMoney();
+
 public:
-    explicit OptionArbitrageur(QObject *parent = 0);
+    explicit OptionArbitrageur(int number = 1, QObject *parent = 0);
     ~OptionArbitrageur();
 
 signals:
