@@ -18,14 +18,14 @@ int main(int argc, char *argv[])
     parser.addOptions({
         // Number allows to trade (-n)
         {{"n", "number"},
-            QCoreApplication::translate("main", "Number allows to trade")},
+            QCoreApplication::translate("main", "Number allows to trade"), "TradeNumber"},
     });
 
     parser.process(a);
     bool ok;
     int allowTradeNumber = parser.value("number").toInt(&ok);
     if (!ok || allowTradeNumber <= 0) {
-        allowTradeNumber = 1;
+        allowTradeNumber = 0;
     }
 
     OptionArbitrageur arbitrageur(allowTradeNumber);

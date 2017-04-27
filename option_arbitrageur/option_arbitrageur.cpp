@@ -34,10 +34,12 @@ OptionArbitrageur::OptionArbitrageur(int number, QObject *parent) :
     loadCommonMarketData();
     loadOptionArbitrageurSettings();
 
-    Q_ASSERT(number > 0);
     Q_ASSERT(allowTradeNumber > 0);
-    // 取命令行参数number和配置文件中AllowTradeNumber当中较小的那个值
-    allowTradeNumber = qMin(allowTradeNumber, number);
+    if (number > 0) {
+        qDebug() << "Command line overrides ini file settings";
+        allowTradeNumber = number;
+    }
+    qDebug() << "allowTradeNumber =" << allowTradeNumber;
 
     pExecuter = new com::lazzyquant::trade_executer(EXECUTER_DBUS_SERVICE, EXECUTER_DBUS_OBJECT, QDBusConnection::sessionBus(), this);
     pWatcher = new com::lazzyquant::market_watcher(WATCHER_DBUS_SERVICE, WATCHER_DBUS_OBJECT, QDBusConnection::sessionBus(), this);
@@ -395,22 +397,6 @@ void OptionArbitrageur::checkReversedPutOptions(const QString &futureID, QMap<in
     }
 }
 
-/*!
- * \brief OptionArbitrageur::findCheapStrangles
- * 9、买入看涨期权，买入行权价更高的看跌期权
- * 无风险套利九：当到期日相同，行权价较高的看跌期权与行权价较低的看涨期权的权利金价格之和，小于两者行权价之差时，买入行权价较低的看涨期权，买入相同数量行权价较高的看跌期权。
- * 无风险收益=（高行权价－低行权价）－（看涨期权权利金价格+看跌期权权利金价格）
- * 例如，假设CF505C13200的权利金价格为170，CF505P13600的权利金价格为190，符合上述条件，那么买入1手CF505C13200，买入1手CF505P13600，同时行权，收益=（CF505P13600行权价- CF505C13200行权价）-（CF505P13600 权利金价格+CF505C13200权利金价格）=（13600-13200）+（170+190）=40，再乘以5等于200。
- * 此种套利出现的概率很低，临近期权到期日时有可能会出现。
- *
- * \param futureID 标的期货合约代码
- */
-void OptionArbitrageur::findCheapStrangles(const QString &futureID)
-{
-    Q_UNUSED(futureID)
-    // TODO
-}
-
 void OptionArbitrageur::fishing(const QStringList &options, int vol, double price)
 {
     for (const auto &optionID : options) {
@@ -418,10 +404,10 @@ void OptionArbitrageur::fishing(const QStringList &options, int vol, double pric
     }
 }
 
-void OptionArbitrageur::manageMoney()
+void OptionArbitrageur::manageMoney(int vol)
 {
-    static int count = 0;
-    if (++count >= allowTradeNumber) {
+    allowTradeNumber -= vol;
+    if (allowTradeNumber <= 0) {
         qDebug() << "Enough trades made! Let's quit!";
         QCoreApplication::quit();
     }

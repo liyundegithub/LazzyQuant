@@ -49,13 +49,12 @@ protected:
     void checkReversedCallOptions(const QString &futureID, QMap<int, DepthMarket> &callOptionMap, int lowExercisePrice, int highExercisePrice);
     void findReversedPutOptions(const QString &futureID, int exercisePriceToCheck);
     void checkReversedPutOptions(const QString &futureID, QMap<int, DepthMarket> &putOptionMap, int lowExercisePrice, int highExercisePrice);
-    void findCheapStrangles(const QString &futureID);
 
     void fishing(const QStringList &options, int vol, double price);
-    void manageMoney();
+    void manageMoney(int vol = 1);
 
 public:
-    explicit OptionArbitrageur(int number = 1, QObject *parent = 0);
+    explicit OptionArbitrageur(int number = 0, QObject *parent = 0);
     ~OptionArbitrageur();
 
 signals:
