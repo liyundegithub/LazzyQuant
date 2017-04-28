@@ -43,7 +43,7 @@ QuantTrader::QuantTrader(QObject *parent) :
 
     pExecuter = new com::lazzyquant::trade_executer(EXECUTER_DBUS_SERVICE, EXECUTER_DBUS_OBJECT, QDBusConnection::sessionBus(), this);
     pWatcher = new com::lazzyquant::market_watcher(WATCHER_DBUS_SERVICE, WATCHER_DBUS_OBJECT, QDBusConnection::sessionBus(), this);
-    connect(pWatcher, SIGNAL(newMarketData(QString, uint, double, int, double, int, double, int, double, int, double, int)), this, SLOT(onMarketData(QString, uint, double, int)));
+    connect(pWatcher, SIGNAL(newMarketData(QString, uint, double, int, double, int, double, int)), this, SLOT(onMarketData(QString, uint, double, int)));
 }
 
 QuantTrader::~QuantTrader()
@@ -61,13 +61,13 @@ void QuantTrader::loadQuantTraderSettings()
     settings.endGroup();
 
     settings.beginGroup("Collector");
-    QStringList instrumentIDs = settings.childKeys();
+    const auto instrumentIDs = settings.childKeys();
 
-    foreach (const QString &instrumentID, instrumentIDs) {
+    for (const auto &instrumentID : instrumentIDs) {
         QString combined_time_frame_string = settings.value(instrumentID).toString();
-        QStringList time_frame_stringlist = combined_time_frame_string.split('|');
+        const QStringList time_frame_stringlist = combined_time_frame_string.split('|');
         BarCollector::TimeFrames time_frame_flags;
-        foreach (const QString &tf, time_frame_stringlist) {
+        for (const QString &tf : time_frame_stringlist) {
             int time_frame_value = BarCollector::staticMetaObject.enumerator(barCollector_enumIdx).keyToValue(tf.trimmed().toLatin1().data());
             BarCollector::TimeFrame time_frame = static_cast<BarCollector::TimeFrame>(time_frame_value);
             time_frame_flags |= time_frame;
@@ -81,18 +81,18 @@ void QuantTrader::loadQuantTraderSettings()
     settings.endGroup();
 
     QMap<QTime, QStringList> endPointsMap;
-    foreach (const QString &instrumentID, instrumentIDs) {
-        auto endPoints = getEndPoints(instrumentID);
-        foreach (const auto &item, endPoints) {
+    for (const auto &instrumentID : instrumentIDs) {
+        const auto endPoints = getEndPoints(instrumentID);
+        for (const auto &item : endPoints) {
             endPointsMap[item] << instrumentID;
         }
     }
 
     auto keys = endPointsMap.keys();
     qSort(keys);
-    foreach (const auto &item, keys) {
+    for (const auto &item : qAsConst(keys)) {
         QList<BarCollector*> collectors;
-        foreach (const auto &instrumentID, endPointsMap[item]) {
+        for (const auto &instrumentID : qAsConst(endPointsMap[item])) {
             collectors << collector_map[instrumentID];
         }
         collectorsToSave << collectors;
@@ -110,10 +110,10 @@ void QuantTrader::loadTradeStrategySettings()
     }();
 
     QSettings settings(QSettings::IniFormat, QSettings::UserScope, ORGANIZATION, "trade_strategy");
-    QStringList groups = settings.childGroups();
+    const QStringList groups = settings.childGroups();
     qDebug() << groups.size() << "stragegs in all.";
 
-    foreach (const QString& group, groups) {
+    for (const QString& group : groups) {
         settings.beginGroup(group);
         QString strategy_name = settings.value("strategy").toString();
         QString instrument = settings.value("instrument").toString();
@@ -203,7 +203,7 @@ QList<Bar>* QuantTrader::getBars(const QString &instrumentID, const QString &tim
         QList<KTExportBar> ktBarList;
         ktStream >> ktBarList;
         qDebug() << ktBarList.size();
-        foreach (const KTExportBar &ktbar, ktBarList) {
+        for (const auto &ktbar : qAsConst(ktBarList)) {
             barList.append(ktbar);
         }
         kt_export_file.close();
@@ -215,8 +215,8 @@ QList<Bar>* QuantTrader::getBars(const QString &instrumentID, const QString &tim
     QStringList filters;
     filters << "*.bars";
     collector_bar_dir.setNameFilters(filters);
-    QStringList entries = collector_bar_dir.entryList(QDir::Files | QDir::NoDotAndDotDot, QDir::Name);
-    foreach (const QString &barfilename, entries) {
+    const QStringList entries = collector_bar_dir.entryList(QDir::Files | QDir::NoDotAndDotDot, QDir::Name);
+    for (const QString &barfilename : entries) {
         QFile barfile(collector_bar_path + "/" + barfilename);
         if (!barfile.open(QFile::ReadOnly)) {
             qCritical() << "Open file:" << (collector_bar_path + "/" + barfilename) << "failed!";
@@ -241,7 +241,7 @@ QList<Bar>* QuantTrader::getBars(const QString &instrumentID, const QString &tim
     }
     auto invalidList = invalidSet.toList();
     qSort(invalidList.begin(), invalidList.end(), qGreater<int>());
-    foreach (const int i, invalidList) {
+    for (const int i : qAsConst(invalidList)) {
         barList.removeAt(i);
     }
 
@@ -331,8 +331,9 @@ AbstractIndicator* QuantTrader::registerIndicator(const QString &instrumentID, c
 
     qDebug() << params;
 
-    foreach (AbstractIndicator *indicator, indicator_map.values(instrumentID)) {
-        QObject *obj = dynamic_cast<QObject*>(indicator);
+    const auto pIndicators = indicator_map.values(instrumentID);
+    for (AbstractIndicator *pIndicator : pIndicators) {
+        QObject *obj = dynamic_cast<QObject*>(pIndicator);
         if (indicator_name == obj->metaObject()->className()) {
             bool match = true;
             for (int i = 0; i < parameter_number; i++) {
@@ -342,7 +343,7 @@ AbstractIndicator* QuantTrader::registerIndicator(const QString &instrumentID, c
                 }
             }
             if (match) {
-                return indicator;
+                return pIndicator;
             }
         }
     }
@@ -404,7 +405,7 @@ void QuantTrader::saveBarsAndResetTimer()
 {
     const int size = saveBarTimePoints.size();
     if (saveBarTimeIndex >= 0 && saveBarTimeIndex < size) {
-        foreach (const auto &collector, collectorsToSave[saveBarTimeIndex]) {
+        for (const auto &collector : qAsConst(collectorsToSave[saveBarTimeIndex])) {
             collector->saveBars();
         }
     }
@@ -443,9 +444,9 @@ void QuantTrader::onMarketData(const QString& instrumentID, uint time, double la
         isNewTick = collector->onMarketData(time, lastPrice, volume);
     }
 
-    auto strategyList = strategy_map.values(instrumentID);
+    const auto strategyList = strategy_map.values(instrumentID);
     boost::optional<int> new_position_sum;
-    foreach (auto *strategy, strategyList) {
+    for (auto *strategy : strategyList) {
         if (isNewTick) {    // 有新的成交
             strategy->onNewTick(time, lastPrice);
         }
@@ -483,8 +484,8 @@ void QuantTrader::onMarketData(const QString& instrumentID, uint time, double la
 void QuantTrader::onNewBar(const QString &instrumentID, int time_frame, const Bar &bar)
 {
     bars_map[instrumentID][time_frame].append(bar);
-    auto strategyList = strategy_map.values(instrumentID);
-    foreach (auto *strategy, strategyList) {
+    const auto strategyList = strategy_map.values(instrumentID);
+    for (auto *strategy : strategyList) {
         strategy->checkIfNewBar();
     }
 }

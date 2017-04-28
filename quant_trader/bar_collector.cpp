@@ -26,7 +26,7 @@ BarCollector::BarCollector(const QString& instrumentID, const TimeFrames &time_f
     }
     key_set.insert(TimeFrame::MIN1);
     keys = key_set.toList();
-    foreach (const auto key, keys) {
+    for (const auto key : qAsConst(keys)) {
         bar_list_map.insert(key, QList<Bar>());
         current_bar_map.insert(key, Bar());
 
@@ -75,7 +75,7 @@ bool BarCollector::onMarketData(uint time, double lastPrice, int volume)
     now.setTime(QTime(0, 0).addSecs(time));    // 当前的日期(YYMMDD)加上交易所的时间(HHMMSS)
     auto currentTime = now.toTime_t();
 
-    foreach (const auto key, keys) {
+    for (const auto key : qAsConst(keys)) {
         Bar & bar = current_bar_map[key];
         const uint time_unit = g_time_table[key];  // TODO optimize, use time_unit as key
 
@@ -115,7 +115,7 @@ bool BarCollector::onMarketData(uint time, double lastPrice, int volume)
 
 void BarCollector::saveBars()
 {
-    foreach (const auto key, keys) {
+    for (const auto key : qAsConst(keys)) {
         auto & barList = bar_list_map[key];
         const auto & lastBar = current_bar_map[key];
 

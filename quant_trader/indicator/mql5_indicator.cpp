@@ -99,7 +99,7 @@ void MQL5Indicator::SetIndexBuffer(int index, IndicatorBuffer<double> & buffer, 
 void MQL5Indicator::preCalculate()
 {
     rates_total = barList->size() + 1;
-    foreach (IndicatorBuffer<double> *buffer, indicator_buffers) {
+    for (IndicatorBuffer<double> *buffer : qAsConst(indicator_buffers)) {
         buffer->resize(rates_total);
     }
 }

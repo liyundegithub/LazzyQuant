@@ -105,7 +105,7 @@ void AbstractStrategy::checkTPSL(double price)
 void AbstractStrategy::checkIfNewBar()
 {
     if (isNewBar()) {
-        foreach (auto* indicator, indicators) {
+        for (auto* indicator : qAsConst(indicators)) {
             indicator->update();
         }
         onNewBar();
