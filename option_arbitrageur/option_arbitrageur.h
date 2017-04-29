@@ -29,9 +29,10 @@ protected:
     void timesUp(int index);
     void loadOptionArbitrageurSettings();
 
-    QSet<QString> objectFutureIDs;
+    QSet<QString> underlyingIDs;
+    QMap<QString, double> thresholdMap;
+
     int updateRetryCounter;
-    double threshold;
     int allowTradeNumber;
 
     //   期货合约    两档盘口
@@ -41,10 +42,10 @@ protected:
 
     // Argitrage strategies
     void findInefficientPrices(const QString &futureID, OPTION_TYPE type = CALL_OPT, int exercisePrice = 0);
-    void findCheapCallOptions(const QString &futureID);
-    void checkCheapCallOptions(const QString &futureID, int exercisePrice);
-    void findCheapPutOptions(const QString &futureID);
-    void checkCheapPutOptions(const QString &futureID, int exercisePrice);
+    void findCheapCallOptions(const QString &futureID, double threshold);
+    void checkCheapCallOptions(const QString &futureID, int exercisePrice, double threshold);
+    void findCheapPutOptions(const QString &futureID, double threshold);
+    void checkCheapPutOptions(const QString &futureID, int exercisePrice, double threshold);
     void findReversedCallOptions(const QString &futureID, int exercisePriceToCheck);
     void checkReversedCallOptions(const QString &futureID, QMap<int, DepthMarket> &callOptionMap, int lowExercisePrice, int highExercisePrice);
     void findReversedPutOptions(const QString &futureID, int exercisePriceToCheck);
