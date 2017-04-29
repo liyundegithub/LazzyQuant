@@ -6,17 +6,19 @@
 #include "market.h"
 #include "utility.h"
 #include "multiple_timer.h"
+#include "trading_calendar.h"
 #include "market_watcher.h"
 #include "market_watcher_adaptor.h"
 #include "tick_receiver.h"
 
 extern QList<Market> markets;
+TradingCalendar tradingCalendar;
 
 MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, const bool replayMode, QObject *parent) :
-    replayMode(replayMode), QObject(parent)
+    QObject(parent), replayMode(replayMode)
 {
     settings = new QSettings(QSettings::IniFormat, QSettings::UserScope, config.organization, config.name, this);
-    QByteArray flowPath = settings->value("FlowPath").toByteArray();
+    const auto flowPath = settings->value("FlowPath").toByteArray();
     saveDepthMarketData = settings->value("SaveDepthMarketData").toBool();
     saveDepthMarketDataPath = settings->value("SaveDepthMarketDataPath").toString();
     QDir dir(saveDepthMarketDataPath);
@@ -129,7 +131,7 @@ void MarketWatcher::setupTimers()
     qSort(keys);
     for (const auto &timePoint : qAsConst(keys)) {
         instrumentsToProcess.append(endPointsMap[timePoint]);
-        saveBarTimePoints << timePoint.addSecs(180); // Save data 3 minutes after market close
+        saveBarTimePoints << timePoint.addSecs(60); // Save data 3 minutes after market close
     }
 
     if (multiTimer != nullptr) {
@@ -154,6 +156,20 @@ QDataStream& operator>>(QDataStream& s, CThostFtdcDepthMarketDataField& dataFiel
 
 void MarketWatcher::timesUp(int index)
 {
+    const auto today = QDate::currentDate();
+
+    if (!tradingCalendar.isTradingDay(today)) {
+        if (!tradingCalendar.tradesTonight(today.addDays(-1))) {
+            depthMarketDataListMap.clear();
+            return;
+        } else {
+            if (QTime::currentTime() > QTime(5, 0)) {
+                depthMarketDataListMap.clear();
+                return;
+            }
+        }
+    }
+
     for (const auto &instrumentID : qAsConst(subscribeSet)) {
         if (instrumentsToProcess[index].contains(instrumentID)) {
             setCurrentTradingTime(instrumentID);
