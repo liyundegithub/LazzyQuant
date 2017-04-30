@@ -70,10 +70,10 @@ static const auto g_time_table = []() -> QMap<BarCollector::TimeFrame, uint> {
 
 bool BarCollector::onMarketData(uint time, double lastPrice, int volume)
 {
-    bool isNewTick = (volume == lastVolume);
+    const bool isNewTick = (volume == lastVolume);
     QDateTime now = QDateTime::currentDateTime();
     now.setTime(QTime(0, 0).addSecs(time));    // 当前的日期(YYMMDD)加上交易所的时间(HHMMSS)
-    auto currentTime = now.toTime_t();
+    const auto currentTime = now.toTime_t();
 
     for (const auto key : qAsConst(keys)) {
         Bar & bar = current_bar_map[key];

@@ -89,7 +89,7 @@ void QuantTrader::loadQuantTraderSettings()
     }
 
     auto keys = endPointsMap.keys();
-    qSort(keys);
+    std::sort(keys.begin(), keys.end());
     for (const auto &item : qAsConst(keys)) {
         QList<BarCollector*> collectors;
         for (const auto &instrumentID : qAsConst(endPointsMap[item])) {
@@ -162,13 +162,26 @@ void QuantTrader::loadTradeStrategySettings()
  * \brief getKTExportName
  * 从合约代码中提取飞狐交易师导出数据的文件名
  * 比如 cu1703 --> cu03, i1705 --> i05, CF705 --> CF05
+ *      SR709 --> SR109, SR809 --> SR009
  *
  * \param instrumentID 合约代码
  * \return 从飞狐交易师导出的此合约数据的文件名
  */
 static inline QString getKTExportName(const QString &instrumentID) {
+    const QString code = getCode(instrumentID);
     QString month = instrumentID.right(2);
-    return getCode(instrumentID) + month;
+    if (code == "SR" || code == "WH" || code == "bu" || code == "a") {
+        const int len = instrumentID.length();
+        const QString Y = instrumentID.mid(len - 3, 1);
+        const int y = Y.toInt();
+        if (y % 2 == 0) {
+            return code + "0" + month;
+        } else {
+            return code + "1" + month;
+        }
+    } else {
+        return code + month;
+    }
 }
 
 /*!
@@ -240,7 +253,7 @@ QList<Bar>* QuantTrader::getBars(const QString &instrumentID, const QString &tim
         }
     }
     auto invalidList = invalidSet.toList();
-    qSort(invalidList.begin(), invalidList.end(), qGreater<int>());
+    std::sort(invalidList.begin(), invalidList.end(), qGreater<int>());
     for (const int i : qAsConst(invalidList)) {
         barList.removeAt(i);
     }
@@ -277,13 +290,13 @@ static QVariant getParam(const QByteArray &typeName, va_list &ap)
 
 static bool compareVariant(const QVariant &v1, const QVariant &v2)
 {
-    int typeId = v1.userType();
+    const auto typeId = v1.userType();
     if (typeId != v2.userType()) {
         return false;
     }
     switch (typeId) {
     case QMetaType::Int:
-        return v1.toInt() == v1.toInt();
+        return v1.toInt() == v2.toInt();
     case QMetaType::Double:
         return v1.toDouble() == v2.toDouble();
     default:

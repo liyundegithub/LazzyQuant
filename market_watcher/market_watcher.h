@@ -42,9 +42,7 @@ protected:
     QMap<QString, QList<CThostFtdcDepthMarketDataField>> depthMarketDataListMap;
 
     MultipleTimer *multiTimer;
-    QList<QTime> saveBarTimePoints;
     QList<QStringList> instrumentsToProcess;
-    int saveBarTimeIndex;
     void setupTimers();
     void timesUp(int index);
     void setCurrentTradingTime(const QString &instrumentID);

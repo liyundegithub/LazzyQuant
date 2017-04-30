@@ -128,7 +128,8 @@ void MarketWatcher::setupTimers()
     }
 
     auto keys = endPointsMap.keys();
-    qSort(keys);
+    std::sort(keys.begin(), keys.end());
+    QList<QTime> saveBarTimePoints;
     for (const auto &timePoint : qAsConst(keys)) {
         instrumentsToProcess.append(endPointsMap[timePoint]);
         saveBarTimePoints << timePoint.addSecs(60); // Save data 3 minutes after market close
