@@ -12,7 +12,7 @@ class OptionPricing
 public:
     explicit OptionPricing(double r, double q = 0, bool american = true);
 
-    void generate(const QList<double> &kList, const QList<double> &s0List, const QList<double> &sigmaList, const QDate &endDate, const QDate &startDate = QDate::currentDate(), const int steps = 100);
+    void generate(const QList<double> &kList, const QList<double> &s0List, const QList<double> &sigmaList, const QDate &startDate, const QDate &endDate, const int steps = 100);
     void generate(const QList<double> &kList, const QList<double> &s0List, const QList<double> &sigmaList, const double T, const int steps);
 
     double getPrice(const double k, const double s, const double sigma, const OPTION_TYPE type);

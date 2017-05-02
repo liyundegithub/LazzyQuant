@@ -2,12 +2,21 @@
 #include <cfloat>
 #include <QDebug>
 
+#include "trading_calendar.h"
 #include "option_pricing.h"
+
+extern TradingCalendar tradingCalendar;
 
 OptionPricing::OptionPricing(double r, double q, bool american) :
     american(american), r(r), q(q)
 {
     //
+}
+
+void OptionPricing::generate(const QList<double> &kList, const QList<double> &s0List, const QList<double> &sigmaList, const QDate &startDate, const QDate &endDate, const int steps)
+{
+    const int tradingDays = tradingCalendar.getTradingDays(startDate, endDate);
+    generate(kList, s0List, sigmaList, tradingDays / 365.0, steps);
 }
 
 void OptionPricing::generate(const QList<double> &kList, const QList<double> &s0List, const QList<double> &sigmaList, const double T, const int steps)

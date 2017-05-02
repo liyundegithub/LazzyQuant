@@ -33,6 +33,9 @@
     <method name="getSubscribeList">
       <arg type="as" direction="out"/>
     </method>
+    <method name="setReplayDate">
+      <arg name="date" type="s" direction="in"/>
+    </method>
     <method name="startReplay">
       <arg name="date" type="s" direction="in"/>
       <arg name="realSpeed" type="b" direction="in"/>

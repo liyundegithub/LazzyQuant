@@ -26,6 +26,7 @@ public:
 
 protected:
     const bool replayMode;
+    QString replayDate;
     QSettings *settings;
 
     QAtomicInt nRequestID;
@@ -73,6 +74,7 @@ public slots:
     QString getTradingDay() const;
     void subscribeInstruments(const QStringList &instruments, bool updateIni = true);
     QStringList getSubscribeList() const;
+    void setReplayDate(const QString &date) { replayDate = date; }
     void startReplay(const QString &date, bool realSpeed = false);
     void quit();
 };

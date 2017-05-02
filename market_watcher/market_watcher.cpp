@@ -398,7 +398,7 @@ void MarketWatcher::emitNewMarketData(const CThostFtdcDepthMarketDataField& dept
 QString MarketWatcher::getTradingDay() const
 {
     if (replayMode) {
-        // TODO
+        return replayDate;
     } else {
         return pUserApi->GetTradingDay();
     }

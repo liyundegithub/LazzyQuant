@@ -19,6 +19,9 @@ int main(int argc, char *argv[])
         // Number allows to trade (-n)
         {{"n", "number"},
             QCoreApplication::translate("main", "Number allows to trade"), "TradeNumber"},
+        // replay mode (-r, --replay)
+        {{"r", "replay"},
+            QCoreApplication::translate("main", "Replay Mode"), "ReplayDate"},
     });
 
     parser.process(a);
@@ -28,6 +31,12 @@ int main(int argc, char *argv[])
         allowTradeNumber = 0;
     }
 
-    OptionArbitrageur arbitrageur(allowTradeNumber);
+    bool replayMode = parser.isSet("replay");
+    QString replayDate = QString();
+    if (replayMode) {
+        replayDate = parser.value("replay");
+    }
+
+    OptionArbitrageur arbitrageur(allowTradeNumber, replayMode, replayDate);
     return a.exec();
 }

@@ -93,6 +93,9 @@ public slots:
     double getAvailable() const { return available; }
     void updateInstrumentsCache(const QStringList& instruments);
     QStringList getCachedInstruments(const QString &idPrefix = QString()) const;
+    QString getExpireDate(const QString &instrument);
+    double getUpperLimit(const QString &instrument);
+    double getLowerLimit(const QString &instrument);
 
     int qryParkedOrder(const QString &instrument = QString(), const QString &exchangeID = QString());
     int qryParkedOrderAction(const QString &instrument = QString(), const QString &exchangeID = QString());

@@ -5,7 +5,12 @@
 
 #include "config.h"
 #include "multiple_timer.h"
+#include "trading_calendar.h"
+#include "option_pricing.h"
+#include "option_helper.h"
 #include "option_arbitrageur.h"
+
+TradingCalendar tradingCalendar;
 
 static inline void makeInvalid(DepthMarket &depthMarket)
 {
@@ -39,7 +44,7 @@ static inline int getVol(const int liquidity)
     }
 }
 
-OptionArbitrageur::OptionArbitrageur(int number, QObject *parent) :
+OptionArbitrageur::OptionArbitrageur(int number, const bool replayMode, const QString replayDate, QObject *parent) :
     QObject(parent)
 {
     loadOptionArbitrageurSettings();
@@ -54,6 +59,23 @@ OptionArbitrageur::OptionArbitrageur(int number, QObject *parent) :
     pExecuter = new com::lazzyquant::trade_executer(EXECUTER_DBUS_SERVICE, EXECUTER_DBUS_OBJECT, QDBusConnection::sessionBus(), this);
     pWatcher = new com::lazzyquant::market_watcher(WATCHER_DBUS_SERVICE, WATCHER_DBUS_OBJECT, QDBusConnection::sessionBus(), this);
     connect(pWatcher, SIGNAL(newMarketData(QString, uint, double, int, double, int, double, int)), this, SLOT(onMarketData(QString, uint, double, int, double, int, double, int)));
+
+// 复盘模式和实盘模式共用的部分到此为止 ---------------------------------------
+    if (replayMode) {
+        qDebug() << "Relay mode is ready!";
+        QStringList options;
+        QStringList subscribeList = pWatcher->getSubscribeList();
+        for (const auto &item : subscribeList) {
+            if (isOption(item)) {
+                options << item;
+            }
+        }
+        pWatcher->setReplayDate(replayDate);
+        preparePricing(options);
+        pWatcher->startReplay(replayDate);
+        return;
+    }
+// 以下设置仅用于实盘模式 --------------------------------------------------
 
     updateRetryCounter = 0;
     updateOptions();
@@ -100,6 +122,14 @@ void OptionArbitrageur::updateOptions()
         if (instrumentsToSubscribe.length() > 0) {
             pWatcher->subscribeInstruments(instrumentsToSubscribe);
         }
+
+        QStringList options;
+        for (const auto &item : cachedInstruments) {
+            if (isOption(item)) {
+                options << item;
+            }
+        }
+        preparePricing(options);
     });
 
     updateRetryCounter = 0;
@@ -150,6 +180,64 @@ void OptionArbitrageur::loadOptionArbitrageurSettings()
         thresholdMap[underlying] = t;
     }
     settings.endGroup();
+}
+
+void OptionArbitrageur::preparePricing(const QStringList &options)
+{
+    if (!pricingMap.isEmpty()) {
+        for (const auto pPricing : pricingMap) {
+            delete pPricing;
+        }
+        pricingMap.clear();
+    }
+
+    QList<double> sigmaList;
+    for (double sigma = 0.01; sigma < 1.0; sigma *= 1.4) {
+        sigmaList << sigma;
+    }
+
+    QDate startDate;
+    if (pWatcher->isValid()) {
+        startDate = QDate::fromString(pWatcher->getTradingDay(), "yyyyMMdd");
+    } else {
+        startDate = QDate::currentDate();
+    }
+
+    for (const auto &underlying : qAsConst(underlyingIDs)) {
+        double upperLimit;
+        double lowerLimit;
+        QDate endDate;
+
+        if (pExecuter->isValid()) {
+            upperLimit = pExecuter->getUpperLimit(underlying);
+            lowerLimit = pExecuter->getLowerLimit(underlying);
+            endDate = QDate::fromString(pExecuter->getExpireDate(underlying), "yyyyMMdd");
+        } else {
+            upperLimit = 10000.0;   // FIXME
+            lowerLimit = 1000.0;    // FIXME
+            endDate = getExpireDate(underlying);
+        }
+
+        QList<double> s0List;
+        for (double s0 = (lowerLimit - 1.0); s0 < (upperLimit + 5.0); s0 += 4.0) {
+            s0List << s0;
+        }
+        QSet<double> kSet;
+        for (const auto &optionID : options) {
+            if (optionID.startsWith(underlying)) {
+                QString futureID;
+                OPTION_TYPE type;
+                int exercisePrice;
+                if (parseOptionID(optionID, futureID, type, exercisePrice)) {
+                    kSet.insert(exercisePrice);
+                }
+            }
+        }
+
+        auto *pPricing = new OptionPricing(0.04, 0.04);
+        pPricing->generate(kSet.toList(), s0List, sigmaList, endDate, startDate);
+        pricingMap[underlying] = pPricing;
+    }
 }
 
 /*!

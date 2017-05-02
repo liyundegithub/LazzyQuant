@@ -12,7 +12,7 @@ public:
     bool isTradingDay(const QDate &date = QDate::currentDate());
     bool tradesTonight(const QDate &date = QDate::currentDate());
 
-    int tradingDaysTo(const QDate &endDate, const QDate &startDate = QDate::currentDate());
+    int getTradingDays(const QDate &startDate, const QDate &endDate);
 
 protected:
     QList<QDate> nonTradingDays; // Mon ~ Fri but market close

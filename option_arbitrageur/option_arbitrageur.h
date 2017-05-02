@@ -7,6 +7,7 @@
 #include "utility.h"
 
 template <typename Key, typename T> class QMap;
+class OptionPricing;
 
 struct DepthMarket {
     uint time;
@@ -28,9 +29,11 @@ protected:
     void updateOptions();
     void timesUp(int index);
     void loadOptionArbitrageurSettings();
+    void preparePricing(const QStringList &options);
 
     QSet<QString> underlyingIDs;
     QMap<QString, double> thresholdMap;
+    QMap<QString, OptionPricing*> pricingMap;
 
     int updateRetryCounter;
     int allowTradeNumber;
@@ -55,7 +58,7 @@ protected:
     void manageMoney(int vol = 1);
 
 public:
-    explicit OptionArbitrageur(int number = 0, QObject *parent = 0);
+    explicit OptionArbitrageur(int number = 0, const bool replayMode = false, const QString replayDate = QString(), QObject *parent = 0);
     ~OptionArbitrageur();
 
 signals:

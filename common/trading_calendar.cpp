@@ -43,7 +43,7 @@ bool TradingCalendar::tradesTonight(const QDate &date)
     return true;
 }
 
-int TradingCalendar::tradingDaysTo(const QDate &endDate, const QDate &startDate)
+int TradingCalendar::getTradingDays(const QDate &startDate, const QDate &endDate)
 {
     int sum = 0;
     for (QDate date = startDate; date <= endDate; date = date.addDays(1)) {

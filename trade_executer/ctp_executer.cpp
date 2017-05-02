@@ -854,6 +854,42 @@ QStringList CtpExecuter::getCachedInstruments(const QString &idPrefix) const
     return ret;
 }
 
+/*!
+ * \brief CtpExecuter::getExpireDate
+ * 从缓存中查询合约的到期日并返回
+ *
+ * \param instrument 合约代码
+ * \return 合约到期日
+ */
+QString CtpExecuter::getExpireDate(const QString &instrument)
+{
+    return instruments_cache_map.value(instrument).ExpireDate;
+}
+
+/*!
+ * \brief CtpExecuter::getUpperLimit
+ * 从缓存中查询合约的涨停价并返回
+ *
+ * \param instrument 合约代码
+ * \return 涨停价
+ */
+double CtpExecuter::getUpperLimit(const QString &instrument)
+{
+    return upper_lower_limit_map.value(instrument).value().second;
+}
+
+/*!
+ * \brief CtpExecuter::getLowerLimit
+ * 从缓存中查询合约的跌停价并返回
+ *
+ * \param instrument 合约代码
+ * \return 跌停价
+ */
+double CtpExecuter::getLowerLimit(const QString &instrument)
+{
+    return upper_lower_limit_map.value(instrument).value().first;
+}
+
 int CtpExecuter::qryParkedOrder(const QString &instrument, const QString &exchangeID)
 {
     auto *pField = (CThostFtdcQryParkedOrderField*) malloc(sizeof (CThostFtdcQryParkedOrderField));

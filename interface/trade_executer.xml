@@ -33,6 +33,18 @@
     <method name="getCachedInstruments">
       <arg type="as" direction="out"/>
     </method>
+    <method name="getExpireDate">
+      <arg type="s" direction="out"/>
+      <arg name="instrument" type="s" direction="in"/>
+    </method>
+    <method name="getUpperLimit">
+      <arg type="d" direction="out"/>
+      <arg name="instrument" type="s" direction="in"/>
+    </method>
+    <method name="getLowerLimit">
+      <arg type="d" direction="out"/>
+      <arg name="instrument" type="s" direction="in"/>
+    </method>
     <method name="qryParkedOrder">
       <arg type="i" direction="out"/>
       <arg name="instrument" type="s" direction="in"/>
