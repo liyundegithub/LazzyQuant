@@ -23,7 +23,7 @@
     <method name="getAvailable">
       <arg type="d" direction="out"/>
     </method>
-    <method name="updateInstrumentsCache">
+    <method name="updateInstrumentDataCache">
       <arg name="instruments" type="as" direction="in"/>
     </method>
     <method name="getCachedInstruments">

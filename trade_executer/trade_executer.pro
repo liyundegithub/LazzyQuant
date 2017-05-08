@@ -8,15 +8,17 @@ CONFIG -= app_bundle
 TEMPLATE = app
 
 SOURCES += main.cpp \
+    ../common/multiple_timer.cpp \
     ctp_executer.cpp \
     trade_handler.cpp \
     order.cpp
 
 HEADERS += ../config.h \
+    ../common/expires.h \
+    ../common/multiple_timer.h \
     ctp_executer.h \
     trade_handler.h \
-    order.h \
-    ../common/expires.h
+    order.h
 
 INCLUDEPATH += ../ ../common/
 DBUS_ADAPTORS += ../interface/trade_executer.xml

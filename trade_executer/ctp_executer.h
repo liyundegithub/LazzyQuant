@@ -48,13 +48,14 @@ protected:
     QMap<QString, int> td_pos_map;
     QDateTime pos_update_time;
     QMultiMap<QString, Expires<Order>> order_map;
-    QMap<QString, Expires<QPair<double, double>>> upper_lower_limit_map;
-    QMap<QString, CThostFtdcInstrumentField> instruments_cache_map;
+    QMap<QString, Expires<QPair<double, double>>> upperLowerLimitCache;
+    QMap<QString, CThostFtdcInstrumentField> instrumentDataCache;   // TODO add expires
 
     QList<CThostFtdcParkedOrderField> parkedOrders;
     QList<CThostFtdcParkedOrderActionField> parkedOrderActions;
 
     void customEvent(QEvent *event) override;
+    void timesUp(int index);
 
     template<typename T>
     int callTraderApi(int (CThostFtdcTraderApi::* pTraderApi)(T *,int), T * pField);
@@ -91,7 +92,8 @@ public slots:
     int confirmSettlementInfo();
     int qryTradingAccount();
     double getAvailable() const { return available; }
-    void updateInstrumentsCache(const QStringList& instruments);
+
+    void updateInstrumentDataCache(const QStringList& instruments);
     QStringList getCachedInstruments(const QString &idPrefix = QString()) const;
     QString getExpireDate(const QString &instrument);
     double getUpperLimit(const QString &instrument);
