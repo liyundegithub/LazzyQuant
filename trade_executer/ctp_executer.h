@@ -48,8 +48,9 @@ protected:
     QMap<QString, int> td_pos_map;
     QDateTime pos_update_time;
     QMultiMap<QString, Expires<Order>> order_map;
-    QMap<QString, Expires<QPair<double, double>>> upperLowerLimitCache;
-    QMap<QString, CThostFtdcInstrumentField> instrumentDataCache;   // TODO add expires
+
+    QMap<QString, QPair<double, double>> upperLowerLimitCache;
+    QMap<QString, CThostFtdcInstrumentField> instrumentDataCache;
 
     QList<CThostFtdcParkedOrderField> parkedOrders;
     QList<CThostFtdcParkedOrderActionField> parkedOrderActions;
@@ -93,7 +94,7 @@ public slots:
     int qryTradingAccount();
     double getAvailable() const { return available; }
 
-    void updateInstrumentDataCache(const QStringList& instruments);
+    void updateInstrumentDataCache();
     QStringList getCachedInstruments(const QString &idPrefix = QString()) const;
     QString getExpireDate(const QString &instrument);
     double getUpperLimit(const QString &instrument);

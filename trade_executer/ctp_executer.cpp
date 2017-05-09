@@ -2,6 +2,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
+#include <cfloat>
 #include <QSettings>
 #include <QtConcurrentRun>
 
@@ -81,7 +82,7 @@ CtpExecuter::CtpExecuter(const CONFIG_ITEM &config, QObject *parent) :
 
     pUserApi->Init();
 
-    QList<QTime> timePoints = { QTime(8, 45), QTime(20, 45) };
+    QList<QTime> timePoints = { QTime(8, 50), QTime(20, 50) };
     auto multiTimer = new MultipleTimer(timePoints, this);
     connect(multiTimer, &MultipleTimer::timesUp, this, &CtpExecuter::timesUp);
 }
@@ -191,7 +192,7 @@ void CtpExecuter::customEvent(QEvent *event)
         for (const auto &item : devent->depthMarketDataList) {
             const QString instrument = item.InstrumentID;
             qDebug() << instrument << qMakePair(item.UpperLimitPrice, item.LowerLimitPrice);
-            upperLowerLimitCache[instrument] = make_expires(qMakePair(item.UpperLimitPrice, item.LowerLimitPrice), getExpireTime());
+            upperLowerLimitCache[instrument] = qMakePair(item.UpperLimitPrice, item.LowerLimitPrice);
         }
     }
         break;
@@ -373,14 +374,9 @@ void CtpExecuter::timesUp(int index)
             login();
         }
 
-        QTimer::singleShot(10000, [=]() -> void {
+        QTimer::singleShot(5000, [=]() -> void {
             if (loggedIn) {
-                const auto keys = upperLowerLimitCache.keys();
-                for (const auto key : keys) {
-                    if (upperLowerLimitCache.value(key).expired()) {
-                        qryDepthMarketData(key);
-                    }
-                }
+                updateInstrumentDataCache();
             }
         });
         break;
@@ -811,8 +807,11 @@ QDateTime CtpExecuter::getExpireTime() const
  */
 void CtpExecuter::operate(const QString &instrument, int new_position)
 {
-    const double high = upperLowerLimitCache[instrument].originalValue().first;
-    const double low = upperLowerLimitCache[instrument].originalValue().second;
+    if (!upperLowerLimitCache.contains(instrument)) {
+        return;
+    }
+    const double high = upperLowerLimitCache[instrument].first;
+    const double low  = upperLowerLimitCache[instrument].second;
 
     int position = getPosition(instrument);
     int pending_order_pos = getPendingOrderVolume(instrument);
@@ -852,7 +851,11 @@ void CtpExecuter::operate(const QString &instrument, int new_position)
  */
 QString CtpExecuter::getTradingDay() const
 {
-    return pUserApi->GetTradingDay();
+    if (loggedIn) {
+        return pUserApi->GetTradingDay();
+    } else {
+        return INVALID_DATE_STRING;
+    }
 }
 
 /*!
@@ -862,11 +865,15 @@ QString CtpExecuter::getTradingDay() const
  *
  * \param instruments 合约代码列表
  */
-void CtpExecuter::updateInstrumentDataCache(const QStringList &instruments)
+void CtpExecuter::updateInstrumentDataCache()
 {
-    for (const auto &instrument : instruments) {
-        qryInstrument(instrument);
-        qryDepthMarketData(instrument);
+    if (loggedIn) {
+        upperLowerLimitCache.clear();
+        instrumentDataCache.clear();
+        qryInstrument();
+        qryDepthMarketData();
+    } else {
+        qWarning() << "UpdateInstrumentDataCache failed! Not logged in!";
     }
 }
 
@@ -909,17 +916,15 @@ QString CtpExecuter::getExpireDate(const QString &instrument)
  * 从缓存中查询合约的涨停价并返回
  *
  * \param instrument 合约代码
- * \return 涨停价 (如果缓存已过期返回-DBL_MAX)
+ * \return 涨停价 (如果缓存中查不到返回-DBL_MAX)
  */
 double CtpExecuter::getUpperLimit(const QString &instrument)
 {
     if (upperLowerLimitCache.contains(instrument)) {
-        const auto cache = upperLowerLimitCache.value(instrument);
-        if (!cache.expired()) {
-            return cache.originalValue().second;
-        }
+        return upperLowerLimitCache.value(instrument).second;
+    } else {
+        return -DBL_MAX;
     }
-    return -DBL_MAX;
 }
 
 /*!
@@ -927,17 +932,15 @@ double CtpExecuter::getUpperLimit(const QString &instrument)
  * 从缓存中查询合约的跌停价并返回
  *
  * \param instrument 合约代码
- * \return 跌停价 (如果缓存已过期返回DBL_MAX)
+ * \return 跌停价 (如果缓存中查不到返回DBL_MAX)
  */
 double CtpExecuter::getLowerLimit(const QString &instrument)
 {
     if (upperLowerLimitCache.contains(instrument)) {
-        const auto cache = upperLowerLimitCache.value(instrument);
-        if (!cache.expired()) {
-            return cache.originalValue().first;
-        }
+        return upperLowerLimitCache.value(instrument).first;
+    } else {
+        return DBL_MAX;
     }
-    return DBL_MAX;
 }
 
 int CtpExecuter::qryParkedOrder(const QString &instrument, const QString &exchangeID)
@@ -1079,14 +1082,9 @@ void CtpExecuter::parkSellLimit(const QString& instrument, int volume, double pr
  */
 void CtpExecuter::setPosition(const QString& instrument, int new_position)
 {
-    qDebug() << instrument << ":" << new_position;
-    target_pos_map.insert(instrument, new_position);
-    if (upperLowerLimitCache[instrument].expired()) {
-        qryDepthMarketData(instrument);
-        // TODO postEvent, call operate() in customEvent()
-    } else {
-        operate(instrument, new_position);
-    }
+    qDebug() << instrument << ":" << "new_position =" << new_position;
+    target_pos_map[instrument] = new_position;
+    operate(instrument, new_position);
 }
 
 /*!

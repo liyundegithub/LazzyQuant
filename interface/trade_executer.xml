@@ -24,7 +24,6 @@
       <arg type="d" direction="out"/>
     </method>
     <method name="updateInstrumentDataCache">
-      <arg name="instruments" type="as" direction="in"/>
     </method>
     <method name="getCachedInstruments">
       <arg type="as" direction="out"/>
