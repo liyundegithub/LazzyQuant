@@ -1,5 +1,6 @@
 #include <cmath>
 #include <cfloat>
+#include <QDate>
 #include <QDebug>
 
 #include "trading_calendar.h"
@@ -7,43 +8,71 @@
 
 extern TradingCalendar tradingCalendar;
 
-OptionPricing::OptionPricing(double r, double q, bool american) :
-    american(american), r(r), q(q)
+OptionPricing::OptionPricing(const QMultiMap<QString, int> &underlyingKMap) :
+    OptionIndex(underlyingKMap)
 {
-    //
+    pCallPrice = new S_SIGMA_PRICE[underlyingNum * kNum];
+    pPutPrice  = new S_SIGMA_PRICE[underlyingNum * kNum];
+
+    ppCallPrice = (S_SIGMA_PRICE **) malloc(underlyingNum * sizeof(S_SIGMA_PRICE*));
+    ppPutPrice  = (S_SIGMA_PRICE **) malloc(underlyingNum * sizeof(S_SIGMA_PRICE*));
+
+    for (int i = 0; i < underlyingNum; i++) {
+        ppCallPrice[i] = pCallPrice + i * kNum;
+        ppPutPrice[i]  = pPutPrice  + i * kNum;
+    }
 }
 
-void OptionPricing::generate(const QList<double> &kList, const QList<double> &s0List, const QList<double> &sigmaList, const QDate &startDate, const QDate &endDate, const int steps)
+OptionPricing::~OptionPricing()
 {
-    const int tradingDays = tradingCalendar.getTradingDays(startDate, endDate);
-    generate(kList, s0List, sigmaList, tradingDays / 365.0, steps);
+    delete[] pCallPrice;
+    delete[] pPutPrice;
+
+    free(ppCallPrice);
+    free(ppPutPrice);
 }
 
-void OptionPricing::generate(const QList<double> &kList, const QList<double> &s0List, const QList<double> &sigmaList, const double T, const int steps)
+void OptionPricing::setBasicParam(double r, double q, bool american)
 {
-    this->kList = kList;
-    this->kNum = kList.length();
+    this->american = american;
+    this->r = r;
+    this->q = q;
+}
+
+void OptionPricing::setS0AndSigma(const QList<double> &s0List, const QList<double> &sigmaList)
+{
     this->sList = s0List;
     std::sort(this->sList.begin(), this->sList.end());
     this->sNum = sList.length();
+
     this->sigmaList = sigmaList;
     std::sort(this->sigmaList.begin(), this->sigmaList.end());
     this->sigmaNum = sigmaList.length();
+}
 
-    for (const auto sigma : sigmaList) {
+void OptionPricing::generate(const QString &underlyingID, const QDate &startDate, const QDate &endDate, int daysInOneYear, int steps)
+{
+    int underlyingIdx = getIdxByUnderlyingID(underlyingID);
+    const int tradingDays = tradingCalendar.getTradingDays(startDate, endDate);
+    generate(underlyingIdx, ((double)tradingDays) / ((double)daysInOneYear), steps);
+}
+
+void OptionPricing::generate(int underlyingIdx, double T, int steps)
+{
+    for (const auto sigma : qAsConst(sigmaList)) {
         dt = T / steps;
         a = exp((r - q) * dt);
         u = exp(sigma * sqrt(dt));
         d = exp(-sigma * sqrt(dt));
         p = (a - d) / (u - d);
 
-        for (const auto s0 : s0List) {
-            generate(kList, s0, sigma, steps);
+        for (const auto s0 : qAsConst(sList)) {
+            generate(underlyingIdx, s0, sigma, steps);
         }
     }
 }
 
-void OptionPricing::generate(const QList<double> &kList, const double s0, const double sigma, const int steps)
+void OptionPricing::generate(int underlyingIdx, double s0, double sigma, int steps)
 {
     const int length = (steps + 1);
     const int block_size = length * length;
@@ -67,7 +96,8 @@ void OptionPricing::generate(const QList<double> &kList, const double s0, const 
         }
     }
 
-    for (const auto K : kList) {
+    for (int kIdx = 0; kIdx < kNum; kIdx ++) {
+        int K = pK[kIdx];
         for (int j = 0; j <= steps; j++) {
             C[steps][j] = qMax(S[steps][j] - K, 0.0);
             P[steps][j] = qMax(K - S[steps][j], 0.0);
@@ -84,8 +114,8 @@ void OptionPricing::generate(const QList<double> &kList, const double s0, const 
             }
         }
 
-        callPriceMap[K][s0][sigma] = C[0][0];
-        putPriceMap[K][s0][sigma] = P[0][0];
+        ppCallPrice[underlyingIdx][kIdx][s0][sigma] = C[0][0];
+        ppPutPrice[underlyingIdx][kIdx][s0][sigma] = P[0][0];
     }
 
     free(ptr_block);
@@ -116,13 +146,20 @@ QPair<double, double> OptionPricing::findSigma(const double sigma)
     return qMakePair(sigmaList[sigmaNum - 2], sigmaList[sigmaNum - 1]);
 }
 
-double OptionPricing::getPrice(const double k, const double s, const double sigma, const OPTION_TYPE type)
+double OptionPricing::getPrice(const QString &underlyingID, const OPTION_TYPE type, int K, double s, double sigma)
 {
-    if (!kList.contains(k)) {
-        qDebug() << "No such exercise price! K =" << k;
+    if (!kList.contains(K)) {
+        qDebug() << "No such exercise price! K =" << K;
         return -DBL_MAX;
     }
 
+    int underlyingIdx = getIdxByUnderlyingID(underlyingID);
+    int kIdx = getIdxByK(K);
+    return getPriceByIdx(underlyingIdx, type, kIdx, s, sigma);
+}
+
+double OptionPricing::getPriceByIdx(int underlyingIdx, const OPTION_TYPE type, int kIdx, double s, double sigma)
+{
     const auto s1s2 = findS(s);
     const auto s1 = s1s2.first;
     const auto s2 = s1s2.second;
@@ -130,12 +167,11 @@ double OptionPricing::getPrice(const double k, const double s, const double sigm
     const auto sigma1 = sigma1sigma2.first;
     const auto sigma2 = sigma1sigma2.second;
 
-    //     S          sigma    price
-    QMap<double, QMap<double, double>> *priceMap;
+    S_SIGMA_PRICE *priceMap;
     if (type == CALL_OPT) {
-        priceMap = &(callPriceMap[k]);
+        priceMap = &(ppCallPrice[underlyingIdx][kIdx]);
     } else {
-        priceMap = &(putPriceMap[k]);
+        priceMap = &(ppPutPrice[underlyingIdx][kIdx]);
     }
 
     const auto s1sigma1 = (*priceMap)[s1][sigma1];
@@ -154,13 +190,20 @@ double OptionPricing::getPrice(const double k, const double s, const double sigm
     return sum / (s2 - s1) / (sigma2 - sigma1);
 }
 
-double OptionPricing::getSigma(const double k, const double s, const double price, const OPTION_TYPE type)
+double OptionPricing::getSigma(const QString &underlyingID, const OPTION_TYPE type, int K, double s, double price)
 {
-    if (!kList.contains(k)) {
-        qDebug() << "No such exercise price! K =" << k;
+    if (!kList.contains(K)) {
+        qDebug() << "No such exercise price! K =" << K;
         return -DBL_MAX;
     }
 
+    int underlyingIdx = getIdxByUnderlyingID(underlyingID);
+    int kIdx = getIdxByK(K);
+    return getSigmaByIdx(underlyingIdx, type, kIdx, s, price);
+}
+
+double OptionPricing::getSigmaByIdx(int underlyingIdx, const OPTION_TYPE type, int kIdx, double s, double price)
+{
     const auto s1s2 = findS(s);
     const auto s1 = s1s2.first;
     const auto s2 = s1s2.second;
@@ -170,11 +213,11 @@ double OptionPricing::getSigma(const double k, const double s, const double pric
     QMap<double, double> *s2PriceMap;
 
     if (type == CALL_OPT) {
-        s1PriceMap = &(callPriceMap[k][s1]);
-        s2PriceMap = &(callPriceMap[k][s2]);
+        s1PriceMap = &(ppCallPrice[underlyingIdx][kIdx][s1]);
+        s2PriceMap = &(ppCallPrice[underlyingIdx][kIdx][s2]);
     } else {
-        s1PriceMap = &(putPriceMap[k][s1]);
-        s2PriceMap = &(putPriceMap[k][s2]);
+        s1PriceMap = &(ppPutPrice[underlyingIdx][kIdx][s1]);
+        s2PriceMap = &(ppPutPrice[underlyingIdx][kIdx][s2]);
     }
 
     QMap<double, double> iPriceMap;

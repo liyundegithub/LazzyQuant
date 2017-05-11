@@ -14,7 +14,12 @@ SOURCES += main.cpp \
     ../common/trading_calendar.cpp \
     option_arbitrageur.cpp \
     option_pricing.cpp \
-    option_helper.cpp
+    option_helper.cpp \
+    high_frequency.cpp \
+    risk_free.cpp \
+    depth_market.cpp \
+    base_strategy.cpp \
+    option_index.cpp
 
 INCLUDEPATH += ../ ../common/
 DBUS_INTERFACES += ../interface/market_watcher.xml ../interface/trade_executer.xml
@@ -26,4 +31,9 @@ HEADERS += ../config.h \
     ../common/trading_calendar.h \
     option_arbitrageur.h \
     option_pricing.h \
-    option_helper.h
+    option_helper.h \
+    high_frequency.h \
+    risk_free.h \
+    depth_market.h \
+    base_strategy.h \
+    option_index.h

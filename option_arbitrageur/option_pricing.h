@@ -2,37 +2,47 @@
 #define OPTION_PRICING_H
 
 #include "utility.h"
+#include "option_index.h"
 
-#include <QDate>
-#include <QMap>
 #include <QPair>
 
-class OptionPricing
+class QDate;
+
+//             S          sigma    price
+typedef QMap<double, QMap<double, double>> S_SIGMA_PRICE;
+
+class OptionPricing : OptionIndex
 {
 public:
-    explicit OptionPricing(double r, double q = 0, bool american = true);
+    explicit OptionPricing(const QMultiMap<QString, int> &underlyingKMap);
+    ~OptionPricing();
 
-    void generate(const QList<double> &kList, const QList<double> &s0List, const QList<double> &sigmaList, const QDate &startDate, const QDate &endDate, const int steps = 100);
-    void generate(const QList<double> &kList, const QList<double> &s0List, const QList<double> &sigmaList, const double T, const int steps);
+    void setBasicParam(double r, double q = 0, bool american = true);
+    void setS0AndSigma(const QList<double> &s0List, const QList<double> &sigmaList);
 
-    double getPrice(const double k, const double s, const double sigma, const OPTION_TYPE type);
-    double getSigma(const double k, const double s, const double price, const OPTION_TYPE type);
+    void generate(const QString &underlyingID, const QDate &startDate, const QDate &endDate, int daysInOneYear = 365, int steps = 100);
+    void generate(int underlyingIdx, double T, int steps);
+
+    double getPrice(const QString &underlyingID, const OPTION_TYPE type, int K, double s, double sigma);
+    double getPriceByIdx(int underlyingIdx, const OPTION_TYPE type, int kIdx, double s, double sigma);
+    double getSigma(const QString &underlyingID, const OPTION_TYPE type, int K, double s, double price);
+    double getSigmaByIdx(int underlyingIdx, const OPTION_TYPE type, int kIdx, double s, double price);
 
 protected:
     bool american;
     double r, q, dt;
     double a, p, u, d;
 
-    void generate(const QList<double> &kList, const double s0, const double sigma, const int steps);
+    void generate(int underlyingIdx, double s0, double sigma, int steps);
     QPair<double, double> findS(const double s);
     QPair<double, double> findSigma(const double sigma);
 
-    //     K            S          sigma    price
-    QMap<double, QMap<double, QMap<double, double>>> callPriceMap;
-    QMap<double, QMap<double, QMap<double, double>>> putPriceMap;
+    S_SIGMA_PRICE *pCallPrice;
+    S_SIGMA_PRICE *pPutPrice;
 
-    QList<double> kList;
-    int kNum;
+    S_SIGMA_PRICE **ppCallPrice;
+    S_SIGMA_PRICE **ppPutPrice;
+
     QList<double> sList;
     int sNum;
     QList<double> sigmaList;
