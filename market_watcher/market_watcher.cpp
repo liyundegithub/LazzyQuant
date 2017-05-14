@@ -107,6 +107,7 @@ MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, const bool replayMode, Q
     loggedIn = false;
 
     pUserApi->Init();
+    localTime.start();
 }
 
 MarketWatcher::~MarketWatcher()
@@ -364,8 +365,11 @@ void MarketWatcher::processDepthMarketData(const CThostFtdcDepthMarketDataField&
                            depthMarketDataField.BidPrice1,
                            depthMarketDataField.BidVolume1);
 
-        if (saveDepthMarketData)
-            depthMarketDataListMap[instrumentID].append(depthMarketDataField);
+        if (saveDepthMarketData) {
+            auto mdToSave = depthMarketDataField;
+            *((int*)mdToSave.ActionDay) = localTime.elapsed();  // Add timestamp
+            depthMarketDataListMap[instrumentID].append(mdToSave);
+        }
     }
 }
 
@@ -520,7 +524,11 @@ void MarketWatcher::startReplay(const QString &date, bool realSpeed)
     std::stable_sort(mdList.begin(), mdList.end(), [](const auto &item1, const auto &item2) -> bool {
         int ret = QString::compare(item1.UpdateTime, item2.UpdateTime);
         if (ret == 0) {
-            return item1.UpdateMillisec < item2.UpdateMillisec;
+            if (item1.UpdateMillisec == item2.UpdateMillisec) {
+                return *((int*)item1.ActionDay) < *((int*)item2.ActionDay); // 比较本地时间戳
+            } else {
+                return item1.UpdateMillisec < item2.UpdateMillisec;
+            }
         } else {
             return ret < 0;
         }

@@ -6,10 +6,10 @@
 #include <QStringList>
 #include <QSet>
 #include <QMap>
+#include <QTime>
 
 class QSettings;
 class QTimer;
-class QTime;
 class CThostFtdcMdApi;
 class CTickReceiver;
 struct CThostFtdcDepthMarketDataField;
@@ -40,6 +40,7 @@ protected:
 
     bool saveDepthMarketData;
     QString saveDepthMarketDataPath;
+    QTime localTime;    // 用来在保存行情数据时生成一个本地的时间戳, 以记录行情到达的先后顺序
     QMap<QString, QList<CThostFtdcDepthMarketDataField>> depthMarketDataListMap;
 
     MultipleTimer *multiTimer;

@@ -14,26 +14,34 @@
 #define RSP_SETTLEMENT_INFO                 (QEvent::User + 6)
 #define RSP_SETTLEMENT_CONFIRM              (QEvent::User + 7)
 #define RSP_TRADING_ACCOUNT                 (QEvent::User + 8)
-#define RSP_QRY_INSTRUMENT_COMMISSION_RATE  (QEvent::User + 9)
-#define RSP_QRY_INSTRUMENT                  (QEvent::User + 10)
-#define RSP_DEPTH_MARKET_DATA               (QEvent::User + 11)
-#define RSP_ORDER_INSERT                    (QEvent::User + 12)
-#define RSP_ORDER_ACTION                    (QEvent::User + 13)
-#define RSP_PARKED_ORDER_INSERT             (QEvent::User + 14)
-#define RSP_PARKED_ORDER_ACTION             (QEvent::User + 15)
-#define RSP_REMOVE_PARKED_ORDER             (QEvent::User + 16)
-#define RSP_REMOVE_PARKED_ORDER_ACTION      (QEvent::User + 17)
-#define ERR_RTN_ORDER_INSERT                (QEvent::User + 18)
-#define ERR_RTN_ORDER_ACTION                (QEvent::User + 19)
-#define RTN_ORDER                           (QEvent::User + 20)
-#define RTN_TRADE                           (QEvent::User + 21)
-#define RSP_QRY_ORDER                       (QEvent::User + 22)
-#define RSP_QRY_TRADE                       (QEvent::User + 23)
-#define RSP_QRY_PARKED_ORDER                (QEvent::User + 24)
-#define RSP_QRY_PARKED_ORDER_ACTION         (QEvent::User + 25)
-#define RSP_QRY_POSITION                    (QEvent::User + 26)
-#define RSP_QRY_POSITION_DETAIL             (QEvent::User + 27)
-#define RSP_QRY_MAX_ORDER_VOL               (QEvent::User + 28)
+#define RSP_QRY_INSTRUMENT_MARGIN_RATE      (QEvent::User + 9)
+#define RSP_QRY_INSTRUMENT_COMMISSION_RATE  (QEvent::User + 10)
+#define RSP_QRY_INSTRUMENT                  (QEvent::User + 11)
+#define RSP_DEPTH_MARKET_DATA               (QEvent::User + 12)
+#define RSP_ORDER_INSERT                    (QEvent::User + 13)
+#define RSP_ORDER_ACTION                    (QEvent::User + 14)
+#define RSP_PARKED_ORDER_INSERT             (QEvent::User + 15)
+#define RSP_PARKED_ORDER_ACTION             (QEvent::User + 16)
+#define RSP_REMOVE_PARKED_ORDER             (QEvent::User + 17)
+#define RSP_REMOVE_PARKED_ORDER_ACTION      (QEvent::User + 18)
+#define ERR_RTN_ORDER_INSERT                (QEvent::User + 19)
+#define ERR_RTN_ORDER_ACTION                (QEvent::User + 20)
+#define RTN_ORDER                           (QEvent::User + 21)
+#define RTN_TRADE                           (QEvent::User + 22)
+#define RSP_QRY_ORDER                       (QEvent::User + 23)
+#define RSP_QRY_TRADE                       (QEvent::User + 24)
+#define RSP_QRY_PARKED_ORDER                (QEvent::User + 25)
+#define RSP_QRY_PARKED_ORDER_ACTION         (QEvent::User + 26)
+#define RSP_QRY_POSITION                    (QEvent::User + 27)
+#define RSP_QRY_POSITION_DETAIL             (QEvent::User + 28)
+#define RSP_QRY_MAX_ORDER_VOL               (QEvent::User + 29)
+#define RSP_EXEC_ORDER_INSERT               (QEvent::User + 30)
+#define RSP_EXEC_ORDER_ACTION               (QEvent::User + 31)
+#define RSP_FOR_QUOTE_INSERT                (QEvent::User + 32)
+#define RTN_EXEC_ORDER                      (QEvent::User + 33)
+#define ERR_RTN_EXEC_ORDER_INSERT           (QEvent::User + 34)
+#define ERR_RTN_EXEC_ORDER_ACTION           (QEvent::User + 35)
+#define ERR_RTN_FOR_QUOTE_INSERT            (QEvent::User + 36)
 
 struct RspInfo {
     const int errorID;
@@ -111,6 +119,16 @@ public:
         QEvent(QEvent::Type(RSP_TRADING_ACCOUNT)),
         RspInfo(err, id),
         tradingAccount(*pTradingAccount) {}
+};
+
+class RspQryInstrumentMarginRateEvent : public QEvent, public RspInfo {
+public:
+    const QList<CThostFtdcInstrumentMarginRateField> instrumentMarginRateList;
+
+    RspQryInstrumentMarginRateEvent(const QList<CThostFtdcInstrumentMarginRateField> &list, int err, int id) :
+        QEvent(QEvent::Type(RSP_QRY_INSTRUMENT_MARGIN_RATE)),
+        RspInfo(err, id),
+        instrumentMarginRateList(list) {}
 };
 
 class RspQryInstrumentCommissionRateEvent : public QEvent, public RspInfo {
@@ -311,11 +329,81 @@ public:
         maxOrderVolumeField(*pQueryMaxOrderVolume) {}
 };
 
+class RspExecOrderInsertEvent : public QEvent, public RspInfo {
+public:
+    const CThostFtdcInputExecOrderField inputExecOrderField;
+
+    RspExecOrderInsertEvent(CThostFtdcInputExecOrderField *pInputExecOrder, int err, int id) :
+        QEvent(QEvent::Type(RSP_EXEC_ORDER_INSERT)),
+        RspInfo(err, id),
+        inputExecOrderField(*pInputExecOrder) {}
+};
+
+class RspExecOrderActionEvent : public QEvent, public RspInfo {
+public:
+    const CThostFtdcInputExecOrderActionField inputExecOrderActionField;
+
+    RspExecOrderActionEvent(CThostFtdcInputExecOrderActionField *pInputExecOrderAction, int err, int id) :
+        QEvent(QEvent::Type(RSP_EXEC_ORDER_ACTION)),
+        RspInfo(err, id),
+        inputExecOrderActionField(*pInputExecOrderAction) {}
+};
+
+class RspForQuoteInsertEvent : public QEvent, public RspInfo {
+public:
+    const CThostFtdcInputForQuoteField inputForQuoteField;
+
+    RspForQuoteInsertEvent(CThostFtdcInputForQuoteField *pInputForQuote, int err, int id) :
+        QEvent(QEvent::Type(RSP_FOR_QUOTE_INSERT)),
+        RspInfo(err, id),
+        inputForQuoteField(*pInputForQuote) {}
+};
+
+class RtnExecOrderEvent : public QEvent {
+public:
+    const CThostFtdcExecOrderField execOrderField;
+
+    explicit RtnExecOrderEvent(CThostFtdcExecOrderField *pExecOrderField) :
+        QEvent(QEvent::Type(RTN_EXEC_ORDER)),
+        execOrderField(*pExecOrderField) {}
+};
+
+class ErrRtnExecOrderInsertEvent : public QEvent, public RspInfo {
+public:
+    const CThostFtdcInputExecOrderField pInputExecOrderField;
+
+    ErrRtnExecOrderInsertEvent(CThostFtdcInputExecOrderField *pInputExecOrder, int err, int id) :
+        QEvent(QEvent::Type(ERR_RTN_EXEC_ORDER_INSERT)),
+        RspInfo(err, id),
+        pInputExecOrderField(*pInputExecOrder) {}
+};
+
+class ErrRtnExecOrderActionEvent : public QEvent, public RspInfo {
+public:
+    const CThostFtdcExecOrderActionField pExecOrderActionField;
+
+    ErrRtnExecOrderActionEvent(CThostFtdcExecOrderActionField *pExecOrderAction, int err, int id) :
+        QEvent(QEvent::Type(ERR_RTN_EXEC_ORDER_ACTION)),
+        RspInfo(err, id),
+        pExecOrderActionField(*pExecOrderAction) {}
+};
+
+class ErrRtnForQuoteInsertEvent : public QEvent, public RspInfo {
+public:
+    const CThostFtdcInputForQuoteField pInputForQuoteField;
+
+    ErrRtnForQuoteInsertEvent(CThostFtdcInputForQuoteField *pInputForQuote, int err, int id) :
+        QEvent(QEvent::Type(ERR_RTN_FOR_QUOTE_INSERT)),
+        RspInfo(err, id),
+        pInputForQuoteField(*pInputForQuote) {}
+};
+
 class CTradeHandler : public CThostFtdcTraderSpi {
     QObject * const receiver;
 
     int lastRequestID;
     QList<CThostFtdcSettlementInfoField> settlementInfoList;
+    QList<CThostFtdcInstrumentMarginRateField> instrumentMarginRateList;
     QList<CThostFtdcInstrumentCommissionRateField> instrumentCommissionRateList;
     QList<CThostFtdcInstrumentField> instrumentList;
     QList<CThostFtdcDepthMarketDataField> depthMarketDataList;
@@ -351,6 +439,7 @@ public:
     void OnRspQrySettlementInfoConfirm(CThostFtdcSettlementInfoConfirmField *pSettlementInfoConfirm, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
 
     void OnRspQryTradingAccount(CThostFtdcTradingAccountField *pTradingAccount, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
+    void OnRspQryInstrumentMarginRate(CThostFtdcInstrumentMarginRateField *pInstrumentMarginRate, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
     void OnRspQryInstrumentCommissionRate(CThostFtdcInstrumentCommissionRateField *pInstrumentCommissionRate, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
     void OnRspQryInstrument(CThostFtdcInstrumentField *pInstrument, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
     void OnRspQryDepthMarketData(CThostFtdcDepthMarketDataField *pDepthMarketData, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
@@ -376,6 +465,15 @@ public:
     void OnRspQryInvestorPosition(CThostFtdcInvestorPositionField *pInvestorPosition, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
     void OnRspQryInvestorPositionDetail(CThostFtdcInvestorPositionDetailField *pInvestorPositionDetail, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
     void OnRspQueryMaxOrderVolume(CThostFtdcQueryMaxOrderVolumeField *pQueryMaxOrderVolume, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
+
+    void OnRspExecOrderInsert(CThostFtdcInputExecOrderField *pInputExecOrder, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
+    void OnRspExecOrderAction(CThostFtdcInputExecOrderActionField *pInputExecOrderAction, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
+    void OnRspForQuoteInsert(CThostFtdcInputForQuoteField *pInputForQuote, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
+    void OnRtnExecOrder(CThostFtdcExecOrderField *pExecOrder);
+
+    void OnErrRtnExecOrderInsert(CThostFtdcInputExecOrderField *pInputExecOrder, CThostFtdcRspInfoField *pRspInfo);
+    void OnErrRtnExecOrderAction(CThostFtdcExecOrderActionField *pExecOrderAction, CThostFtdcRspInfoField *pRspInfo);
+    void OnErrRtnForQuoteInsert(CThostFtdcInputForQuoteField *pInputForQuote, CThostFtdcRspInfoField *pRspInfo);
 };
 
 #endif // TRADE_HANDLER_H

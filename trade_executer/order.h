@@ -7,9 +7,6 @@
 class QString;
 
 class Order {
-    Order();
-
-public:
     int vol;
     int vol_remain;
     TThostFtdcOrderRefType ref;
@@ -19,6 +16,7 @@ public:
     TThostFtdcDirectionType direction;
     TThostFtdcOrderStatusType status;
 
+public:
     Order(const CThostFtdcOrderField &field);
     Order(const Order &other);
 
@@ -32,6 +30,10 @@ public:
         } else {
             return -vol_remain;
         }
+    }
+
+    TThostFtdcOrderStatusType getStatus() const {
+        return status;
     }
 };
 

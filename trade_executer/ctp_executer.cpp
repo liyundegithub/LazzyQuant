@@ -7,7 +7,6 @@
 #include <QtConcurrentRun>
 
 #include "config_struct.h"
-#include "utility.h"
 #include "multiple_timer.h"
 #include "ctp_executer.h"
 #include "trade_executer_adaptor.h"
@@ -137,9 +136,10 @@ void CtpExecuter::customEvent(QEvent *event)
 
             qDebug() << DATE_TIME << "OnUserLogin OK! FrontID = " << FrontID << ", SessionID = " << SessionID;
 
-            confirmSettlementInfo();
+            settlementInfoConfirm();
             QTimer::singleShot(1000, this, SLOT(qryOrder()));
             QTimer::singleShot(2000, this, SLOT(qryPositionDetail()));
+            QTimer::singleShot(5000, this, &CtpExecuter::updateInstrumentDataCache);
         } else {
             qDebug() << DATE_TIME << "OnUserLogin: ErrorID = " << uevent->errorID;
         }
@@ -169,11 +169,19 @@ void CtpExecuter::customEvent(QEvent *event)
         qDebug() << "available = " << available;
     }
         break;
+    case RSP_QRY_INSTRUMENT_MARGIN_RATE:
+    {
+        auto *qmevent = static_cast<RspQryInstrumentMarginRateEvent*>(event);
+        for (const auto &item : qmevent->instrumentMarginRateList) {
+            qDebug() << item.InstrumentID << item.LongMarginRatioByMoney << item.LongMarginRatioByVolume << item.ShortMarginRatioByMoney << item.ShortMarginRatioByVolume;
+        }
+    }
+        break;
     case RSP_QRY_INSTRUMENT_COMMISSION_RATE:
     {
         auto *qcevent = static_cast<RspQryInstrumentCommissionRateEvent*>(event);
         for (const auto &item : qcevent->instrumentCommissionRateList) {
-            qDebug() << item.InstrumentID << item.OpenRatioByMoney << item.OpenRatioByVolume;
+            qDebug() << item.InstrumentID << item.OpenRatioByMoney << item.OpenRatioByVolume << item.CloseRatioByMoney << item.CloseRatioByVolume;
         }
     }
         break;
@@ -277,10 +285,10 @@ void CtpExecuter::customEvent(QEvent *event)
     case RSP_QRY_ORDER:
     {
         auto *qoevent = static_cast<QryOrderEvent*>(event);
-        order_map.clear();
+
         for (const auto &item : qoevent->orderList) {
-            order_map.insert(item.InstrumentID, Expires<Order>(item, getExpireTime()));
-            qDebug() << item.OrderStatus << QTextCodec::codecForName("GBK")->toUnicode(item.StatusMsg);
+            orderMap.insert(item.InstrumentID, item);
+            qDebug() << item.InstrumentID << QTextCodec::codecForName("GBK")->toUnicode(item.StatusMsg);
         }
     }
         break;
@@ -357,6 +365,20 @@ void CtpExecuter::customEvent(QEvent *event)
         auto *qmevent = static_cast<QryMaxOrderVolumeEvent*>(event);
         qDebug() << qmevent->maxOrderVolumeField.InstrumentID << qmevent->maxOrderVolumeField.MaxVolume;
     }
+        break;
+    case RSP_EXEC_ORDER_INSERT:
+        break;
+    case RSP_EXEC_ORDER_ACTION:
+        break;
+    case RSP_FOR_QUOTE_INSERT:
+        break;
+    case RTN_EXEC_ORDER:
+        break;
+    case ERR_RTN_EXEC_ORDER_INSERT:
+        break;
+    case ERR_RTN_EXEC_ORDER_ACTION:
+        break;
+    case ERR_RTN_FOR_QUOTE_INSERT:
         break;
     default:
         QObject::customEvent(event);
@@ -464,12 +486,12 @@ int CtpExecuter::qrySettlementInfo()
 }
 
 /*!
- * \brief CtpExecuter::confirmSettlementInfo
+ * \brief CtpExecuter::settlementInfoConfirm
  * 发送投资者结算结果确认请求
  *
  * \return nRequestID
  */
-int CtpExecuter::confirmSettlementInfo()
+int CtpExecuter::settlementInfoConfirm()
 {
     CThostFtdcSettlementInfoConfirmField confirmField;
     memset(&confirmField, 0, sizeof (CThostFtdcSettlementInfoConfirmField));
@@ -514,6 +536,25 @@ int CtpExecuter::qryTradingAccount()
     strcpy(pField->InvestorID, c_userID);
 
     return callTraderApi(&CThostFtdcTraderApi::ReqQryTradingAccount, pField);
+}
+
+/*!
+ * \brief CtpExecuter::qryInstrumenMarginRate
+ * 发送查询保证金率请求(投机)
+ *
+ * \param instrument 合约代码(为空代表所有持仓合约)
+ * \return nRequestID
+ */
+int CtpExecuter::qryInstrumentMarginRate(const QString &instrument)
+{
+    auto * pField = (CThostFtdcQryInstrumentMarginRateField*) malloc(sizeof(CThostFtdcQryInstrumentMarginRateField));
+    memset(pField, 0, sizeof (CThostFtdcQryInstrumentMarginRateField));
+    strcpy(pField->BrokerID, c_brokerID);
+    strcpy(pField->InvestorID, c_userID);
+    strcpy(pField->InstrumentID, instrument.toLatin1().data());
+    pField->HedgeFlag = THOST_FTDC_HF_Speculation;
+
+    return callTraderApi(&CThostFtdcTraderApi::ReqQryInstrumentMarginRate, pField);
 }
 
 /*!
@@ -613,8 +654,8 @@ int CtpExecuter::insertLimitOrder(const QString &instrument, bool open, int volu
 }
 
 /*!
- * \brief CtpExecuter::cancelOrder
- * 撤单
+ * \brief CtpExecuter::orderAction
+ * 操作报单(仅支持撤单)
  *
  * \param orderRef 报单引用(TThostFtdcOrderRefType)
  * \param frontID 前置编号
@@ -622,7 +663,7 @@ int CtpExecuter::insertLimitOrder(const QString &instrument, bool open, int volu
  * \param instrument 合约代码
  * \return nRequestID
  */
-int CtpExecuter::cancelOrder(char* orderRef, int frontID, int sessionID, const QString &instrument)
+int CtpExecuter::orderAction(char* orderRef, int frontID, int sessionID)
 {
     CThostFtdcInputOrderActionField orderAction;
     memset(&orderAction, 0, sizeof(CThostFtdcInputOrderActionField));
@@ -632,7 +673,6 @@ int CtpExecuter::cancelOrder(char* orderRef, int frontID, int sessionID, const Q
     orderAction.FrontID = frontID;
     orderAction.SessionID = sessionID;
     orderAction.ActionFlag = THOST_FTDC_AF_Delete;
-    strcpy(orderAction.InstrumentID, instrument.toLatin1().data());
 
     int id = nRequestID.fetchAndAddRelaxed(1);
     traderApiMutex.lock();
@@ -782,6 +822,51 @@ int CtpExecuter::qryPositionDetail(const QString &instrument)
     return callTraderApi(&CThostFtdcTraderApi::ReqQryInvestorPositionDetail, pField);
 }
 
+int CtpExecuter::insertExecOrder(const QString &instrument, OPTION_TYPE type, int volume)
+{
+    CThostFtdcInputExecOrderField exc;
+    memset(&exc, 0, sizeof(CThostFtdcInputExecOrderField));
+    strcpy(exc.BrokerID, c_brokerID);
+    strcpy(exc.InvestorID, c_userID);
+    strcpy(exc.InstrumentID, instrument.toLatin1().data());
+    //memcpy(exc.ExecOrderRef, )
+    exc.OffsetFlag = THOST_FTDC_OF_Close;
+    exc.HedgeFlag = THOST_FTDC_HF_Speculation;
+    exc.ActionType = THOST_FTDC_ACTP_Exec;
+    if (type == CALL_OPT) {
+        exc.PosiDirection = THOST_FTDC_PD_Long;
+    } else {
+        exc.PosiDirection = THOST_FTDC_PD_Short;
+    }
+
+    exc.ReservePositionFlag = THOST_FTDC_EOPF_Reserve;
+    exc.CloseFlag = THOST_FTDC_EOCF_NotToClose;
+
+    int id = nRequestID.fetchAndAddRelaxed(1);
+    traderApiMutex.lock();
+    int ret = pUserApi->ReqExecOrderInsert(&exc, id);
+    traderApiMutex.unlock();
+    Q_UNUSED(ret);
+    return id;
+}
+
+int CtpExecuter::insertQuote(const QString &instrument)
+{
+    CThostFtdcInputForQuoteField quote;
+    memset(&quote, 0, sizeof(CThostFtdcInputForQuoteField));
+    strcpy(quote.BrokerID, c_brokerID);
+    strcpy(quote.InvestorID, c_userID);
+    strcpy(quote.InstrumentID, instrument.toLatin1().data());
+    //memcpy(quote.ForQuoteRef, )
+
+    int id = nRequestID.fetchAndAddRelaxed(1);
+    traderApiMutex.lock();
+    int ret = pUserApi->ReqForQuoteInsert(&quote, id);
+    traderApiMutex.unlock();
+    Q_UNUSED(ret);
+    return id;
+}
+
 /*!
  * \brief CtpExecuter::getExpireTime
  * 根据TradingDay生成过期时间(下午5点过期)
@@ -855,6 +940,24 @@ QString CtpExecuter::getTradingDay() const
         return pUserApi->GetTradingDay();
     } else {
         return INVALID_DATE_STRING;
+    }
+}
+
+void CtpExecuter::confirmSettlementInfo()
+{
+    if (loggedIn) {
+        settlementInfoConfirm();
+    } else {
+        qWarning() << "ConfirmSettleInfo failed! Not logged in!";
+    }
+}
+
+void CtpExecuter::updateAccountInfo()
+{
+    if (loggedIn) {
+        qryTradingAccount();
+    } else {
+        qWarning() << "UpdateAccountInfo failed! Not logged in!";
     }
 }
 
@@ -941,6 +1044,24 @@ double CtpExecuter::getLowerLimit(const QString &instrument)
     } else {
         return DBL_MAX;
     }
+}
+
+void CtpExecuter::updateOrderMap(const QString &instrument)
+{
+    if (!loggedIn) {
+        return;
+    }
+
+    if (instrument == "") {
+        orderMap.clear();
+    } else {
+        const auto keys = orderMap.uniqueKeys();
+        for (const auto key : keys) {
+            orderMap.remove(key);
+        }
+    }
+
+    qryOrder(instrument);
 }
 
 int CtpExecuter::qryParkedOrder(const QString &instrument, const QString &exchangeID)
@@ -1114,20 +1235,44 @@ int CtpExecuter::getPosition(const QString& instrument) const
 int CtpExecuter::getPendingOrderVolume(const QString &instrument) const
 {
     int sum = 0;
-    const auto orderList = order_map.values(instrument);
-    for (const auto& item : orderList) {
-        if (item.expired()) {
-            continue;
-        }
-        auto order = item.originalValue();
-        if (order.status == THOST_FTDC_OST_PartTradedQueueing ||
-                order.status == THOST_FTDC_OST_NoTradeQueueing ||
-                order.status == THOST_FTDC_OST_Unknown)
+    const auto orderList = orderMap.values(instrument);
+    for (const auto& order : orderList) {
+        const auto status = order.getStatus();
+        if (status == THOST_FTDC_OST_PartTradedQueueing ||
+            status == THOST_FTDC_OST_NoTradeQueueing ||
+            status == THOST_FTDC_OST_Unknown)
         {
             sum += order.remainVolume();
         }
     }
     return sum;
+}
+
+void CtpExecuter::execOption(const QString &instrument, int volume)
+{
+    if (loggedIn) {
+        if (isOption(instrument)) {
+            QString underlyingID;
+            OPTION_TYPE type;
+            int K;
+            if (parseOptionID(instrument, underlyingID, type, K)) {
+                insertExecOrder(instrument, type, volume);
+            }
+        } else {
+            qWarning() << instrument << "is not option!";
+        }
+    } else {
+        qWarning() << "Execute option failed! Not logged in!";
+    }
+}
+
+void CtpExecuter::quote(const QString &instrument)
+{
+    if (loggedIn) {
+        insertQuote(instrument);
+    } else {
+        qWarning() << "Quote failed! Not logged in!";
+    }
 }
 
 /*!

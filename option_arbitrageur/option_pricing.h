@@ -23,10 +23,10 @@ public:
     void generate(const QString &underlyingID, const QDate &startDate, const QDate &endDate, int daysInOneYear = 365, int steps = 100);
     void generate(int underlyingIdx, double T, int steps);
 
-    double getPrice(const QString &underlyingID, const OPTION_TYPE type, int K, double s, double sigma);
-    double getPriceByIdx(int underlyingIdx, const OPTION_TYPE type, int kIdx, double s, double sigma);
-    double getSigma(const QString &underlyingID, const OPTION_TYPE type, int K, double s, double price);
-    double getSigmaByIdx(int underlyingIdx, const OPTION_TYPE type, int kIdx, double s, double price);
+    double getPrice(const QString &underlyingID, const OPTION_TYPE type, int K, double s, double sigma) const;
+    double getPriceByIdx(int underlyingIdx, const OPTION_TYPE type, int kIdx, double s, double sigma) const;
+    double getSigma(const QString &underlyingID, const OPTION_TYPE type, int K, double s, double price) const;
+    double getSigmaByIdx(int underlyingIdx, const OPTION_TYPE type, int kIdx, double s, double price) const;
 
 protected:
     bool american;
@@ -34,8 +34,8 @@ protected:
     double a, p, u, d;
 
     void generate(int underlyingIdx, double s0, double sigma, int steps);
-    QPair<double, double> findS(const double s);
-    QPair<double, double> findSigma(const double sigma);
+    QPair<double, double> findS(const double s) const;
+    QPair<double, double> findSigma(const double sigma) const;
 
     S_SIGMA_PRICE *pCallPrice;
     S_SIGMA_PRICE *pPutPrice;

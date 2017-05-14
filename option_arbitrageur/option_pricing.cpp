@@ -122,7 +122,7 @@ void OptionPricing::generate(int underlyingIdx, double s0, double sigma, int ste
     free(data_block);
 }
 
-QPair<double, double> OptionPricing::findS(const double s)
+QPair<double, double> OptionPricing::findS(const double s) const
 {
     int i = 0;
     for (; i < sNum - 1; i++) {
@@ -134,7 +134,7 @@ QPair<double, double> OptionPricing::findS(const double s)
     return qMakePair(sList[sNum - 2], sList[sNum - 1]);
 }
 
-QPair<double, double> OptionPricing::findSigma(const double sigma)
+QPair<double, double> OptionPricing::findSigma(const double sigma) const
 {
     int i = 0;
     for (; i < sigmaNum - 1; i++) {
@@ -146,7 +146,7 @@ QPair<double, double> OptionPricing::findSigma(const double sigma)
     return qMakePair(sigmaList[sigmaNum - 2], sigmaList[sigmaNum - 1]);
 }
 
-double OptionPricing::getPrice(const QString &underlyingID, const OPTION_TYPE type, int K, double s, double sigma)
+double OptionPricing::getPrice(const QString &underlyingID, const OPTION_TYPE type, int K, double s, double sigma) const
 {
     if (!kList.contains(K)) {
         qDebug() << "No such exercise price! K =" << K;
@@ -158,7 +158,7 @@ double OptionPricing::getPrice(const QString &underlyingID, const OPTION_TYPE ty
     return getPriceByIdx(underlyingIdx, type, kIdx, s, sigma);
 }
 
-double OptionPricing::getPriceByIdx(int underlyingIdx, const OPTION_TYPE type, int kIdx, double s, double sigma)
+double OptionPricing::getPriceByIdx(int underlyingIdx, const OPTION_TYPE type, int kIdx, double s, double sigma) const
 {
     const auto s1s2 = findS(s);
     const auto s1 = s1s2.first;
@@ -174,15 +174,15 @@ double OptionPricing::getPriceByIdx(int underlyingIdx, const OPTION_TYPE type, i
         priceMap = &(ppPutPrice[underlyingIdx][kIdx]);
     }
 
-    const auto s1sigma1 = (*priceMap)[s1][sigma1];
-    const auto s1sigma2 = (*priceMap)[s1][sigma2];
-    const auto s2sigma1 = (*priceMap)[s2][sigma1];
-    const auto s2sigma2 = (*priceMap)[s2][sigma2];
+    const auto p11 = (*priceMap)[s1][sigma1];
+    const auto p12 = (*priceMap)[s1][sigma2];
+    const auto p21 = (*priceMap)[s2][sigma1];
+    const auto p22 = (*priceMap)[s2][sigma2];
 
-    auto sum = s1sigma1 * (s2 - s) * (sigma2 - sigma)
-             + s1sigma2 * (s2 - s) * (sigma - sigma1)
-             + s2sigma1 * (s - s1) * (sigma2 - sigma)
-             + s2sigma2 * (s - s1) * (sigma - sigma1);
+    auto sum = p11 * (s2 - s) * (sigma2 - sigma)
+             + p12 * (s2 - s) * (sigma - sigma1)
+             + p21 * (s - s1) * (sigma2 - sigma)
+             + p22 * (s - s1) * (sigma - sigma1);
 
     //           p11(s2-s)(sigma2-sigma)+p12(s2-s)(sigma-sigma1)+p21(s-s1)(sigma2-sigma)+p22(s-s1)(sigma-sigma1)
     // price = --------------------------------------------------------------------------------------------------
@@ -190,7 +190,7 @@ double OptionPricing::getPriceByIdx(int underlyingIdx, const OPTION_TYPE type, i
     return sum / (s2 - s1) / (sigma2 - sigma1);
 }
 
-double OptionPricing::getSigma(const QString &underlyingID, const OPTION_TYPE type, int K, double s, double price)
+double OptionPricing::getSigma(const QString &underlyingID, const OPTION_TYPE type, int K, double s, double price) const
 {
     if (!kList.contains(K)) {
         qDebug() << "No such exercise price! K =" << K;
@@ -202,7 +202,7 @@ double OptionPricing::getSigma(const QString &underlyingID, const OPTION_TYPE ty
     return getSigmaByIdx(underlyingIdx, type, kIdx, s, price);
 }
 
-double OptionPricing::getSigmaByIdx(int underlyingIdx, const OPTION_TYPE type, int kIdx, double s, double price)
+double OptionPricing::getSigmaByIdx(int underlyingIdx, const OPTION_TYPE type, int kIdx, double s, double price) const
 {
     const auto s1s2 = findS(s);
     const auto s1 = s1s2.first;
@@ -220,22 +220,28 @@ double OptionPricing::getSigmaByIdx(int underlyingIdx, const OPTION_TYPE type, i
         s2PriceMap = &(ppPutPrice[underlyingIdx][kIdx][s2]);
     }
 
-    QMap<double, double> iPriceMap;
+    QMap<double, double> iSigmaPriceMap;
     for (const auto sigma : sigmaList) {
-        iPriceMap[sigma] = ((*s1PriceMap)[sigma] * (s2 - s) + (*s2PriceMap)[sigma] * (s - s1)) / (s2 - s1);
+        iSigmaPriceMap[sigma] = ((*s1PriceMap)[sigma] * (s2 - s) + (*s2PriceMap)[sigma] * (s - s1)) / (s2 - s1);
+    }
+
+    if (price < iSigmaPriceMap[sigmaList[0]]) {
+        return DBL_MIN; // Too cheap
+    } else if (iSigmaPriceMap[sigmaList[sigmaNum - 1]] < price) {
+        return DBL_MAX; // Too expensive
     }
 
     int i = 0;
     for (; i < sigmaNum - 1; i++) {
-        if (iPriceMap[sigmaList[i]] <= price && price <= iPriceMap[sigmaList[i + 1]]) {
+        if (iSigmaPriceMap[sigmaList[i]] <= price && price <= iSigmaPriceMap[sigmaList[i + 1]]) {
             break;
         }
     }
 
     const auto sigma1 = sigmaList[i];
     const auto sigma2 = sigmaList[i + 1];
-    const auto sigma1price = iPriceMap[sigma1];
-    const auto sigma2price = iPriceMap[sigma2];
+    const auto sigma1price = iSigmaPriceMap[sigma1];
+    const auto sigma2price = iSigmaPriceMap[sigma2];
 
     return (price * (sigma2 - sigma1) - sigma1price * sigma2 + sigma2price * sigma1) / (sigma2price - sigma1price);
 }

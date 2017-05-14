@@ -9,6 +9,8 @@
 #include <QDateTime>
 #include <QPair>
 
+#include "utility.h"
+
 struct CThostFtdcInstrumentField;
 struct CThostFtdcParkedOrderField;
 struct CThostFtdcParkedOrderActionField;
@@ -47,7 +49,7 @@ protected:
     QMap<QString, int> yd_pos_map;
     QMap<QString, int> td_pos_map;
     QDateTime pos_update_time;
-    QMultiMap<QString, Expires<Order>> order_map;
+    QMultiMap<QString, Order> orderMap;
 
     QMap<QString, QPair<double, double>> upperLowerLimitCache;
     QMap<QString, CThostFtdcInstrumentField> instrumentDataCache;
@@ -67,18 +69,23 @@ protected:
 private slots:
     int login();
     int qrySettlementInfo();
+    int settlementInfoConfirm();
     int qrySettlementInfoConfirm();
+    int qryTradingAccount();
+    int qryInstrumentMarginRate(const QString &instrument = QString());
     int qryInstrumentCommissionRate(const QString &instrument = QString());
     int qryInstrument(const QString &instrument = QString(), const QString &exchangeID = QString());
     int qryDepthMarketData(const QString &instrument = QString());
     int insertLimitOrder(const QString &instrument, bool open, int volume, double price, bool allOrAny = false, bool gfdOrIoc = true);
-    int cancelOrder(char* orderRef, int frontID, int sessionID, const QString &instrument);
+    int orderAction(char* orderRef, int frontID, int sessionID);
     int insertParkedLimitOrder(const QString &instrument, bool open, int volume, double price, bool allOrAny = false, bool gfdOrIoc = true);
     int qryMaxOrderVolume(const QString &instrument, bool buy, char offsetFlag);
     int qryOrder(const QString &instrument = QString());
     int qryTrade(const QString &instrument = QString());
     int qryPosition(const QString &instrument = QString());
     int qryPositionDetail(const QString &instrument = QString());
+    int insertExecOrder(const QString &instrument, OPTION_TYPE type, int volume);
+    int insertQuote(const QString &instrument);
 
     QDateTime getExpireTime() const;
     void operate(const QString &instrument, int new_position);
@@ -90,8 +97,8 @@ signals:
 public slots:
     bool isLoggedIn() const { return loggedIn; }
     QString getTradingDay() const;
-    int confirmSettlementInfo();
-    int qryTradingAccount();
+    void confirmSettlementInfo();
+    void updateAccountInfo();
     double getAvailable() const { return available; }
 
     void updateInstrumentDataCache();
@@ -99,6 +106,8 @@ public slots:
     QString getExpireDate(const QString &instrument);
     double getUpperLimit(const QString &instrument);
     double getLowerLimit(const QString &instrument);
+
+    void updateOrderMap(const QString &instrument = QString());
 
     int qryParkedOrder(const QString &instrument = QString(), const QString &exchangeID = QString());
     int qryParkedOrderAction(const QString &instrument = QString(), const QString &exchangeID = QString());
@@ -110,6 +119,10 @@ public slots:
     void setPosition(const QString& instrument, int new_position);
     int getPosition(const QString& instrument) const;
     int getPendingOrderVolume(const QString &instrument) const;
+
+    void execOption(const QString &instrument, int volume);
+    void quote(const QString &instrument);
+
     void quit();
 };
 

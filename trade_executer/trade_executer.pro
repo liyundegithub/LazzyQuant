@@ -8,6 +8,7 @@ CONFIG -= app_bundle
 TEMPLATE = app
 
 SOURCES += main.cpp \
+    ../common/utility.cpp \
     ../common/multiple_timer.cpp \
     ctp_executer.cpp \
     trade_handler.cpp \
@@ -15,6 +16,7 @@ SOURCES += main.cpp \
 
 HEADERS += ../config.h \
     ../common/expires.h \
+    ../common/utility.h \
     ../common/multiple_timer.h \
     ctp_executer.h \
     trade_handler.h \

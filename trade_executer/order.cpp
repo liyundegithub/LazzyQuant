@@ -3,10 +3,6 @@
 
 #include "order.h"
 
-Order::Order()
-{
-}
-
 Order::Order(const CThostFtdcOrderField &field)
 {
     vol = field.VolumeTotalOriginal;

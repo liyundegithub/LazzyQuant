@@ -101,6 +101,11 @@ void CTradeHandler::OnRspQryTradingAccount(CThostFtdcTradingAccountField *pTradi
     handleSingleRsp<TradingAccountEvent>(pTradingAccount, pRspInfo, nRequestID);
 }
 
+void CTradeHandler::OnRspQryInstrumentMarginRate(CThostFtdcInstrumentMarginRateField *pInstrumentMarginRate, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
+{
+    handleMultiRsp<RspQryInstrumentMarginRateEvent>(&instrumentMarginRateList, pInstrumentMarginRate, pRspInfo, nRequestID, bIsLast);
+}
+
 void CTradeHandler::OnRspQryInstrumentCommissionRate(CThostFtdcInstrumentCommissionRateField *pInstrumentCommissionRate, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
     handleMultiRsp<RspQryInstrumentCommissionRateEvent>(&instrumentCommissionRateList, pInstrumentCommissionRate, pRspInfo, nRequestID, bIsLast);
@@ -214,4 +219,42 @@ void CTradeHandler::OnRspQueryMaxOrderVolume(CThostFtdcQueryMaxOrderVolumeField 
 {
     Q_UNUSED(bIsLast);
     handleSingleRsp<QryMaxOrderVolumeEvent>(pQueryMaxOrderVolume, pRspInfo, nRequestID);
+}
+
+void CTradeHandler::OnRspExecOrderInsert(CThostFtdcInputExecOrderField *pInputExecOrder, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
+{
+    Q_UNUSED(bIsLast);
+    handleSingleRsp<RspExecOrderInsertEvent>(pInputExecOrder, pRspInfo, nRequestID);
+}
+
+void CTradeHandler::OnRspExecOrderAction(CThostFtdcInputExecOrderActionField *pInputExecOrderAction, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
+{
+    Q_UNUSED(bIsLast);
+    handleSingleRsp<RspExecOrderActionEvent>(pInputExecOrderAction, pRspInfo, nRequestID);
+}
+
+void CTradeHandler::OnRspForQuoteInsert(CThostFtdcInputForQuoteField *pInputForQuote, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
+{
+    Q_UNUSED(bIsLast);
+    handleSingleRsp<RspForQuoteInsertEvent>(pInputForQuote, pRspInfo, nRequestID);
+}
+
+void CTradeHandler::OnRtnExecOrder(CThostFtdcExecOrderField *pExecOrder)
+{
+    postToReceiver(new RtnExecOrderEvent(pExecOrder));
+}
+
+void CTradeHandler::OnErrRtnExecOrderInsert(CThostFtdcInputExecOrderField *pInputExecOrder, CThostFtdcRspInfoField *pRspInfo)
+{
+    handleSingleRsp<ErrRtnExecOrderInsertEvent>(pInputExecOrder, pRspInfo);
+}
+
+void CTradeHandler::OnErrRtnExecOrderAction(CThostFtdcExecOrderActionField *pExecOrderAction, CThostFtdcRspInfoField *pRspInfo)
+{
+    handleSingleRsp<ErrRtnExecOrderActionEvent>(pExecOrderAction, pRspInfo);
+}
+
+void CTradeHandler::OnErrRtnForQuoteInsert(CThostFtdcInputForQuoteField *pInputForQuote, CThostFtdcRspInfoField *pRspInfo)
+{
+    handleSingleRsp<ErrRtnForQuoteInsertEvent>(pInputForQuote, pRspInfo);
 }
