@@ -12,6 +12,16 @@
 #define TM2 \
     qDebug() << t1.msecsTo(QTime::currentTime()) << "ms";
 
+static inline bool isTimeCloseEnouogh(uint time1, uint time2, uint diff)
+{
+    // 两个无符号数不能用qAbs(time1 - time2) < diff;
+    if (time1 > time2) {
+        return (time1 - time2) < diff;
+    } else {
+        return (time2 - time1) < diff;
+    }
+}
+
 enum OPTION_TYPE {
     CALL_OPT,
     PUT_OPT,

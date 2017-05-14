@@ -8,6 +8,8 @@ CONFIG -= app_bundle
 TEMPLATE = app
 
 SOURCES += main.cpp \
+    ../common/market.cpp \
+    ../common/utility.cpp \
     quant_trader.cpp \
     bar_collector.cpp \
     bar.cpp \
@@ -17,13 +19,14 @@ SOURCES += main.cpp \
     indicator/mql5_indicator.cpp \
     strategy/abstract_strategy.cpp \
     strategy/DblMaPsar_strategy.cpp \
-    ../common/market.cpp \
-    ../common/utility.cpp
+    strategy/BigHit_strategy.cpp
 
 INCLUDEPATH += ../ ../common/
 DBUS_INTERFACES += ../interface/market_watcher.xml ../interface/trade_executer.xml
 
 HEADERS += ../config.h \
+    ../common/market.h \
+    ../common/utility.h \
     quant_trader.h \
     bar_collector.h \
     bar.h \
@@ -34,5 +37,4 @@ HEADERS += ../config.h \
     indicator/mql5_indicator.h \
     strategy/abstract_strategy.h \
     strategy/DblMaPsar_strategy.h \
-    ../common/market.h \
-    ../common/utility.h
+    strategy/BigHit_strategy.h

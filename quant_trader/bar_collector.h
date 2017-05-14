@@ -12,14 +12,22 @@ class BarCollector : public QObject
     Q_ENUMS(TimeFrame)
 public:
     enum TimeFrame {
-        MIN1  = 0x01,
-        MIN3  = 0x02,	// SinYee only
-        MIN5  = 0x04,
-        MIN10 = 0x08,	// SinYee only
-        MIN15 = 0x10,
-        MIN30 = 0x20,
-        MIN60 = 0x40,
-        DAY   = 0x80,
+        SEC3  = 0x0001,
+        SEC5  = 0x0002,
+        SEC6  = 0x0004,
+        SEC10 = 0x0008,
+        SEC12 = 0x0010,
+        SEC15 = 0x0020,
+        SEC20 = 0x0040,
+        SEC30 = 0x0080,
+        MIN1  = 0x0100,
+        MIN3  = 0x0200,
+        MIN5  = 0x0400,
+        MIN10 = 0x0800,
+        MIN15 = 0x1000,
+        MIN30 = 0x2000,
+        MIN60 = 0x4000,
+        DAY   = 0x8000,
     };
     Q_DECLARE_FLAGS(TimeFrames, TimeFrame)
 
@@ -32,9 +40,9 @@ public:
 
 protected:
     const QString instrument;
-    QList<TimeFrame> keys;
-    QMap<TimeFrame, QList<Bar>> bar_list_map;
-    QMap<TimeFrame, Bar> current_bar_map;
+    QList<int> keys;
+    QMap<int, QList<Bar>> bar_list_map;
+    QMap<int, Bar> current_bar_map;
     int lastVolume;
 
 signals:

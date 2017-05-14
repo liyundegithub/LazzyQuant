@@ -10,12 +10,13 @@
 #include "indicator/ma.h"
 #include "indicator/parabolicsar.h"
 #include "strategy/DblMaPsar_strategy.h"
+#include "strategy/bighit_strategy.h"
 
 extern QList<Market> markets;
 
 QuantTrader* QuantTrader::instance;
 
-int barCollector_enumIdx;
+int timeFrameEnumIdx;
 int MA_METHOD_enumIdx;
 int APPLIED_PRICE_enumIdx;
 
@@ -27,7 +28,7 @@ QuantTrader::QuantTrader(QObject *parent) :
 
     QuantTrader::instance = this;
 
-    barCollector_enumIdx = BarCollector::staticMetaObject.indexOfEnumerator("TimeFrame");
+    timeFrameEnumIdx = BarCollector::staticMetaObject.indexOfEnumerator("TimeFrame");
     MA_METHOD_enumIdx = MA::staticMetaObject.indexOfEnumerator("ENUM_MA_METHOD");
     APPLIED_PRICE_enumIdx = MQL5IndicatorOnSingleDataBuffer::staticMetaObject.indexOfEnumerator("ENUM_APPLIED_PRICE");
 
@@ -68,7 +69,7 @@ void QuantTrader::loadQuantTraderSettings()
         const QStringList time_frame_stringlist = combined_time_frame_string.split('|');
         BarCollector::TimeFrames time_frame_flags;
         for (const QString &tf : time_frame_stringlist) {
-            int time_frame_value = BarCollector::staticMetaObject.enumerator(barCollector_enumIdx).keyToValue(tf.trimmed().toLatin1().data());
+            int time_frame_value = BarCollector::staticMetaObject.enumerator(timeFrameEnumIdx).keyToValue(tf.trimmed().toLatin1().data());
             BarCollector::TimeFrame time_frame = static_cast<BarCollector::TimeFrame>(time_frame_value);
             time_frame_flags |= time_frame;
         }
@@ -105,6 +106,7 @@ void QuantTrader::loadTradeStrategySettings()
     static const auto meta_object_map = []() -> QMap<QString, const QMetaObject*> {
         QMap<QString, const QMetaObject*> map;
         map.insert("DblMaPsarStrategy", &DblMaPsarStrategy::staticMetaObject);
+        map.insert("BigHitStrategy", &BigHitStrategy::staticMetaObject);
         // Register more strategies here
         return map;
     }();
@@ -194,7 +196,7 @@ static inline QString getKTExportName(const QString &instrumentID) {
  */
 QList<Bar>* QuantTrader::getBars(const QString &instrumentID, const QString &time_frame_str)
 {
-    int time_frame_value = BarCollector::staticMetaObject.enumerator(barCollector_enumIdx).keyToValue(time_frame_str.trimmed().toLatin1().data());
+    int time_frame_value = BarCollector::staticMetaObject.enumerator(timeFrameEnumIdx).keyToValue(time_frame_str.trimmed().toLatin1().data());
     if (bars_map.contains(instrumentID)) {
         if (bars_map[instrumentID].contains(time_frame_value)) {
             return &bars_map[instrumentID][time_frame_value];
@@ -478,10 +480,12 @@ void QuantTrader::onMarketData(const QString& instrumentID, uint time, double la
             if (position_map[instrumentID].get() != new_position_sum.get()) {
                 position_map[instrumentID] = new_position_sum;
                 pExecuter->setPosition(instrumentID, new_position_sum.get());
+                qDebug() << "New position for" << instrumentID << new_position_sum.get();
             }
         } else {
             position_map[instrumentID] = new_position_sum;
             pExecuter->setPosition(instrumentID, new_position_sum.get());
+            qDebug() << "New position for" << instrumentID << new_position_sum.get();
         }
     }
 }
