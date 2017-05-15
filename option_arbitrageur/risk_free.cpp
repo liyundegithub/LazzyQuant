@@ -1,23 +1,12 @@
+#include "utility.h"
 #include "depth_market.h"
 #include "risk_free.h"
 
-static inline bool isTimeCloseEnouogh(const DepthMarket &md1, const DepthMarket &md2)
-{
-    // 两个无符号数不能用qAbs(md1.time - md2.time) < 120;
-    if (md1.time > md2.time) {
-        return (md1.time - md2.time) < 120;
-    } else {
-        return (md2.time - md1.time) < 120;
-    }
-}
+#define TIME_DIFF 120
 
-static inline int getVol(const int liquidity)
+static inline int getVol(int liquidity)
 {
-    if (liquidity > 1) {
-        return 1;
-    } else {
-        return 0;
-    }
+    return liquidity / 2;
 }
 
 RiskFree::RiskFree(double threshold, DepthMarketCollection *pDMC) :
@@ -43,7 +32,7 @@ void RiskFree::onOptionChanged(int underlyingIdx, OPTION_TYPE type, int kIdx)
     if (type == CALL_OPT) {
         checkCheapCallOptions(underlyingIdx, kIdx);
         findReversedCallOptions(underlyingIdx, kIdx);
-    } else if (type == PUT_OPT) {
+    } else {
         checkCheapPutOptions(underlyingIdx, kIdx);
         findReversedPutOptions(underlyingIdx, kIdx);
     }
@@ -79,7 +68,7 @@ void RiskFree::checkCheapCallOptions(int underlyingIdx, int kIdx)
     auto vol = getVol(liquidity);
     if (vol > 0) {
         auto diff = underlying.bidPrice - pDepthMarkets->getKByIdx(kIdx);
-        if (diff > 0.000001 && isTimeCloseEnouogh(underlying, callOption)) {    // 实值期权, diff = 实值额
+        if (diff > 0.000001 && isTimeCloseEnouogh(underlying.time, callOption.time, TIME_DIFF)) {    // 实值期权, diff = 实值额
             auto premium = callOption.askPrice;
             if ((premium + threshold) < diff) {
                 buyOption(underlyingIdx, CALL_OPT, kIdx, vol, premium);
@@ -126,7 +115,7 @@ void RiskFree::checkCheapPutOptions(int underlyingIdx, int kIdx)
     auto vol = getVol(liquidity);
     if (vol > 0) {
         auto diff = pDepthMarkets->getKByIdx(kIdx) - underlying.askPrice;
-        if (diff > 0.000001 && isTimeCloseEnouogh(underlying, putOption)) {    // 实值期权
+        if (diff > 0.000001 && isTimeCloseEnouogh(underlying.time, putOption.time, TIME_DIFF)) {    // 实值期权
             auto premium = putOption.askPrice;
             if ((premium + threshold) < diff) {
                 buyOption(underlyingIdx, PUT_OPT, kIdx, vol, premium);
@@ -186,7 +175,7 @@ void RiskFree::checkReversedCallOptions(int underlyingIdx, int lowKIdx, int high
         auto lowPremium = lowKOption.askPrice;
         auto highPremium = highKOption.bidPrice;
         auto diff = highPremium - lowPremium;
-        if (diff > 1.0 && isTimeCloseEnouogh(lowKOption, highKOption)) {
+        if (diff > 1.0 && isTimeCloseEnouogh(lowKOption.time, highKOption.time, TIME_DIFF)) {
             buyOption(underlyingIdx, CALL_OPT, lowKIdx, vol, lowPremium);
             sellOption(underlyingIdx, CALL_OPT, highKIdx, vol, highPremium);
 
@@ -194,8 +183,8 @@ void RiskFree::checkReversedCallOptions(int underlyingIdx, int lowKIdx, int high
             qDebug() << pDepthMarkets->makeOptionByIdx(underlyingIdx, CALL_OPT, lowKIdx); qDebug() << lowKOption;
             qDebug() << pDepthMarkets->makeOptionByIdx(underlyingIdx, CALL_OPT, highKIdx); qDebug() << highKOption;
 
-            pDepthMarkets->takeLiquidityByIdx(underlyingIdx, PUT_OPT, lowKIdx, true);
-            pDepthMarkets->takeLiquidityByIdx(underlyingIdx, PUT_OPT, highKIdx, false);
+            pDepthMarkets->takeLiquidityByIdx(underlyingIdx, CALL_OPT, lowKIdx, true);
+            pDepthMarkets->takeLiquidityByIdx(underlyingIdx, CALL_OPT, highKIdx, false);
         }
     }
 }
@@ -243,7 +232,7 @@ void RiskFree::checkReversedPutOptions(int underlyingIdx, int lowKIdx, int highK
         auto lowPremium = lowKOption.bidPrice;
         auto highPremium = highKOption.askPrice;
         auto diff = lowPremium - highPremium;
-        if (diff > 1.0 && isTimeCloseEnouogh(lowKOption, highKOption)) {
+        if (diff > 1.0 && isTimeCloseEnouogh(lowKOption.time, highKOption.time, TIME_DIFF)) {
             buyOption(underlyingIdx, PUT_OPT, highKIdx, vol, highPremium);
             sellOption(underlyingIdx, PUT_OPT, lowKIdx, vol, lowPremium);
 
