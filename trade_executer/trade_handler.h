@@ -7,7 +7,7 @@
 
 #define FRONT_CONNECTED                     (QEvent::User + 0)
 #define FRONT_DISCONNECTED                  (QEvent::User + 1)
-#define HEARTBEAT_WARNING                   (QEvent::User + 2)
+#define RSP_AUTHENTICATE                    (QEvent::User + 2)
 #define RSP_USER_LOGIN                      (QEvent::User + 3)
 #define RSP_USER_LOGOUT                     (QEvent::User + 4)
 #define RSP_ERROR                           (QEvent::User + 5)
@@ -69,23 +69,22 @@ public:
     int getReason() const { return reason; }
 };
 
-class HeartBeatWarningEvent : public QEvent {
+class AuthenticateEvent : public QEvent, public RspInfo {
 protected:
-    const int nTimeLapse;
+    const CThostFtdcRspAuthenticateField rspAuthenticate;
 
 public:
-    explicit HeartBeatWarningEvent(int nTimeLapse) :
-        QEvent(QEvent::Type(HEARTBEAT_WARNING)),
-        nTimeLapse(nTimeLapse) {}
-
-    int getLapseTime() const { return nTimeLapse; }
+    AuthenticateEvent(CThostFtdcRspAuthenticateField *pRspAuthenticate, int err, int id) :
+        QEvent(QEvent::Type(RSP_AUTHENTICATE)),
+        RspInfo(err, id),
+        rspAuthenticate(*pRspAuthenticate) {}
 };
 
-class UserLoginRspEvent : public QEvent, public RspInfo {
+class UserLoginEvent : public QEvent, public RspInfo {
 public:
     const CThostFtdcRspUserLoginField rspUserLogin;
 
-    UserLoginRspEvent(CThostFtdcRspUserLoginField *pRspUserLogin, int err, int id) :
+    UserLoginEvent(CThostFtdcRspUserLoginField *pRspUserLogin, int err, int id) :
         QEvent(QEvent::Type(RSP_USER_LOGIN)),
         RspInfo(err, id),
         rspUserLogin(*pRspUserLogin) {}
@@ -427,11 +426,9 @@ public:
     void handleMultiRsp(QList<F> *pTList, F *pField, CThostFtdcRspInfoField *pRspInfo, const int nRequestID, const bool bIsLast);
 
     void OnFrontConnected();
-
     void OnFrontDisconnected(int nReason);
 
-    void OnHeartBeatWarning(int nTimeLapse);
-
+    void OnRspAuthenticate(CThostFtdcRspAuthenticateField *pRspAuthenticateField, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
     void OnRspUserLogin(CThostFtdcRspUserLoginField *pRspUserLogin, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
 
     void OnRspQrySettlementInfo(CThostFtdcSettlementInfoField *pSettlementInfo, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);

@@ -51,12 +51,15 @@ CtpExecuter::CtpExecuter(const CONFIG_ITEM &config, QObject *parent) :
     brokerID = settings.value("BrokerID").toByteArray();
     userID = settings.value("UserID").toByteArray();
     password = settings.value("Password").toByteArray();
+    useAuthenticate = settings.value("UseAuthenticate").toBool();
+    authenticateCode = settings.value("AuthenticateCode").toByteArray();
     settings.endGroup();
 
     // Pre-convert QString to char*
     c_brokerID = brokerID.data();
     c_userID = userID.data();
     c_password = password.data();
+    c_authenticateCode = authenticateCode.data();
 
     pUserApi = CThostFtdcTraderApi::CreateFtdcTraderApi(flowPath.data());
     pHandler = new CTradeHandler(this);
@@ -97,7 +100,11 @@ void CtpExecuter::customEvent(QEvent *event)
     qDebug() << "customEvent: " << int(event->type());
     switch (int(event->type())) {
     case FRONT_CONNECTED:
-        login();
+        if (useAuthenticate) {
+            authenticate();
+        } else {
+            login();
+        }
         break;
     case FRONT_DISCONNECTED:
     {
@@ -120,28 +127,33 @@ void CtpExecuter::customEvent(QEvent *event)
         }
     }
         break;
-    case HEARTBEAT_WARNING:
+    case RSP_AUTHENTICATE:
     {
-        auto *hevent = static_cast<HeartBeatWarningEvent*>(event);
-        emit heartBeatWarning(hevent->getLapseTime());
+        auto *aevent = static_cast<AuthenticateEvent*>(event);
+        if (aevent->errorID == 0) {
+            qInfo() << DATE_TIME << "Authenticate OK!";
+            login();
+        } else {
+            qWarning() << DATE_TIME << "Authenticate failed! Error ID =" << aevent->errorID;
+        }
     }
         break;
     case RSP_USER_LOGIN:
     {
-        auto *uevent = static_cast<UserLoginRspEvent*>(event);
+        auto *uevent = static_cast<UserLoginEvent*>(event);
         if (uevent->errorID == 0) {
             FrontID = uevent->rspUserLogin.FrontID;
             SessionID = uevent->rspUserLogin.SessionID;
             loggedIn = true;
 
-            qDebug() << DATE_TIME << "OnUserLogin OK! FrontID = " << FrontID << ", SessionID = " << SessionID;
+            qInfo() << DATE_TIME << "UserLogin OK! FrontID =" << FrontID << ", SessionID =" << SessionID;
 
             settlementInfoConfirm();
             QTimer::singleShot(1000, this, SLOT(qryOrder()));
             QTimer::singleShot(2000, this, SLOT(qryPositionDetail()));
             QTimer::singleShot(5000, this, &CtpExecuter::updateInstrumentDataCache);
         } else {
-            qDebug() << DATE_TIME << "OnUserLogin: ErrorID = " << uevent->errorID;
+            qWarning() << DATE_TIME << "UserLogin failed! Error ID =" << uevent->errorID;
         }
     }
         break;
@@ -444,6 +456,23 @@ int CtpExecuter::callTraderApi(int (CThostFtdcTraderApi::* pTraderApi)(T *,int),
         free(pField);
     });
 
+    return id;
+}
+
+int CtpExecuter::authenticate()
+{
+    CThostFtdcReqAuthenticateField reqAuthenticate;
+    memset(&reqAuthenticate, 0, sizeof (CThostFtdcReqAuthenticateField));
+    strcpy(reqAuthenticate.BrokerID, c_brokerID);
+    strcpy(reqAuthenticate.UserID, c_userID);
+    //strcpy(reqAuthenticate.UserProductInfo, "LazzyQuant");
+    strcpy(reqAuthenticate.AuthCode, c_authenticateCode);
+
+    int id = nRequestID.fetchAndAddRelaxed(1);
+    traderApiMutex.lock();
+    int ret = pUserApi->ReqAuthenticate(&reqAuthenticate, id);
+    traderApiMutex.unlock();
+    Q_UNUSED(ret);
     return id;
 }
 

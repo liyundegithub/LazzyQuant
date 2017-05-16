@@ -67,15 +67,16 @@ void CTradeHandler::OnFrontDisconnected(int nReason)
     postToReceiver(new FrontDisconnectedEvent(nReason));
 }
 
-void CTradeHandler::OnHeartBeatWarning(int nTimeLapse)
+void CTradeHandler::OnRspAuthenticate(CThostFtdcRspAuthenticateField *pRspAuthenticateField, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
-    postToReceiver(new HeartBeatWarningEvent(nTimeLapse));
+    Q_UNUSED(bIsLast);
+    handleSingleRsp<AuthenticateEvent>(pRspAuthenticateField, pRspInfo, nRequestID);
 }
 
 void CTradeHandler::OnRspUserLogin(CThostFtdcRspUserLoginField *pRspUserLogin, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
     Q_UNUSED(bIsLast);
-    handleSingleRsp<UserLoginRspEvent>(pRspUserLogin, pRspInfo, nRequestID);
+    handleSingleRsp<UserLoginEvent>(pRspUserLogin, pRspInfo, nRequestID);
 }
 
 void CTradeHandler::OnRspQrySettlementInfo(CThostFtdcSettlementInfoField *pSettlementInfo, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)

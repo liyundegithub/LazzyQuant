@@ -38,9 +38,12 @@ protected:
     QByteArray brokerID;
     QByteArray userID;
     QByteArray password;
+    bool useAuthenticate;
+    QByteArray authenticateCode;
     char* c_brokerID;
     char* c_userID;
     char* c_password;
+    char* c_authenticateCode;
 
     int FrontID;
     int SessionID;
@@ -67,6 +70,7 @@ protected:
     double available;
 
 private slots:
+    int authenticate();
     int login();
     int qrySettlementInfo();
     int settlementInfoConfirm();
