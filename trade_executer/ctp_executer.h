@@ -95,7 +95,6 @@ private slots:
     void operate(const QString &instrument, int new_position);
 
 signals:
-    void heartBeatWarning(int nTimeLapse);
     void dealMade(const QString& instrument, int volume);
 
 public slots:
@@ -116,8 +115,11 @@ public slots:
     int qryParkedOrder(const QString &instrument = QString(), const QString &exchangeID = QString());
     int qryParkedOrderAction(const QString &instrument = QString(), const QString &exchangeID = QString());
 
-    void buyLimit(const QString& instrument, int volume, double price, int orderType = 0);
-    void sellLimit(const QString& instrument, int volume, double price, int orderType = 0);
+    void buyLimitAuto(const QString& instrument, int volume, double price, int orderType = 0);
+    void sellLimitAuto(const QString& instrument, int volume, double price, int orderType = 0);
+    void buyLimit(const QString& instrument, int volume, double price, bool open = true, int orderType = 0);
+    void sellLimit(const QString& instrument, int volume, double price, bool open = true, int orderType = 0);
+
     void parkBuyLimit(const QString& instrument, int volume, double price, int orderType = 0);
     void parkSellLimit(const QString& instrument, int volume, double price, int orderType = 0);
     void setPosition(const QString& instrument, int new_position);

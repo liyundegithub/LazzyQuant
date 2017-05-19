@@ -1124,16 +1124,18 @@ void analyzeOrderType(int orderType, bool &allOrAny, bool &gfdOrIoc)
 }
 
 /*!
- * \brief CtpExecuter::buyLimit
- * 限价买进合约 (开多或平空)
+ * \brief CtpExecuter::buyLimitAuto
+ * 限价买进合约 (开多或平空, 如有空头持仓先平仓)
  *
  * \param instrument 合约代码
  * \param volume 买进数量 (大于零)
  * \param price 买进价格 (必须在涨跌停范围内)
  * \param orderType 订单类型 (0:普通限价单, 1:FAK, 2:FOK)
  */
-void CtpExecuter::buyLimit(const QString& instrument, int volume, double price, int orderType)
+void CtpExecuter::buyLimitAuto(const QString& instrument, int volume, double price, int orderType)
 {
+    qDebug() << DATE_TIME << "buyLimitAuto" << instrument << ": volume =" << volume << ", price =" << price << ", orderType =" << orderType;
+
     bool allOrAny, gfdOrIoc;
     analyzeOrderType(orderType, allOrAny, gfdOrIoc);
 
@@ -1150,21 +1152,21 @@ void CtpExecuter::buyLimit(const QString& instrument, int volume, double price, 
     if (remain_volume > 0) {
         insertLimitOrder(instrument, true, remain_volume, price, allOrAny, gfdOrIoc);
     }
-
-    qDebug() << DATE_TIME << "buyLimit" << instrument << ": volume =" << volume << ", price =" << price << ", orderType =" << orderType;
 }
 
 /*!
- * \brief CtpExecuter::sellLimit
- * 限价卖出合约 (开空或平多)
+ * \brief CtpExecuter::sellLimitAuto
+ * 限价卖出合约 (开空或平多, 如有多头持仓先平仓)
  *
  * \param instrument 合约代码
  * \param volume 卖出数量 (大于零)
  * \param price 卖出价格 (必须在涨跌停范围内)
  * \param orderType 订单类型 (0:普通限价单, 1:FAK, 2:FOK)
  */
-void CtpExecuter::sellLimit(const QString& instrument, int volume, double price, int orderType)
+void CtpExecuter::sellLimitAuto(const QString& instrument, int volume, double price, int orderType)
 {
+    qDebug() << DATE_TIME << "sellLimitAuto" << instrument << ": volume =" << volume << ", price =" << price << ", orderType =" << orderType;
+
     bool allOrAny, gfdOrIoc;
     analyzeOrderType(orderType, allOrAny, gfdOrIoc);
 
@@ -1181,8 +1183,46 @@ void CtpExecuter::sellLimit(const QString& instrument, int volume, double price,
     if (remain_volume > 0) {
         insertLimitOrder(instrument, true, - remain_volume, price, allOrAny, gfdOrIoc);
     }
+}
 
+/*!
+ * \brief CtpExecuter::buyLimit
+ * 限价买进合约 (需指定开多或平空, 默认开多)
+ *
+ * \param instrument 合约代码
+ * \param volume 买进数量 (大于零)
+ * \param price 买进价格 (必须在涨跌停范围内)
+ * \param open 开多(true)或平空(false)
+ * \param orderType 订单类型 (0:普通限价单, 1:FAK, 2:FOK)
+ */
+void CtpExecuter::buyLimit(const QString& instrument, int volume, double price, bool open, int orderType)
+{
+    qDebug() << DATE_TIME << "buyLimit" << instrument << ": volume =" << volume << ", price =" << price << ", orderType =" << orderType;
+
+    bool allOrAny, gfdOrIoc;
+    analyzeOrderType(orderType, allOrAny, gfdOrIoc);
+
+    insertLimitOrder(instrument, open, volume, price, allOrAny, gfdOrIoc);
+}
+
+/*!
+ * \brief CtpExecuter::sellLimit
+ * 限价卖出合约 (需指定开空或平多, 默认开空)
+ *
+ * \param instrument 合约代码
+ * \param volume 卖出数量 (大于零)
+ * \param price 卖出价格 (必须在涨跌停范围内)
+ * \param open 开多(true)或平空(false)
+ * \param orderType 订单类型 (0:普通限价单, 1:FAK, 2:FOK)
+ */
+void CtpExecuter::sellLimit(const QString& instrument, int volume, double price, bool open, int orderType)
+{
     qDebug() << DATE_TIME << "sellLimit" << instrument << ": volume =" << volume << ", price =" << price << ", orderType =" << orderType;
+
+    bool allOrAny, gfdOrIoc;
+    analyzeOrderType(orderType, allOrAny, gfdOrIoc);
+
+    insertLimitOrder(instrument, open, - volume, price, allOrAny, gfdOrIoc);
 }
 
 /*!
@@ -1291,7 +1331,7 @@ void CtpExecuter::execOption(const QString &instrument, int volume)
             qWarning() << instrument << "is not option!";
         }
     } else {
-        qWarning() << "Execute option failed! Not logged in!";
+        qWarning() << "Execute" << instrument << "failed! Not logged in!";
     }
 }
 
@@ -1300,7 +1340,7 @@ void CtpExecuter::quote(const QString &instrument)
     if (loggedIn) {
         insertQuote(instrument);
     } else {
-        qWarning() << "Quote failed! Not logged in!";
+        qWarning() << "Quote for" << instrument << "failed! Not logged in!";
     }
 }
 
