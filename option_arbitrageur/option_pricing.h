@@ -47,6 +47,9 @@ protected:
     int sNum;
     QList<double> sigmaList;
     int sigmaNum;
+
+    double *pSigmaPrice;
+    double *pLastSigmaPrice;
 };
 
 #endif // OPTION_PRICING_H

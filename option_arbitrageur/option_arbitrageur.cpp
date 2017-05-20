@@ -50,7 +50,7 @@ OptionArbitrageur::OptionArbitrageur(bool replayMode, const QString &replayDate,
             setupHighFreq(options);
         }
         pWatcher->startReplay(replayDate);
-        qDebug() << "Relay mode is ready!";
+        qInfo() << "Relay mode is ready!";
         return;
     }
 // 以下设置仅用于实盘模式 --------------------------------------------------
@@ -152,7 +152,7 @@ void OptionArbitrageur::loadOptionArbitrageurSettings()
 {
     QSettings settings(QSettings::IniFormat, QSettings::UserScope, ORGANIZATION, "option_arbitrageur");
     riskFreeInterestRate = settings.value("RiskFreeInterestRate", 0.05).toDouble();
-    qDebug() << "Risk-free interest rate =" << riskFreeInterestRate;
+    qInfo() << "Risk-free interest rate =" << riskFreeInterestRate;
 
     settings.beginGroup("Underlyings");
     const auto underlyingList = settings.childKeys();
@@ -162,7 +162,7 @@ void OptionArbitrageur::loadOptionArbitrageurSettings()
         }
     }
     settings.endGroup();
-    qDebug() << "Underlyings:" << underlyingIDs;
+    qInfo() << "Underlyings:" << underlyingIDs;
 
     settings.beginGroup("RiskFree");
     const auto riskFreeList = settings.childKeys();
@@ -172,7 +172,7 @@ void OptionArbitrageur::loadOptionArbitrageurSettings()
         }
     }
     settings.endGroup();
-    qDebug() << "UnderlyingsForRiskFree:" << underlyingsForRiskFree;
+    qInfo() << "UnderlyingsForRiskFree:" << underlyingsForRiskFree;
 
     settings.beginGroup("HighFreq");
     const auto highFreqList = settings.childKeys();
@@ -182,7 +182,7 @@ void OptionArbitrageur::loadOptionArbitrageurSettings()
         }
     }
     settings.endGroup();
-    qDebug() << "UnderlyingsForHighFreq:" << underlyingsForHighFreq;
+    qInfo() << "UnderlyingsForHighFreq:" << underlyingsForHighFreq;
 }
 
 static inline QDate getEndDate(const QString &underlying)
@@ -256,7 +256,7 @@ void OptionArbitrageur::preparePricing(const QMultiMap<QString, int> &underlying
     for (double sigma = 0.01; sigma < 1.0; sigma *= 1.1) {
         sigmaList << sigma;
     }
-    qDebug() << "Use sigma:" << sigmaList;
+    qInfo() << "Use sigma:" << sigmaList;
 
     double maxPrice = 3400.0;   // FIXME
     double minPrice = 2300.0;   // FIXME
@@ -281,7 +281,7 @@ void OptionArbitrageur::preparePricing(const QMultiMap<QString, int> &underlying
     for (double s0 = minPrice; s0 < maxPrice; s0 += 4.0) {
         s0List << s0;
     }
-    qDebug() << "Use s0:" << s0List;
+    qInfo() << "Use s0:" << s0List;
 
     QDate startDate;
     if (pWatcher->isValid()) {
@@ -299,8 +299,9 @@ void OptionArbitrageur::preparePricing(const QMultiMap<QString, int> &underlying
     pPricingEngine->setBasicParam(riskFreeInterestRate, riskFreeInterestRate);
     pPricingEngine->setS0AndSigma(s0List, sigmaList);
     for (const auto &key : keys) {
-        qDebug() << "Calculating:" << key;
-        pPricingEngine->generate(key, startDate, getEndDate(key));
+        const auto endDate = getEndDate(key);
+        qInfo() << "Calculating:" << key << ", startDate =" << startDate << ", endDate =" << endDate;
+        pPricingEngine->generate(key, startDate, endDate);
     }
 }
 

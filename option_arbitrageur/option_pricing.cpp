@@ -21,6 +21,8 @@ OptionPricing::OptionPricing(const QMultiMap<QString, int> &underlyingKMap) :
         ppCallPrice[i] = pCallPrice + i * kNum;
         ppPutPrice[i]  = pPutPrice  + i * kNum;
     }
+
+    pSigmaPrice = nullptr;
 }
 
 OptionPricing::~OptionPricing()
@@ -30,6 +32,9 @@ OptionPricing::~OptionPricing()
 
     free(ppCallPrice);
     free(ppPutPrice);
+
+    if (pSigmaPrice != nullptr)
+        free(pSigmaPrice);
 }
 
 void OptionPricing::setBasicParam(double r, double q, bool american)
@@ -48,6 +53,9 @@ void OptionPricing::setS0AndSigma(const QList<double> &s0List, const QList<doubl
     this->sigmaList = sigmaList;
     std::sort(this->sigmaList.begin(), this->sigmaList.end());
     this->sigmaNum = sigmaList.length();
+
+    pSigmaPrice = (double*) malloc(sigmaNum * sizeof(double));
+    pLastSigmaPrice = pSigmaPrice + (sigmaNum - 1);
 }
 
 void OptionPricing::generate(const QString &underlyingID, const QDate &startDate, const QDate &endDate, int daysInOneYear, int steps)
@@ -220,28 +228,27 @@ double OptionPricing::getSigmaByIdx(int underlyingIdx, const OPTION_TYPE type, i
         s2PriceMap = &(ppPutPrice[underlyingIdx][kIdx][s2]);
     }
 
-    QMap<double, double> iSigmaPriceMap;
-    for (const auto sigma : sigmaList) {
-        iSigmaPriceMap[sigma] = ((*s1PriceMap)[sigma] * (s2 - s) + (*s2PriceMap)[sigma] * (s - s1)) / (s2 - s1);
+    for (int i = 0; i < sigmaNum; i++) {
+        pSigmaPrice[i] = ((*s1PriceMap)[sigmaList[i]] * (s2 - s) + (*s2PriceMap)[sigmaList[i]] * (s - s1)) / (s2 - s1);
     }
 
-    if (price < iSigmaPriceMap[sigmaList[0]]) {
+    if (price < *pSigmaPrice) {
         return DBL_MIN; // Too cheap
-    } else if (iSigmaPriceMap[sigmaList[sigmaNum - 1]] < price) {
+    } else if (*pLastSigmaPrice < price) {
         return DBL_MAX; // Too expensive
     }
 
     int i = 0;
     for (; i < sigmaNum - 1; i++) {
-        if (iSigmaPriceMap[sigmaList[i]] <= price && price <= iSigmaPriceMap[sigmaList[i + 1]]) {
+        if (pSigmaPrice[i] <= price && price <= pSigmaPrice[i + 1]) {
             break;
         }
     }
 
     const auto sigma1 = sigmaList[i];
     const auto sigma2 = sigmaList[i + 1];
-    const auto sigma1price = iSigmaPriceMap[sigma1];
-    const auto sigma2price = iSigmaPriceMap[sigma2];
+    const auto sigma1price = pSigmaPrice[i];
+    const auto sigma2price = pSigmaPrice[i + 1];
 
     return (price * (sigma2 - sigma1) - sigma1price * sigma2 + sigma2price * sigma1) / (sigma2price - sigma1price);
 }
