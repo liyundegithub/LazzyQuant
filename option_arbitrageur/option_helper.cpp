@@ -1,5 +1,6 @@
 #include "option_helper.h"
 #include "trading_calendar.h"
+#include "depth_market.h"
 
 #include <QDebug>
 
@@ -62,6 +63,60 @@ int getOptionTradingDays(const QString &instrumentID, const QDate &startDate)
 {
     const auto endDate = getExpireDate(instrumentID);
     return tradingCalendar.getTradingDays(startDate, endDate);
+}
+
+/*!
+ * \brief hasSensibleQuote
+ * 判断期权合约是否有合理的报价
+ *
+ * \param optionID 期权合约代码
+ * \param md 市场报价信息
+ * \return 市场报价是否合理
+ */
+bool hasSensibleQuote(const QString &optionID, const DepthMarket &md)
+{
+    double maxSpread = 0.0000001;
+    if (optionID.startsWith("m1")) {
+        /*
+         * 期权合约没有买入委托，但存在报价数量不小于10手且卖出报价小于等于2元/吨的委托时，不接受询价。
+         */
+        if (md.bidVolume < 0.01 && md.askVolume > 0 && md.askPrice < 2.01) {
+            return true;
+        }
+        /*
+         期权合约存在报价数量不小于10手且报价价差（单位：元/吨）满足如下要求的委托时，不接受询价：
+        （1）当0＜买入报价＜50，最大买卖价差=Max{买入报价的16%,6}；
+        （2）当50≤买入报价＜400，最大买卖价差=Max{买入报价的12%,8}；
+        （3）当400≤买入报价，最大买卖价差=Max{买入报价的10%,48}。
+        */
+        if (0.0 < md.bidPrice && md.bidPrice < 50.0) {
+            maxSpread += qMax(md.bidPrice * 0.16, 6.0);
+        } else if (50.0 <= md.bidPrice && md.bidPrice < 400.0) {
+            maxSpread += qMax(md.bidPrice * 0.12, 8.0);
+        } else if (400.0 <= md.bidPrice) {
+            maxSpread += qMax(md.bidPrice * 0.10, 48.0);
+        } else {
+            // Error
+        }
+    } else if (optionID.startsWith("SR")) {
+        if (md.bidPrice < 50.0) {
+            maxSpread += 8.0;
+        } else if (50.0 <= md.bidPrice && md.bidPrice < 100.0) {
+            maxSpread += 10.0;
+        } else if (100.0 <= md.bidPrice && md.bidPrice < 200.0) {
+            maxSpread += 20.0;
+        } else if (200.0 <= md.bidPrice && md.bidPrice < 300.0) {
+            maxSpread += 30.0;
+        } else if (300.0 <= md.bidPrice && md.bidPrice < 500.0) {
+            maxSpread += 50.0;
+        } else if (500.0 <= md.bidPrice) {
+            maxSpread += 75.0;
+        } else {
+            // Error
+        }
+    }
+
+    return md.askVolume > 0.01 && md.bidVolume > 0.01 && (md.askPrice - md.bidPrice) < maxSpread;
 }
 
 /*!
