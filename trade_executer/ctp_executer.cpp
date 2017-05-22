@@ -5,6 +5,9 @@
 #include <cfloat>
 #include <QSettings>
 #include <QtConcurrentRun>
+#include <QTimer>
+#include <QTextCodec>
+#include <QCoreApplication>
 
 #include "config_struct.h"
 #include "multiple_timer.h"
@@ -185,25 +188,27 @@ void CtpExecuter::customEvent(QEvent *event)
     {
         auto *qmevent = static_cast<RspQryInstrumentMarginRateEvent*>(event);
         for (const auto &item : qmevent->instrumentMarginRateList) {
-            qDebug() << item.InstrumentID << item.LongMarginRatioByMoney << item.LongMarginRatioByVolume << item.ShortMarginRatioByMoney << item.ShortMarginRatioByVolume;
+            marginRateCache[item.InstrumentID] = item;
         }
+        qInfo() << DATE_TIME << " Updated" << qmevent->instrumentMarginRateList.size() << "instrument margin rate!";
     }
         break;
     case RSP_QRY_INSTRUMENT_COMMISSION_RATE:
     {
         auto *qcevent = static_cast<RspQryInstrumentCommissionRateEvent*>(event);
         for (const auto &item : qcevent->instrumentCommissionRateList) {
-            qDebug() << item.InstrumentID << item.OpenRatioByMoney << item.OpenRatioByVolume << item.CloseRatioByMoney << item.CloseRatioByVolume;
+            commissionRateCache[item.InstrumentID] = item;
         }
+        qInfo() << DATE_TIME << " Updated" << qcevent->instrumentCommissionRateList.size() << "instrument commission rate!";
     }
         break;
     case RSP_QRY_INSTRUMENT:
     {
         auto *qievent = static_cast<RspQryInstrumentEvent*>(event);
         for (const auto &item : qievent->instrumentList) {
-            qDebug() << item.InstrumentID << item.ExchangeID << item.VolumeMultiple;
             instrumentDataCache[item.InstrumentID] = item;
         }
+        qInfo() << DATE_TIME << " Updated" << qievent->instrumentList.size() << "instruments!";
     }
         break;
     case RSP_DEPTH_MARKET_DATA:
@@ -211,9 +216,9 @@ void CtpExecuter::customEvent(QEvent *event)
         auto *devent = static_cast<DepthMarketDataEvent*>(event);
         for (const auto &item : devent->depthMarketDataList) {
             const QString instrument = item.InstrumentID;
-            qDebug() << instrument << qMakePair(item.UpperLimitPrice, item.LowerLimitPrice);
             upperLowerLimitCache[instrument] = qMakePair(item.UpperLimitPrice, item.LowerLimitPrice);
         }
+        qInfo() << DATE_TIME << " Updated" << devent->depthMarketDataList.size() << "depth market data!";
     }
         break;
     case RSP_ORDER_INSERT:
@@ -1331,7 +1336,7 @@ void CtpExecuter::execOption(const QString &instrument, int volume)
             qWarning() << instrument << "is not option!";
         }
     } else {
-        qWarning() << "Execute" << instrument << "failed! Not logged in!";
+        qWarning() << DATE_TIME << "Execute" << instrument << "failed! Not logged in!";
     }
 }
 
@@ -1340,7 +1345,7 @@ void CtpExecuter::quote(const QString &instrument)
     if (loggedIn) {
         insertQuote(instrument);
     } else {
-        qWarning() << "Quote for" << instrument << "failed! Not logged in!";
+        qWarning() << DATE_TIME << "Quote for" << instrument << "failed! Not logged in!";
     }
 }
 

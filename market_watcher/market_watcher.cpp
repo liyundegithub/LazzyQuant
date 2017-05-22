@@ -1,6 +1,9 @@
 ﻿#include <QtConcurrentRun>
 #include <QSettings>
 #include <QDebug>
+#include <QDir>
+#include <QDataStream>
+#include <QCoreApplication>
 
 #include "config_struct.h"
 #include "market.h"

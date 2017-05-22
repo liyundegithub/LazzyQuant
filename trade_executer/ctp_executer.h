@@ -11,6 +11,8 @@
 
 #include "utility.h"
 
+struct CThostFtdcInstrumentMarginRateField;
+struct CThostFtdcInstrumentCommissionRateField;
 struct CThostFtdcInstrumentField;
 struct CThostFtdcParkedOrderField;
 struct CThostFtdcParkedOrderActionField;
@@ -54,8 +56,10 @@ protected:
     QDateTime pos_update_time;
     QMultiMap<QString, Order> orderMap;
 
-    QMap<QString, QPair<double, double>> upperLowerLimitCache;
+    QMap<QString, CThostFtdcInstrumentMarginRateField> marginRateCache;
+    QMap<QString, CThostFtdcInstrumentCommissionRateField> commissionRateCache;
     QMap<QString, CThostFtdcInstrumentField> instrumentDataCache;
+    QMap<QString, QPair<double, double>> upperLowerLimitCache;
 
     QList<CThostFtdcParkedOrderField> parkedOrders;
     QList<CThostFtdcParkedOrderActionField> parkedOrderActions;
