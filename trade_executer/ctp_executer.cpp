@@ -15,7 +15,6 @@
 #include "trade_executer_adaptor.h"
 #include "trade_handler.h"
 #include "order.h"
-#include "expires.h"
 
 #ifdef Q_OS_WIN
 #include <Windows.h>
@@ -650,6 +649,8 @@ int CtpExecuter::qryDepthMarketData(const QString &instrument)
  * \param open 开仓(true)/平仓(false)
  * \param volume 手数(非零整数, 正数代表开多/平空, 负数代表开空/平多)
  * \param price 价格(限价, 不得超出涨跌停范围)
+ * \param allOrAny 全部成交或撤单(true)/任意数量成交剩余撤单(false)
+ * \param gfdOrIoc 今日有效(true)/立即成交否则撤单(false)
  * \return nRequestID
  */
 int CtpExecuter::insertLimitOrder(const QString &instrument, bool open, int volume, double price, bool allOrAny, bool gfdOrIoc)
@@ -694,7 +695,6 @@ int CtpExecuter::insertLimitOrder(const QString &instrument, bool open, int volu
  * \param orderRef 报单引用(TThostFtdcOrderRefType)
  * \param frontID 前置编号
  * \param sessionID 会话编号
- * \param instrument 合约代码
  * \return nRequestID
  */
 int CtpExecuter::orderAction(char* orderRef, int frontID, int sessionID)
@@ -724,6 +724,8 @@ int CtpExecuter::orderAction(char* orderRef, int frontID, int sessionID)
  * \param open 开仓(true)/平仓(false)
  * \param volume 手数(非零整数, 正数代表开多/平空, 负数代表开空/平多)
  * \param price 价格(限价, 不得超出涨跌停范围)
+ * \param allOrAny 全部成交或撤单(true)/任意数量成交剩余撤单(false)
+ * \param gfdOrIoc 今日有效(true)/立即成交否则撤单(false)
  * \return nRequestID
  */
 int CtpExecuter::insertParkedLimitOrder(const QString &instrument, bool open, int volume, double price, bool allOrAny, bool gfdOrIoc)
@@ -856,6 +858,15 @@ int CtpExecuter::qryPositionDetail(const QString &instrument)
     return callTraderApi(&CThostFtdcTraderApi::ReqQryInvestorPositionDetail, pField);
 }
 
+/*!
+ * \brief CtpExecuter::insertExecOrder
+ * 发送期权行权指令
+ *
+ * \param instrument 期权合约代码
+ * \param type 期权类型(看涨/看跌)
+ * \param volume 行权手数
+ * \return nRequestID
+ */
 int CtpExecuter::insertExecOrder(const QString &instrument, OPTION_TYPE type, int volume)
 {
     CThostFtdcInputExecOrderField exc;
@@ -884,6 +895,13 @@ int CtpExecuter::insertExecOrder(const QString &instrument, OPTION_TYPE type, in
     return id;
 }
 
+/*!
+ * \brief CtpExecuter::insertQuote
+ * 发送询价指令
+ *
+ * \param instrument 合约代码
+ * \return nRequestID
+ */
 int CtpExecuter::insertQuote(const QString &instrument)
 {
     CThostFtdcInputForQuoteField quote;
@@ -982,7 +1000,7 @@ void CtpExecuter::confirmSettlementInfo()
     if (loggedIn) {
         settlementInfoConfirm();
     } else {
-        qWarning() << "ConfirmSettleInfo failed! Not logged in!";
+        qWarning() << DATE_TIME << "ConfirmSettleInfo failed! Not logged in!";
     }
 }
 
@@ -991,7 +1009,7 @@ void CtpExecuter::updateAccountInfo()
     if (loggedIn) {
         qryTradingAccount();
     } else {
-        qWarning() << "UpdateAccountInfo failed! Not logged in!";
+        qWarning() << DATE_TIME << "UpdateAccountInfo failed! Not logged in!";
     }
 }
 
@@ -1010,7 +1028,7 @@ void CtpExecuter::updateInstrumentDataCache()
         qryInstrument();
         qryDepthMarketData();
     } else {
-        qWarning() << "UpdateInstrumentDataCache failed! Not logged in!";
+        qWarning() << DATE_TIME << "UpdateInstrumentDataCache failed! Not logged in!";
     }
 }
 
@@ -1122,7 +1140,18 @@ int CtpExecuter::qryParkedOrderAction(const QString &instrument, const QString &
     return callTraderApi(&CThostFtdcTraderApi::ReqQryParkedOrderAction, pField);
 }
 
-void analyzeOrderType(int orderType, bool &allOrAny, bool &gfdOrIoc)
+/*!
+ * \brief analyzeOrderType
+ * 分析报单类型
+ * 普通限价单: allOrAny = false, gfdOrIoc = true
+ * FAK:      allOrAny = false, gfdOrIoc = false
+ * FOK:      allOrAny = true,  gfdOrIoc = false
+ *
+ * \param orderType 订单类型 (0:普通限价单, 1:FAK, 2:FOK)
+ * \param allOrAny 全部成交或撤单(true)/任意数量成交剩余撤单(false)
+ * \param gfdOrIoc 今日有效(true)/立即成交否则撤单(false)
+ */
+static inline void analyzeOrderType(int orderType, bool &allOrAny, bool &gfdOrIoc)
 {
     allOrAny = (orderType == 2);
     gfdOrIoc = (orderType == 0);
@@ -1322,6 +1351,13 @@ int CtpExecuter::getPendingOrderVolume(const QString &instrument) const
     return sum;
 }
 
+/*!
+ * \brief CtpExecuter::execOption
+ * 期权行权
+ *
+ * \param instrument 期权合约代码
+ * \param volume 行权手数
+ */
 void CtpExecuter::execOption(const QString &instrument, int volume)
 {
     if (loggedIn) {
@@ -1340,6 +1376,12 @@ void CtpExecuter::execOption(const QString &instrument, int volume)
     }
 }
 
+/*!
+ * \brief CtpExecuter::quote
+ * 询价
+ *
+ * \param instrument 合约代码
+ */
 void CtpExecuter::quote(const QString &instrument)
 {
     if (loggedIn) {

@@ -20,7 +20,6 @@ struct CThostFtdcParkedOrderActionField;
 class CThostFtdcTraderApi;
 class CTradeHandler;
 class Order;
-template<class T> class Expires;
 struct CONFIG_ITEM;
 
 class CtpExecuter : public QObject
