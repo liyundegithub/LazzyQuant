@@ -1,9 +1,9 @@
 #include "depth_market.h"
 #include "base_strategy.h"
 
-#include "trade_executer_interface.h"
+#include "ctp_executer.h"
 
-extern com::lazzyquant::trade_executer *pExecuter;
+extern CtpExecuter *pExecuter;
 
 BaseStrategy::BaseStrategy(DepthMarketCollection *pDMC) :
     pDepthMarkets(pDMC)

@@ -10,7 +10,6 @@
 #include "multiple_timer.h"
 #include "trading_calendar.h"
 #include "market_watcher.h"
-#include "market_watcher_adaptor.h"
 #include "tick_receiver.h"
 
 extern QList<Market> markets;
@@ -45,10 +44,6 @@ MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, const bool replayMode, Q
     }
     settings->endGroup();
 
-    new Market_watcherAdaptor(this);
-    QDBusConnection dbus = QDBusConnection::sessionBus();
-    dbus.registerObject(config.dbusObject, this);
-    dbus.registerService(config.dbusService);
 // 复盘模式和实盘模式共用的部分到此为止 ---------------------------------------
     if (replayMode) {
         qDebug() << "Relay mode is ready!";
@@ -357,10 +352,9 @@ void MarketWatcher::processDepthMarketData(const CThostFtdcDepthMarketDataField&
     QTime time = QTime::fromString(depthMarketDataField.UpdateTime, "hh:mm:ss");
 
     const auto &tradetime = currentTradingTimeMap[instrumentID];
-    if (isWithinRange(time, tradetime.first, tradetime.second)) {
-        QTime emitTime = (time == tradetime.second) ? time.addSecs(-1) : time;
+    if (isWithinRangeExcludeEnd(time, tradetime.first, tradetime.second)) {
         emit newMarketData(instrumentID,
-                           QTime(0, 0).secsTo(emitTime),
+                           QTime(0, 0).secsTo(time),
                            depthMarketDataField.LastPrice,
                            depthMarketDataField.Volume,
                            depthMarketDataField.AskPrice1,

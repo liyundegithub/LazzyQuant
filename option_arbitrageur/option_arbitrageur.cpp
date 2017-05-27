@@ -13,13 +13,12 @@
 #include "high_frequency.h"
 #include "option_arbitrageur.h"
 
-#include "market_watcher_interface.h"
-#include "trade_executer_interface.h"
+#include "market_watcher.h"
+#include "ctp_executer.h"
 
-com::lazzyquant::market_watcher *pWatcher = nullptr;
-com::lazzyquant::trade_executer *pExecuter = nullptr;
-
-TradingCalendar tradingCalendar;
+extern TradingCalendar tradingCalendar;
+extern MarketWatcher *pWatcher;
+extern CtpExecuter *pExecuter;
 
 OptionArbitrageur::OptionArbitrageur(bool replayMode, const QString &replayDate, QObject *parent) :
     QObject(parent)
@@ -30,8 +29,6 @@ OptionArbitrageur::OptionArbitrageur(bool replayMode, const QString &replayDate,
 
     loadOptionArbitrageurSettings();
 
-    pExecuter = new com::lazzyquant::trade_executer(EXECUTER_DBUS_SERVICE, EXECUTER_DBUS_OBJECT, QDBusConnection::sessionBus(), this);
-    pWatcher = new com::lazzyquant::market_watcher(WATCHER_DBUS_SERVICE, WATCHER_DBUS_OBJECT, QDBusConnection::sessionBus(), this);
     connect(pWatcher, SIGNAL(newMarketData(QString, uint, double, int, double, int, double, int)), this, SLOT(onMarketData(QString, uint, double, int, double, int, double, int)));
 
 // 复盘模式和实盘模式共用的部分到此为止 ---------------------------------------
@@ -77,7 +74,7 @@ OptionArbitrageur::~OptionArbitrageur()
 
 void OptionArbitrageur::updateOptions()
 {
-    if (!pWatcher->isValid() || !pExecuter->isValid()) {
+    if (!pWatcher->isLoggedIn() || !pExecuter->isLoggedIn()) {
         if (updateRetryCounter < 3) {
             qWarning() << "Either Watcher or Executer is not ready! Will try update options later!";
             QTimer::singleShot(10000, this, &OptionArbitrageur::updateOptions);
@@ -187,7 +184,7 @@ void OptionArbitrageur::loadOptionArbitrageurSettings()
 
 static inline QDate getEndDate(const QString &underlying)
 {
-    if (pExecuter->isValid()) {
+    if (pExecuter->isLoggedIn()) {
         const QString dateStr = pExecuter->getExpireDate(underlying);
         if (dateStr != INVALID_DATE_STRING) {
             return QDate::fromString(dateStr, "yyyyMMdd");
@@ -262,7 +259,7 @@ void OptionArbitrageur::preparePricing(const QMultiMap<QString, int> &underlying
     double minPrice = 2300.0;   // FIXME
 
     const auto keys = underlyingKMap.uniqueKeys();
-    if (pExecuter->isValid()) {
+    if (pExecuter->isLoggedIn()) {
         maxPrice = -DBL_MAX;
         minPrice = DBL_MAX;
         for (const auto key : keys) {
@@ -284,7 +281,7 @@ void OptionArbitrageur::preparePricing(const QMultiMap<QString, int> &underlying
     qInfo() << "Use s0:" << s0List;
 
     QDate startDate;
-    if (pWatcher->isValid()) {
+    if (pWatcher->isLoggedIn()) {
         startDate = QDate::fromString(pWatcher->getTradingDay(), "yyyyMMdd");
     } else {
         startDate = QDate::currentDate();
