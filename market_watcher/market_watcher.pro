@@ -1,4 +1,4 @@
-QT += core dbus xml concurrent
+QT += core dbus xml
 QT -= gui
 
 TARGET = market_watcher

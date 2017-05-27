@@ -1,5 +1,4 @@
-﻿#include <QtConcurrentRun>
-#include <QSettings>
+﻿#include <QSettings>
 #include <QDebug>
 #include <QDir>
 #include <QDataStream>
@@ -260,6 +259,7 @@ void MarketWatcher::customEvent(QEvent *event)
         break;
     case RSP_USER_LOGIN:
         loggedIn = true;
+        qInfo() << DATE_TIME << "Market watcher logged in OK!";
         subscribe();
         break;
     case RSP_USER_LOGOUT:
