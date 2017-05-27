@@ -42,6 +42,16 @@ static inline bool isWithinRange(const T &t, const T &rangeStart, const T &range
     }
 }
 
+template<class T>
+static inline bool isWithinRangeExcludeEnd(const T &t, const T &rangeStart, const T &rangeEnd)
+{
+    if (rangeStart < rangeEnd) {
+        return rangeStart <= t && t < rangeEnd;
+    } else {
+        return rangeStart <= t || t < rangeEnd;
+    }
+}
+
 
 // 上海期货交易所                                   燃油, 线材
 const QString SQ[] = {"fu", "wr"};
