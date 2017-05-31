@@ -103,11 +103,6 @@
       <arg name="price" type="d" direction="in"/>
       <arg name="open" type="b" direction="in"/>
     </method>
-    <method name="buyLimit">
-      <arg name="instrument" type="s" direction="in"/>
-      <arg name="volume" type="i" direction="in"/>
-      <arg name="price" type="d" direction="in"/>
-    </method>
     <method name="sellLimit">
       <arg name="instrument" type="s" direction="in"/>
       <arg name="volume" type="i" direction="in"/>
@@ -121,10 +116,16 @@
       <arg name="price" type="d" direction="in"/>
       <arg name="open" type="b" direction="in"/>
     </method>
-    <method name="sellLimit">
+    <method name="cancelOrder">
+      <arg name="orderRefId" type="i" direction="in"/>
+      <arg name="frontID" type="i" direction="in"/>
+      <arg name="sessionID" type="i" direction="in"/>
       <arg name="instrument" type="s" direction="in"/>
-      <arg name="volume" type="i" direction="in"/>
-      <arg name="price" type="d" direction="in"/>
+    </method>
+    <method name="cacelAllOrders">
+      <arg name="instrument" type="s" direction="in"/>
+    </method>
+    <method name="cacelAllOrders">
     </method>
     <method name="parkBuyLimit">
       <arg name="instrument" type="s" direction="in"/>

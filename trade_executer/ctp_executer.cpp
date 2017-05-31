@@ -40,14 +40,14 @@ CtpExecuter::CtpExecuter(const CONFIG_ITEM &config, QObject *parent) :
     QObject(parent)
 {
     nRequestID = 0;
-    FrontID = 0;
-    SessionID = 0;
 
     loggedIn = false;
-    available = 0;
+    available = 0.0f;
 
     QSettings settings(QSettings::IniFormat, QSettings::UserScope, config.organization, config.name);
     QByteArray flowPath = settings.value("FlowPath").toByteArray();
+    preventSelfTrade = settings.value("PreventSelfTrade", 1).toBool();
+    orderCancelLimit = settings.value("OrderCancelLimit", 300).toInt();
 
     settings.beginGroup("AccountInfo");
     brokerID = settings.value("BrokerID").toByteArray();
@@ -144,14 +144,12 @@ void CtpExecuter::customEvent(QEvent *event)
     {
         auto *uevent = static_cast<UserLoginEvent*>(event);
         if (uevent->errorID == 0) {
-            FrontID = uevent->rspUserLogin.FrontID;
-            SessionID = uevent->rspUserLogin.SessionID;
             loggedIn = true;
 
-            qInfo() << DATE_TIME << "UserLogin OK! FrontID =" << FrontID << ", SessionID =" << SessionID;
+            qInfo() << DATE_TIME << "UserLogin OK! FrontID =" << uevent->rspUserLogin.FrontID << ", SessionID =" << uevent->rspUserLogin.SessionID;
 
             settlementInfoConfirm();
-            QTimer::singleShot(1000, this, SLOT(qryOrder()));
+            QTimer::singleShot(1000, this, SLOT(updateOrderMap()));
             QTimer::singleShot(2000, this, SLOT(qryPositionDetail()));
             QTimer::singleShot(5000, this, &CtpExecuter::updateInstrumentDataCache);
         } else {
@@ -223,12 +221,13 @@ void CtpExecuter::customEvent(QEvent *event)
     case RSP_ORDER_INSERT:
     {
         auto *ievent = static_cast<RspOrderInsertEvent*>(event);
-        qDebug() << (ievent->errorID);
+        qWarning() << DATE_TIME << "Order insert failed! errorID =" << ievent->errorID;
     }
         break;
     case RSP_ORDER_ACTION:
     {
         auto *aevent = static_cast<RspOrderActionEvent*>(event);
+        qWarning() << DATE_TIME << "Order cancel failed! errorID =" << aevent->errorID;
     }
         break;
     case RSP_PARKED_ORDER_INSERT:
@@ -255,11 +254,13 @@ void CtpExecuter::customEvent(QEvent *event)
     case ERR_RTN_ORDER_INSERT:
     {
         auto *eievent = static_cast<ErrRtnOrderInsertEvent*>(event);
+        qWarning() << DATE_TIME << "Order insert failed! errorID =" << eievent->errorID;
     }
         break;
     case ERR_RTN_ORDER_ACTION:
     {
         auto *eaevent = static_cast<ErrRtnOrderActionEvent*>(event);
+        qWarning() << DATE_TIME << "Order cancel failed! errorID =" << eaevent->errorID;
     }
         break;
     case RTN_ORDER:
@@ -267,6 +268,22 @@ void CtpExecuter::customEvent(QEvent *event)
         auto *revent = static_cast<RtnOrderEvent*>(event);
         qDebug() << revent->orderField.VolumeTotal << revent->orderField.InsertTime << revent->orderField.OrderStatus <<
                     QTextCodec::codecForName("GBK")->toUnicode(revent->orderField.StatusMsg);
+
+        int refId;
+        int frontId = revent->orderField.FrontID;
+        int sessionId = revent->orderField.SessionID;
+        sscanf(revent->orderField.OrderRef, "%12d", &refId);
+
+        bool updated = false;
+        for (auto &item : orderMap) {
+            if (item.refId == refId && item.frontId == frontId && item.sessionId == sessionId) {
+                item.updateStatus(revent->orderField);
+                updated = true;
+            }
+        }
+        if (!updated) {
+            orderMap.insert(revent->orderField.InstrumentID, revent->orderField);
+        }
     }
         break;
     case RTN_TRADE:
@@ -305,6 +322,7 @@ void CtpExecuter::customEvent(QEvent *event)
         for (const auto &item : qoevent->orderList) {
             orderMap.insert(item.InstrumentID, item);
             qDebug() << item.InstrumentID << QTextCodec::codecForName("GBK")->toUnicode(item.StatusMsg);
+            qDebug() << item.OrderRef << item.FrontID << item.SessionID;
         }
     }
         break;
@@ -411,12 +429,6 @@ void CtpExecuter::timesUp(int index)
         if (!loggedIn) {
             login();
         }
-
-        QTimer::singleShot(5000, [=]() -> void {
-            if (loggedIn) {
-                updateInstrumentDataCache();
-            }
-        });
         break;
     default:
         qWarning() << "Should never see this! Something is wrong! index =" << index;
@@ -690,19 +702,21 @@ int CtpExecuter::insertLimitOrder(const QString &instrument, bool open, int volu
 
 /*!
  * \brief CtpExecuter::orderAction
- * 操作报单(仅支持撤单)
+ * 报单操作(仅支持撤单)
  *
  * \param orderRef 报单引用(TThostFtdcOrderRefType)
  * \param frontID 前置编号
  * \param sessionID 会话编号
+ * \param instrument 合约代码
  * \return nRequestID
  */
-int CtpExecuter::orderAction(char* orderRef, int frontID, int sessionID)
+int CtpExecuter::orderAction(char* orderRef, int frontID, int sessionID, const QString &instrument)
 {
     CThostFtdcInputOrderActionField orderAction;
     memset(&orderAction, 0, sizeof(CThostFtdcInputOrderActionField));
     strcpy(orderAction.BrokerID, c_brokerID);
     strcpy(orderAction.InvestorID, c_userID);
+    strcpy(orderAction.InstrumentID, instrument.toLatin1().data());
     memcpy(orderAction.OrderRef, orderRef, sizeof(TThostFtdcOrderRefType));
     orderAction.FrontID = frontID;
     orderAction.SessionID = sessionID;
@@ -768,18 +782,18 @@ int CtpExecuter::insertParkedLimitOrder(const QString &instrument, bool open, in
  * 发送查询最大报单数量请求
  *
  * \param instrument 合约代码
- * \param buy 买卖方向
+ * \param direction 多空方向 (true: 多, false: 空)
  * \param offsetFlag 开平标志
  * \return nRequestID
  */
-int CtpExecuter::qryMaxOrderVolume(const QString &instrument, bool buy, char offsetFlag)
+int CtpExecuter::qryMaxOrderVolume(const QString &instrument, bool direction, char offsetFlag)
 {
     auto *pField = (CThostFtdcQueryMaxOrderVolumeField *) malloc(sizeof(CThostFtdcQueryMaxOrderVolumeField));
     memset(pField, 0, sizeof(CThostFtdcQueryMaxOrderVolumeField));
     strcpy(pField->BrokerID, c_brokerID);
     strcpy(pField->InvestorID, c_userID);
     strcpy(pField->InstrumentID, instrument.toLatin1().data());
-    pField->Direction = buy ? THOST_FTDC_D_Buy : THOST_FTDC_D_Sell;
+    pField->Direction = direction ? THOST_FTDC_D_Buy : THOST_FTDC_D_Sell;
     pField->OffsetFlag = offsetFlag;
     pField->HedgeFlag = THOST_FTDC_HF_Speculation;
 
@@ -981,6 +995,62 @@ void CtpExecuter::operate(const QString &instrument, int new_position)
 }
 
 /*!
+ * \brief CtpExecuter::checkLimitOrder
+ * 1. 检查限价单价格是否合理, 即是否可能造成自成交
+ * 2. 检查该合约撤单次数是否已超标
+ *
+ * \param instrument 合约代码
+ * \param price 限价单价格
+ * \param direction 多空方向(true: 多, false: 空)
+ * \param orderType 订单类型 (0:普通限价单, 1:FAK, 2:FOK)
+ * \return true: 检查通过, false: 未通过检查
+ */
+bool CtpExecuter::checkLimitOrder(const QString& instrument, double price, bool direction, int orderType)
+{
+    if (orderType == 0) {
+        if (preventSelfTrade) {
+            const auto orderList = orderMap.values(instrument);
+
+            double maxLongPrice = -DBL_MAX;
+            double minShortPrice = DBL_MAX;
+            for (const auto item : orderList) {
+                if (item.status == OrderStatus::PENDING || item.status == OrderStatus::UNKNOWN) {
+                    if (item.direction) {
+                        if (item.price > maxLongPrice) {
+                            maxLongPrice = item.price;
+                        }
+                    } else {
+                        if (item.price < minShortPrice) {
+                            minShortPrice = item.price;
+                        }
+                    }
+                }
+            }
+
+            const double tolerance = 0.0000001;
+
+            if (direction) {
+                if (price > (minShortPrice - tolerance)) {
+                    qWarning() << DATE_TIME << "This limit order may cause self trade, which is not allowed!";
+                    return false;
+                }
+            } else {
+                if (price < (maxLongPrice + tolerance)) {
+                    qWarning() << DATE_TIME << "This limit order may cause self trade, which is not allowed!";
+                    return false;
+                }
+            }
+        }
+
+        if (orderCancelCountMap[instrument] >= orderCancelLimit) {
+            qWarning() << DATE_TIME << "The cancel order counter exceeds limit on this instrument!";
+            return false;
+        }
+    }
+    return true;
+}
+
+/*!
  * \brief CtpExecuter::getTradingDay
  * 获取交易日
  *
@@ -1076,7 +1146,7 @@ QString CtpExecuter::getExpireDate(const QString &instrument)
 double CtpExecuter::getUpperLimit(const QString &instrument)
 {
     if (upperLowerLimitCache.contains(instrument)) {
-        return upperLowerLimitCache.value(instrument).second;
+        return upperLowerLimitCache.value(instrument).first;
     } else {
         return -DBL_MAX;
     }
@@ -1092,7 +1162,7 @@ double CtpExecuter::getUpperLimit(const QString &instrument)
 double CtpExecuter::getLowerLimit(const QString &instrument)
 {
     if (upperLowerLimitCache.contains(instrument)) {
-        return upperLowerLimitCache.value(instrument).first;
+        return upperLowerLimitCache.value(instrument).second;
     } else {
         return DBL_MAX;
     }
@@ -1170,6 +1240,10 @@ void CtpExecuter::buyLimitAuto(const QString& instrument, int volume, double pri
 {
     qDebug() << DATE_TIME << "buyLimitAuto" << instrument << ": volume =" << volume << ", price =" << price << ", orderType =" << orderType;
 
+    if (!checkLimitOrder(instrument, price, true, orderType)) {
+        return;
+    }
+
     bool allOrAny, gfdOrIoc;
     analyzeOrderType(orderType, allOrAny, gfdOrIoc);
 
@@ -1200,6 +1274,10 @@ void CtpExecuter::buyLimitAuto(const QString& instrument, int volume, double pri
 void CtpExecuter::sellLimitAuto(const QString& instrument, int volume, double price, int orderType)
 {
     qDebug() << DATE_TIME << "sellLimitAuto" << instrument << ": volume =" << volume << ", price =" << price << ", orderType =" << orderType;
+
+    if (!checkLimitOrder(instrument, price, false, orderType)) {
+        return;
+    }
 
     bool allOrAny, gfdOrIoc;
     analyzeOrderType(orderType, allOrAny, gfdOrIoc);
@@ -1233,6 +1311,10 @@ void CtpExecuter::buyLimit(const QString& instrument, int volume, double price, 
 {
     qDebug() << DATE_TIME << "buyLimit" << instrument << ": volume =" << volume << ", price =" << price << ", orderType =" << orderType;
 
+    if (!checkLimitOrder(instrument, price, true, orderType)) {
+        return;
+    }
+
     bool allOrAny, gfdOrIoc;
     analyzeOrderType(orderType, allOrAny, gfdOrIoc);
 
@@ -1253,10 +1335,68 @@ void CtpExecuter::sellLimit(const QString& instrument, int volume, double price,
 {
     qDebug() << DATE_TIME << "sellLimit" << instrument << ": volume =" << volume << ", price =" << price << ", orderType =" << orderType;
 
+    if (!checkLimitOrder(instrument, price, false, orderType)) {
+        return;
+    }
+
     bool allOrAny, gfdOrIoc;
     analyzeOrderType(orderType, allOrAny, gfdOrIoc);
 
     insertLimitOrder(instrument, open, - volume, price, allOrAny, gfdOrIoc);
+}
+
+/*!
+ * \brief CtpExecuter::cancelOrder
+ * 取消未成交的订单
+ *
+ * \param orderRefId 订单引用号
+ * \param frontID 前置编号
+ * \param sessionID 会话编号
+ * \param instrument 合约代码
+ */
+void CtpExecuter::cancelOrder(int orderRefId, int frontID, int sessionID, const QString &instrument)
+{
+    if (loggedIn) {
+        TThostFtdcOrderRefType orderRef;
+        sprintf(orderRef, "%12d", orderRefId);
+        orderAction(orderRef, frontID, sessionID, instrument);
+
+        const auto orderList = orderMap.values();
+        for (const auto &item : orderList) {
+            if (item.refId == orderRefId && item.frontId == frontID && item.sessionId == sessionID) {
+                QString instrument = item.instrument;
+                orderCancelCountMap[instrument] ++;
+                qInfo() << DATE_TIME << "Cancel order count of" << item.instrument << ":" << orderCancelCountMap[item.instrument];
+                break;
+            }
+        }
+    } else {
+        qWarning() << DATE_TIME << "Cancel order failed! Not logged in!";
+    }
+}
+
+/*!
+ * \brief CtpExecuter::cacelAllOrders
+ * 取消该合约未成交的订单
+ *
+ * \param instrument 合约代码, 如果为空代表取消所有合约上未成交的订单
+ */
+void CtpExecuter::cacelAllOrders(const QString &instrument)
+{
+    if (loggedIn) {
+        const auto orderList = (instrument == "") ? orderMap.values() : orderMap.values(instrument);
+        for (const auto &item : orderList) {
+            if (item.status == OrderStatus::UNKNOWN || item.status == OrderStatus::PENDING) {
+                TThostFtdcOrderRefType orderRef;
+                sprintf(orderRef, "%12d", item.refId);
+                orderAction(orderRef, item.frontId, item.sessionId, item.instrument);
+                orderCancelCountMap[item.instrument] ++;
+                qInfo() << "Cancel order count of" << item.instrument << ":" << orderCancelCountMap[item.instrument];
+            }
+        }
+    } else {
+        qWarning() << DATE_TIME << "Cancel order failed! Not logged in!";
+    }
 }
 
 /*!
@@ -1340,10 +1480,8 @@ int CtpExecuter::getPendingOrderVolume(const QString &instrument) const
     int sum = 0;
     const auto orderList = orderMap.values(instrument);
     for (const auto& order : orderList) {
-        const auto status = order.getStatus();
-        if (status == THOST_FTDC_OST_PartTradedQueueing ||
-            status == THOST_FTDC_OST_NoTradeQueueing ||
-            status == THOST_FTDC_OST_Unknown)
+        if (order.status == OrderStatus::UNKNOWN ||
+            order.status == OrderStatus::PENDING)
         {
             sum += order.remainVolume();
         }

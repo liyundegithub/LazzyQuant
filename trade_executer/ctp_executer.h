@@ -36,6 +36,11 @@ protected:
     CThostFtdcTraderApi *pUserApi;
     CTradeHandler *pHandler;
 
+    bool preventSelfTrade;
+    int orderCancelLimit;
+    QMap<QString, int> orderCancelCountMap;
+    QMultiMap<QString, Order> orderMap;
+
     QByteArray brokerID;
     QByteArray userID;
     QByteArray password;
@@ -46,14 +51,10 @@ protected:
     char* c_password;
     char* c_authenticateCode;
 
-    int FrontID;
-    int SessionID;
-
     QMap<QString, int> target_pos_map;
     QMap<QString, int> yd_pos_map;
     QMap<QString, int> td_pos_map;
     QDateTime pos_update_time;
-    QMultiMap<QString, Order> orderMap;
 
     QMap<QString, CThostFtdcInstrumentMarginRateField> marginRateCache;
     QMap<QString, CThostFtdcInstrumentCommissionRateField> commissionRateCache;
@@ -84,9 +85,9 @@ private slots:
     int qryInstrument(const QString &instrument = QString(), const QString &exchangeID = QString());
     int qryDepthMarketData(const QString &instrument = QString());
     int insertLimitOrder(const QString &instrument, bool open, int volume, double price, bool allOrAny = false, bool gfdOrIoc = true);
-    int orderAction(char* orderRef, int frontID, int sessionID);
+    int orderAction(char* orderRef, int frontID, int sessionID, const QString &instrument);
     int insertParkedLimitOrder(const QString &instrument, bool open, int volume, double price, bool allOrAny = false, bool gfdOrIoc = true);
-    int qryMaxOrderVolume(const QString &instrument, bool buy, char offsetFlag);
+    int qryMaxOrderVolume(const QString &instrument, bool direction, char offsetFlag);
     int qryOrder(const QString &instrument = QString());
     int qryTrade(const QString &instrument = QString());
     int qryPosition(const QString &instrument = QString());
@@ -96,6 +97,7 @@ private slots:
 
     QDateTime getExpireTime() const;
     void operate(const QString &instrument, int new_position);
+    bool checkLimitOrder(const QString& instrument, double price, bool direction, int orderType);
 
 signals:
     void dealMade(const QString& instrument, int volume);
@@ -120,8 +122,11 @@ public slots:
 
     void buyLimitAuto(const QString& instrument, int volume, double price, int orderType = 0);
     void sellLimitAuto(const QString& instrument, int volume, double price, int orderType = 0);
-    void buyLimit(const QString& instrument, int volume, double price, bool open = true, int orderType = 0);
-    void sellLimit(const QString& instrument, int volume, double price, bool open = true, int orderType = 0);
+    void buyLimit(const QString& instrument, int volume, double price, bool open, int orderType = 0);
+    void sellLimit(const QString& instrument, int volume, double price, bool open, int orderType = 0);
+
+    void cancelOrder(int orderRefId, int frontID, int sessionID, const QString &instrument);
+    void cacelAllOrders(const QString &instrument = QString());
 
     void parkBuyLimit(const QString& instrument, int volume, double price, int orderType = 0);
     void parkSellLimit(const QString& instrument, int volume, double price, int orderType = 0);

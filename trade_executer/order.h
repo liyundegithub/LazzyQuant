@@ -1,40 +1,40 @@
 #ifndef ORDER_H
 #define ORDER_H
 
-#include "ThostFtdcUserApiDataType.h"
-#include "ThostFtdcUserApiStruct.h"
+#include <QString>
+struct CThostFtdcOrderField;
 
-class QString;
+enum class OrderStatus {
+    UNKNOWN,
+    PENDING,
+    COMPLETED,
+    CANCELED,
+};
 
 class Order {
-    int vol;
-    int vol_remain;
-    TThostFtdcOrderRefType ref;
-    int front;
-    int session;
-    QString instrument;
-    TThostFtdcDirectionType direction;
-    TThostFtdcOrderStatusType status;
-
 public:
+    QString instrument;
+    double price;
+    int vol;
+    int volRemain;
+    int refId;
+    int frontId;
+    int sessionId;
+    bool direction; // true: long, false: short
+    OrderStatus status;
+
     Order(const CThostFtdcOrderField &field);
     Order(const Order &other);
 
-    bool isBuy() const {
-        return direction == THOST_FTDC_D_Buy;
-    }
-
     int remainVolume() const {
-        if (isBuy()) {
-            return vol_remain;
+        if (direction) {
+            return volRemain;
         } else {
-            return -vol_remain;
+            return -volRemain;
         }
     }
 
-    TThostFtdcOrderStatusType getStatus() const {
-        return status;
-    }
+    void updateStatus(const CThostFtdcOrderField &field);
 };
 
 #endif // ORDER_H
