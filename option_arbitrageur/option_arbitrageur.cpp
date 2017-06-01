@@ -32,7 +32,6 @@ OptionArbitrageur::OptionArbitrageur(bool replayMode, const QString &replayDate,
 
     pExecuter = new com::lazzyquant::trade_executer(EXECUTER_DBUS_SERVICE, EXECUTER_DBUS_OBJECT, QDBusConnection::sessionBus(), this);
     pWatcher = new com::lazzyquant::market_watcher(WATCHER_DBUS_SERVICE, WATCHER_DBUS_OBJECT, QDBusConnection::sessionBus(), this);
-    connect(pWatcher, SIGNAL(newMarketData(QString, uint, double, int, double, int, double, int)), this, SLOT(onMarketData(QString, uint, double, int, double, int, double, int)));
 
 // 复盘模式和实盘模式共用的部分到此为止 ---------------------------------------
     if (replayMode) {
@@ -50,6 +49,7 @@ OptionArbitrageur::OptionArbitrageur(bool replayMode, const QString &replayDate,
             setupHighFreq(options);
         }
         pWatcher->startReplay(replayDate);
+        connect(pWatcher, SIGNAL(newMarketData(QString, uint, double, int, double, int, double, int)), this, SLOT(onMarketData(QString, uint, double, int, double, int, double, int)));
         qInfo() << "Relay mode is ready!";
         return;
     }
@@ -124,6 +124,7 @@ void OptionArbitrageur::updateOptions()
         } else {
             setupHighFreq(options);
         }
+        connect(pWatcher, SIGNAL(newMarketData(QString, uint, double, int, double, int, double, int)), this, SLOT(onMarketData(QString, uint, double, int, double, int, double, int)));
     });
 
     updateRetryCounter = 0;
