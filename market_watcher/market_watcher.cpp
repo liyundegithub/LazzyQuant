@@ -220,7 +220,6 @@ void MarketWatcher::setCurrentTradingTime(const QString &instrumentID)
 
 void MarketWatcher::customEvent(QEvent *event)
 {
-    qDebug() << "customEvent: " << int(event->type());
     switch (int(event->type())) {
     case FRONT_CONNECTED:
         login();
