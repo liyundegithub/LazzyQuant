@@ -53,6 +53,7 @@ CtpExecuter::CtpExecuter(const CONFIG_ITEM &config, QObject *parent) :
     brokerID = settings.value("BrokerID").toByteArray();
     userID = settings.value("UserID").toByteArray();
     password = settings.value("Password").toByteArray();
+    userProductInfo = settings.value("UserProductInfo").toByteArray();
     useAuthenticate = settings.value("UseAuthenticate").toBool();
     authenticateCode = settings.value("AuthenticateCode").toByteArray();
     settings.endGroup();
@@ -61,6 +62,7 @@ CtpExecuter::CtpExecuter(const CONFIG_ITEM &config, QObject *parent) :
     c_brokerID = brokerID.data();
     c_userID = userID.data();
     c_password = password.data();
+    c_userProductInfo = userProductInfo.data();
     c_authenticateCode = authenticateCode.data();
 
     pUserApi = CThostFtdcTraderApi::CreateFtdcTraderApi(flowPath.data());
@@ -481,7 +483,7 @@ int CtpExecuter::authenticate()
     memset(&reqAuthenticate, 0, sizeof (CThostFtdcReqAuthenticateField));
     strcpy(reqAuthenticate.BrokerID, c_brokerID);
     strcpy(reqAuthenticate.UserID, c_userID);
-    //strcpy(reqAuthenticate.UserProductInfo, "LazzyQuant");
+    strcpy(reqAuthenticate.UserProductInfo, c_userProductInfo);
     strcpy(reqAuthenticate.AuthCode, c_authenticateCode);
 
     int id = nRequestID.fetchAndAddRelaxed(1);
@@ -505,6 +507,7 @@ int CtpExecuter::login()
     strcpy(reqUserLogin.BrokerID, c_brokerID);
     strcpy(reqUserLogin.UserID, c_userID);
     strcpy(reqUserLogin.Password, c_password);
+    strcpy(reqUserLogin.UserProductInfo, c_userProductInfo);
 
     int id = nRequestID.fetchAndAddRelaxed(1);
     traderApiMutex.lock();

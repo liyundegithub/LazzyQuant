@@ -44,11 +44,13 @@ protected:
     QByteArray brokerID;
     QByteArray userID;
     QByteArray password;
+    QByteArray userProductInfo;
     bool useAuthenticate;
     QByteArray authenticateCode;
     char* c_brokerID;
     char* c_userID;
     char* c_password;
+    char* c_userProductInfo;
     char* c_authenticateCode;
 
     QMap<QString, int> target_pos_map;

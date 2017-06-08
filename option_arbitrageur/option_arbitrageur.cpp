@@ -48,9 +48,9 @@ OptionArbitrageur::OptionArbitrageur(bool replayMode, const QString &replayDate,
         } else {
             setupHighFreq(options);
         }
-        pWatcher->startReplay(replayDate);
         connect(pWatcher, SIGNAL(newMarketData(QString, uint, double, int, double, int, double, int)), this, SLOT(onMarketData(QString, uint, double, int, double, int, double, int)));
         qInfo() << "Relay mode is ready!";
+        pWatcher->startReplay(replayDate);
         return;
     }
 // 以下设置仅用于实盘模式 --------------------------------------------------
