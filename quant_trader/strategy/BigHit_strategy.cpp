@@ -1,4 +1,4 @@
-#include "utility.h"
+#include "common_utility.h"
 #include "../bar.h"
 #include "../mql5_compatible.h"
 #include "bighit_strategy.h"

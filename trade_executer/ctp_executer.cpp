@@ -42,6 +42,7 @@ CtpExecuter::CtpExecuter(const CONFIG_ITEM &config, QObject *parent) :
     nRequestID = 0;
 
     loggedIn = false;
+    cacheReady = false;
     available = 0.0f;
 
     QSettings settings(QSettings::IniFormat, QSettings::UserScope, config.organization, config.name);
@@ -113,6 +114,7 @@ void CtpExecuter::customEvent(QEvent *event)
     case FRONT_DISCONNECTED:
     {
         loggedIn = false;
+        cacheReady = false;
         auto *fevent = static_cast<FrontDisconnectedEvent*>(event);
         // TODO reset position maps, make update times invalid
         switch (fevent->getReason()) {
@@ -147,6 +149,7 @@ void CtpExecuter::customEvent(QEvent *event)
         auto *uevent = static_cast<UserLoginEvent*>(event);
         if (uevent->errorID == 0) {
             loggedIn = true;
+            cacheReady = false;
 
             qInfo() << DATE_TIME << "UserLogin OK! FrontID =" << uevent->rspUserLogin.FrontID << ", SessionID =" << uevent->rspUserLogin.SessionID;
 
@@ -1054,6 +1057,21 @@ bool CtpExecuter::checkLimitOrder(const QString& instrument, double price, bool 
 }
 
 /*!
+ * \brief CtpExecuter::getStatus
+ * 获取状态字符串
+ *
+ * \return 状态
+ */
+QString CtpExecuter::getStatus() const
+{
+    if (loggedIn && cacheReady) {
+        return "Ready";
+    } else {
+        return "NotReady";
+    }
+}
+
+/*!
  * \brief CtpExecuter::getTradingDay
  * 获取交易日
  *
@@ -1100,6 +1118,7 @@ void CtpExecuter::updateInstrumentDataCache()
         instrumentDataCache.clear();
         qryInstrument();
         qryDepthMarketData();
+        cacheReady = true;  //FIXME
     } else {
         qWarning() << DATE_TIME << "UpdateInstrumentDataCache failed! Not logged in!";
     }

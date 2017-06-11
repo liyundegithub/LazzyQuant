@@ -9,7 +9,7 @@
 #include <QDateTime>
 #include <QPair>
 
-#include "utility.h"
+#include "common_utility.h"
 
 struct CThostFtdcInstrumentMarginRateField;
 struct CThostFtdcInstrumentCommissionRateField;
@@ -73,6 +73,7 @@ protected:
     int callTraderApi(int (CThostFtdcTraderApi::* pTraderApi)(T *,int), T * pField);
 
     bool loggedIn;
+    bool cacheReady;
     double available;
 
 private slots:
@@ -105,6 +106,7 @@ signals:
     void dealMade(const QString& instrument, int volume);
 
 public slots:
+    QString getStatus() const;
     bool isLoggedIn() const { return loggedIn; }
     QString getTradingDay() const;
     void confirmSettlementInfo();

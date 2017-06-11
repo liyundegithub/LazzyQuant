@@ -4,7 +4,7 @@
 #include <QDebug>
 
 #include "config.h"
-#include "utility.h"
+#include "common_utility.h"
 #include "abstract_strategy.h"
 #include "../bar.h"
 #include "../indicator/abstract_indicator.h"

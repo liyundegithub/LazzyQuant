@@ -3,7 +3,7 @@
 
 #include "config.h"
 #include "market.h"
-#include "utility.h"
+#include "common_utility.h"
 #include "quant_trader.h"
 #include "bar.h"
 #include "bar_collector.h"

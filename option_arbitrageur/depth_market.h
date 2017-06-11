@@ -1,7 +1,7 @@
 #ifndef DEPTH_MARKET_H
 #define DEPTH_MARKET_H
 
-#include "utility.h"
+#include "common_utility.h"
 #include "option_index.h"
 
 #include <QDebug>

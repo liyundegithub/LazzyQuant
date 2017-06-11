@@ -5,6 +5,9 @@
       <arg name="instrument" type="s" direction="out"/>
       <arg name="volume" type="i" direction="out"/>
     </signal>
+    <method name="getStatus">
+      <arg type="s" direction="out"/>
+    </method>
     <method name="isLoggedIn">
       <arg type="b" direction="out"/>
     </method>

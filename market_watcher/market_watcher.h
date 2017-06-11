@@ -70,6 +70,7 @@ signals:
                        double askPrice1, int askVolume1, double bidPrice1, int bidVolume1);
 
 public slots:
+    QString getStatus() const;
     bool isReplayMode() const { return replayMode; }
     bool isLoggedIn() const { return loggedIn; }
     QString getTradingDay() const;

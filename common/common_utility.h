@@ -1,5 +1,5 @@
-#ifndef UTILITY_H
-#define UTILITY_H
+#ifndef COMMON_UTILITY_H
+#define COMMON_UTILITY_H
 
 #include <QString>
 #include <QDateTime>
@@ -70,4 +70,4 @@ const QString ZJ[] = {"ic", "if", "ih", "t",  "tf"};
 
 QString getSuffix(const QString &instrumentID);
 
-#endif // UTILITY_H
+#endif // COMMON_UTILITY_H

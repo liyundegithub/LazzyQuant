@@ -14,6 +14,9 @@
       <arg name="bidPrice1" type="d" direction="out"/>
       <arg name="bidVolume1" type="i" direction="out"/>
     </signal>
+    <method name="getStatus">
+      <arg type="s" direction="out"/>
+    </method>
     <method name="isReplayMode">
       <arg type="b" direction="out"/>
     </method>

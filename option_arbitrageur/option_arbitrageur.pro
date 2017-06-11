@@ -9,7 +9,7 @@ TEMPLATE = app
 
 SOURCES += main.cpp \
     ../common/market.cpp \
-    ../common/utility.cpp \
+    ../common/common_utility.cpp \
     ../common/multiple_timer.cpp \
     ../common/trading_calendar.cpp \
     option_arbitrageur.cpp \
@@ -26,7 +26,7 @@ DBUS_INTERFACES += ../interface/market_watcher.xml ../interface/trade_executer.x
 
 HEADERS += ../config.h \
     ../common/market.h \
-    ../common/utility.h \
+    ../common/common_utility.h \
     ../common/multiple_timer.h \
     ../common/trading_calendar.h \
     option_arbitrageur.h \

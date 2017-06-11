@@ -6,7 +6,7 @@
 
 #include "config_struct.h"
 #include "market.h"
-#include "utility.h"
+#include "common_utility.h"
 #include "multiple_timer.h"
 #include "trading_calendar.h"
 #include "market_watcher.h"
@@ -394,6 +394,21 @@ void MarketWatcher::emitNewMarketData(const CThostFtdcDepthMarketDataField& dept
                        depthMarketDataField.AskVolume1,
                        depthMarketDataField.BidPrice1,
                        depthMarketDataField.BidVolume1);
+}
+
+/*!
+ * \brief CtpExecuter::getStatus
+ * 获取状态字符串
+ *
+ * \return 状态
+ */
+QString MarketWatcher::getStatus() const
+{
+    if (replayMode || (!replayMode && loggedIn)) {
+        return "Ready";
+    } else {
+        return "NotReady";
+    }
 }
 
 /*!

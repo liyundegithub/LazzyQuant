@@ -1,15 +1,15 @@
-#include "utility.h"
+#include "common_utility.h"
 
 #include <QMap>
 
 /*!
  * \brief getInstrumentName
- * ´ÓÆÚ»õ»òÆÚÈ¨ºÏÔ¼´úÂëÀïÌáÈ¡½»Ò×´úÂë
- * ±ÈÈç cu1703 --> cu, i1705 --> i, CF705 --> CF
+ * ä»æœŸè´§æˆ–æœŸæƒåˆçº¦ä»£ç é‡Œæå–äº¤æ˜“ä»£ç 
+ * æ¯”å¦‚ cu1703 --> cu, i1705 --> i, CF705 --> CF
  *      m1707-C-2700 --> m
  *
- * \param instrumentID ÆÚ»õ/ÆÚÈ¨ºÏÔ¼´úÂë
- * \return ½»Ò×Æ·ÖÖÃû
+ * \param instrumentID æœŸè´§/æœŸæƒåˆçº¦ä»£ç 
+ * \return äº¤æ˜“å“ç§å
  */
 QString getCode(const QString &instrumentID)
 {
@@ -25,15 +25,15 @@ QString getCode(const QString &instrumentID)
 
 /*!
  * \brief parseOptionID
- * ½âÎöÆÚÈ¨ºÏÔ¼´úÂë, ÌáÈ¡Æä¶ÔÓ¦±êµÄÆÚ»õºÏÔ¼µÄ´úÂë, ÆÚÈ¨ÀàĞÍ(¿´ÕÇ/¿´µø) ÒÔ¼°Ö´ĞĞ¼Û¸ñ
- * ±ÈÈç m1707-C-2700 --> ±êµÄm1707, ÀàĞÍÎª¿´ÕÇ, Ö´ĞĞ¼Û¸ñ2700
- *     SR705P6400   --> ±êµÄSR705, ÀàĞÍÎª¿´µø, Ö´ĞĞ¼Û¸ñ6400
+ * è§£ææœŸæƒåˆçº¦ä»£ç , æå–å…¶å¯¹åº”æ ‡çš„æœŸè´§åˆçº¦çš„ä»£ç , æœŸæƒç±»å‹(çœ‹æ¶¨/çœ‹è·Œ) ä»¥åŠæ‰§è¡Œä»·æ ¼
+ * æ¯”å¦‚ m1707-C-2700 --> æ ‡çš„m1707, ç±»å‹ä¸ºçœ‹æ¶¨, æ‰§è¡Œä»·æ ¼2700
+ *     SR705P6400   --> æ ‡çš„SR705, ç±»å‹ä¸ºçœ‹è·Œ, æ‰§è¡Œä»·æ ¼6400
  *
- * \param optionID ÆÚÈ¨ºÏÔ¼´úÂë
- * \param futureID ±êµÄÆÚ»õºÏÔ¼´úÂë (Êä³ö²ÎÊı)
- * \param type ¿´ÕÇ/¿´µø (Êä³ö²ÎÊı)
- * \param exercisePrice Ö´ĞĞ¼Û¸ñ (Êä³ö²ÎÊı)
- * \return ½âÎö³É¹¦Óë·ñ
+ * \param optionID æœŸæƒåˆçº¦ä»£ç 
+ * \param futureID æ ‡çš„æœŸè´§åˆçº¦ä»£ç  (è¾“å‡ºå‚æ•°)
+ * \param type çœ‹æ¶¨/çœ‹è·Œ (è¾“å‡ºå‚æ•°)
+ * \param exercisePrice æ‰§è¡Œä»·æ ¼ (è¾“å‡ºå‚æ•°)
+ * \return è§£ææˆåŠŸä¸å¦
  */
 bool parseOptionID(const QString &optionID, QString &futureID, OPTION_TYPE &type, int &exercisePrice)
 {
@@ -67,12 +67,12 @@ bool parseOptionID(const QString &optionID, QString &futureID, OPTION_TYPE &type
 
 /*!
  * \brief makeOptionID
- * ¸ù¾İÆÚÈ¨ºÏÔ¼ÖĞ¹æ¶¨µÄ¸ñÊ½ºÏ³ÉÆÚÈ¨ºÏÔ¼´úÂë
+ * æ ¹æ®æœŸæƒåˆçº¦ä¸­è§„å®šçš„æ ¼å¼åˆæˆæœŸæƒåˆçº¦ä»£ç 
  *
- * \param futureID ±êµÄÆÚ»õºÏÔ¼´úÂë
- * \param type ¿´ÕÇ/¿´µø
- * \param exercisePrice Ö´ĞĞ¼Û¸ñ
- * \return ÆÚÈ¨ºÏÔ¼´úÂë
+ * \param futureID æ ‡çš„æœŸè´§åˆçº¦ä»£ç 
+ * \param type çœ‹æ¶¨/çœ‹è·Œ
+ * \param exercisePrice æ‰§è¡Œä»·æ ¼
+ * \return æœŸæƒåˆçº¦ä»£ç 
  */
 QString makeOptionID(const QString &futureID, const OPTION_TYPE type, const int exercisePrice)
 {
@@ -89,10 +89,10 @@ QString makeOptionID(const QString &futureID, const OPTION_TYPE type, const int 
 
 /*!
  * \brief isOption
- * ÅĞ¶ÏÒ»¸öºÏÔ¼´úÂëÊÇ·ñÊÇÆÚÈ¨ºÏÔ¼
+ * åˆ¤æ–­ä¸€ä¸ªåˆçº¦ä»£ç æ˜¯å¦æ˜¯æœŸæƒåˆçº¦
  *
- * \param instrumentID ºÏÔ¼´úÂë
- * \return ÊÇ·ñÊÇÆÚÈ¨ºÏÔ¼
+ * \param instrumentID åˆçº¦ä»£ç 
+ * \return æ˜¯å¦æ˜¯æœŸæƒåˆçº¦
  */
 bool isOption(const QString &instrumentID)
 {
@@ -102,7 +102,7 @@ bool isOption(const QString &instrumentID)
 
 #define String const QString&
 
-// Í¨¹ıºÏÔ¼Ãû»ñµÃÎÄ¼şµÄÀ©Õ¹Ãû
+// é€šè¿‡åˆçº¦åè·å¾—æ–‡ä»¶çš„æ‰©å±•å
 QString getSuffix(String instrumentID) {
     const QString instrumentLowerCase = getCode(instrumentID).toLower();
     for (String instr : SQ) {

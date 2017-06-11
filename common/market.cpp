@@ -5,7 +5,7 @@
 
 #include "config.h"
 #include "market.h"
-#include "utility.h"
+#include "common_utility.h"
 
 QList<Market> markets;
 

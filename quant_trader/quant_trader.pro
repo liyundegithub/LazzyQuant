@@ -9,7 +9,7 @@ TEMPLATE = app
 
 SOURCES += main.cpp \
     ../common/market.cpp \
-    ../common/utility.cpp \
+    ../common/common_utility.cpp \
     quant_trader.cpp \
     bar_collector.cpp \
     bar.cpp \
@@ -26,7 +26,7 @@ DBUS_INTERFACES += ../interface/market_watcher.xml ../interface/trade_executer.x
 
 HEADERS += ../config.h \
     ../common/market.h \
-    ../common/utility.h \
+    ../common/common_utility.h \
     quant_trader.h \
     bar_collector.h \
     bar.h \

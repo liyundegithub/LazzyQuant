@@ -77,7 +77,7 @@ OptionArbitrageur::~OptionArbitrageur()
 
 void OptionArbitrageur::updateOptions()
 {
-    if (!pWatcher->isValid() || !pExecuter->isValid()) {
+    if (pWatcher->getStatus() != "Ready" || pExecuter->getStatus() != "Ready") {
         if (updateRetryCounter < 3) {
             qWarning() << "Either Watcher or Executer is not ready! Will try update options later!";
             QTimer::singleShot(10000, this, &OptionArbitrageur::updateOptions);
@@ -188,7 +188,7 @@ void OptionArbitrageur::loadOptionArbitrageurSettings()
 
 static inline QDate getEndDate(const QString &underlying)
 {
-    if (pExecuter->isValid()) {
+    if (pExecuter->getStatus() == "Ready") {
         const QString dateStr = pExecuter->getExpireDate(underlying);
         if (dateStr != INVALID_DATE_STRING) {
             return QDate::fromString(dateStr, "yyyyMMdd");
@@ -263,7 +263,7 @@ void OptionArbitrageur::preparePricing(const QMultiMap<QString, int> &underlying
     double minPrice = 2300.0;   // FIXME
 
     const auto keys = underlyingKMap.uniqueKeys();
-    if (pExecuter->isValid()) {
+    if (pExecuter->getStatus() == "Ready") {
         maxPrice = -DBL_MAX;
         minPrice = DBL_MAX;
         for (const auto key : keys) {
@@ -285,7 +285,7 @@ void OptionArbitrageur::preparePricing(const QMultiMap<QString, int> &underlying
     qInfo() << "Use s0:" << s0List;
 
     QDate startDate;
-    if (pWatcher->isValid()) {
+    if (pWatcher->getStatus() == "Ready") {
         startDate = QDate::fromString(pWatcher->getTradingDay(), "yyyyMMdd");
     } else {
         startDate = QDate::currentDate();

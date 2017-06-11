@@ -1,7 +1,7 @@
 #ifndef BASE_STRATEGY_H
 #define BASE_STRATEGY_H
 
-#include "utility.h"
+#include "common_utility.h"
 
 class DepthMarketCollection;
 
