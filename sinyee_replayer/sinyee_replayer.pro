@@ -1,10 +1,8 @@
 QT += core dbus
 QT -= gui
 
-CONFIG += c++14
-
 TARGET = sinyee_replayer
-CONFIG += console
+CONFIG += console c++14
 CONFIG -= app_bundle
 
 TEMPLATE = app

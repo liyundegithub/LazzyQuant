@@ -1,7 +1,6 @@
 #ifndef RISK_FREE_H
 #define RISK_FREE_H
 
-#include "common_utility.h"
 #include "base_strategy.h"
 
 class RiskFree : public BaseStrategy
