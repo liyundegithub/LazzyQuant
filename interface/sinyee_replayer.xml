@@ -13,7 +13,14 @@
     </signal>
     <method name="startReplay">
       <arg name="date" type="s" direction="in"/>
+    </method>
+    <method name="startReplay">
+      <arg name="date" type="s" direction="in"/>
       <arg name="instrument" type="s" direction="in"/>
+    </method>
+    <method name="startReplay">
+      <arg name="date" type="s" direction="in"/>
+      <arg name="instruments" type="as" direction="in"/>
     </method>
   </interface>
 </node>
