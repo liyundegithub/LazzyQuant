@@ -7,7 +7,7 @@ int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
 
-    SinYeeReplayer replayer(replayerConfig);
+    SinYeeReplayer replayer(replayerConfigs[0]);
 
     return a.exec();
 }

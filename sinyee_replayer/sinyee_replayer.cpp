@@ -133,16 +133,16 @@ void SinYeeReplayer::startReplay(const QString &date, const QStringList &instrum
 
         const QStringList contractNames = getAvailableContracts(tickStream);
         qDebug() << contractNames;
-        for (const auto &instrument : contractNames) {
+        for (const auto &contractName : contractNames) {
             qint32 num;
             tickStream >> num;
             Q_ASSERT(num >= 0);
-            qInfo() << num << "items for" << instrument;
+            qInfo() << num << "items for" << contractName;
 
             auto tickList = readTicks(tickStream, num);
-            if (!instrument.endsWith("99")) {
+            if (!contractName.endsWith("99")) {
                 for (const auto &item : tickList) {
-                    tickPairList << qMakePair(instrument, item);
+                    tickPairList << qMakePair(contractName, item);
                 }
             }
         }

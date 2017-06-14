@@ -19,9 +19,13 @@
 #define STOCK_OPTION_EXECUTER_NAME  "stock_option_ctp_executer"
 #define REPLAYER_NAME               "sinyee_replayer"
 
-#define WATCHER_DBUS_OBJECT         "/watcher"
-#define EXECUTER_DBUS_OBJECT        "/executer"
-#define REPLAYER_DBUS_OBJECT        "/replayer"
+#define WATCHER_DBUS_OBJECT                     "/watcher"
+#define EXECUTER_DBUS_OBJECT                    "/executer"
+#define STOCK_WATCHER_DBUS_OBJECT               "/stock_watcher"
+#define STOCK_EXECUTER_DBUS_OBJECT              "/stock_executer"
+#define STOCK_OPTION_WATCHER_DBUS_OBJECT        "/stock_option_watcher"
+#define STOCK_OPTION_EXECUTER_DBUS_OBJECT       "/stock_option_executer"
+#define REPLAYER_DBUS_OBJECT                    "/replayer"
 
 #define WATCHER_DBUS_SERVICE                    UNIQ_PREFIX WATCHER_NAME
 #define EXECUTER_DBUS_SERVICE                   UNIQ_PREFIX EXECUTER_NAME
@@ -49,8 +53,8 @@ const CONFIG_ITEM stockOptionExecuterConfigs[] = {
     {STOCK_OPTION_EXECUTER_NAME, ORGANIZATION, EXECUTER_DBUS_OBJECT, STOCK_OPTION_EXECUTER_DBUS_SERVICE},
 };
 
-const CONFIG_ITEM replayerConfig = {
-    REPLAYER_NAME, ORGANIZATION, REPLAYER_DBUS_OBJECT, REPLAYER_DBUS_SERVICE
+const CONFIG_ITEM replayerConfigs[] = {
+    {REPLAYER_NAME, ORGANIZATION, REPLAYER_DBUS_OBJECT, REPLAYER_DBUS_SERVICE},
 };
 
 #endif // CONFIG_H
