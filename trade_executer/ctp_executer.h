@@ -98,7 +98,6 @@ private slots:
     int insertExecOrder(const QString &instrument, OPTION_TYPE type, int volume);
     int insertQuote(const QString &instrument);
 
-    QDateTime getExpireTime() const;
     void operate(const QString &instrument, int new_position);
     bool checkLimitOrder(const QString& instrument, double price, bool direction, int orderType);
 

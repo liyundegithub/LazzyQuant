@@ -940,22 +940,6 @@ int CtpExecuter::insertQuote(const QString &instrument)
 }
 
 /*!
- * \brief CtpExecuter::getExpireTime
- * 根据TradingDay生成过期时间(下午5点过期)
- *
- * \return 过期时间
- */
-QDateTime CtpExecuter::getExpireTime() const
-{
-    QString tradingDay = pUserApi->GetTradingDay();
-    QDateTime expireTime = QDateTime::fromString(tradingDay, "yyyyMMdd");
-    if (expireTime.isValid()) {
-        expireTime.setTime(QTime(17, 0));
-    }
-    return expireTime;
-}
-
-/*!
  * \brief CtpExecuter::operate
  * 操作合约(必要的话)使得其仓位与目标值一致
  *
