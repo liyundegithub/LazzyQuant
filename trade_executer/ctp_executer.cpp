@@ -16,6 +16,18 @@
 #include "trade_handler.h"
 #include "order.h"
 
+#define OPEN                0
+#define CLOSE               1
+#define CLOSE_TODAY         2
+#define CLOSE_YESTERDAY     3
+
+const TThostFtdcOffsetFlagType ctpOffsetFlags[] = {
+    THOST_FTDC_OF_Open,
+    THOST_FTDC_OF_Close,
+    THOST_FTDC_OF_CloseToday,
+    THOST_FTDC_OF_CloseYesterday,
+};
+
 #ifdef Q_OS_WIN
 #include <Windows.h>
 #endif
@@ -295,25 +307,58 @@ void CtpExecuter::customEvent(QEvent *event)
     {
         auto *tevent = static_cast<RtnTradeEvent*>(event);
         int volume = tevent->tradeField.Volume;
-        if (tevent->tradeField.Direction == THOST_FTDC_D_Sell) {
-            volume *= -1;
-        }
+        const bool direction = (tevent->tradeField.Direction == THOST_FTDC_D_Buy);
 
         switch(tevent->tradeField.OffsetFlag) {
         case THOST_FTDC_OF_Open:            //开仓
-            td_pos_map[tevent->tradeField.InstrumentID] += volume;
+            if (direction) {
+                tdLongPositions[tevent->tradeField.InstrumentID] += volume;
+            } else {
+                tdShortPositions[tevent->tradeField.InstrumentID] += volume;
+            }
             break;
         case THOST_FTDC_OF_Close:           //平仓
-            td_pos_map[tevent->tradeField.InstrumentID] += volume;  // TODO 区分
+            // 默认先平昨仓, 再平今仓
+            // TODO 在考虑平今手续费减免的情况下, 应当先平今仓, 再平昨仓
+            if (direction) {
+                int yd_pos = ydLongPositions[tevent->tradeField.InstrumentID];
+                int closeYd = qMin(yd_pos, volume);
+                if (closeYd > 0) {
+                    ydLongPositions[tevent->tradeField.InstrumentID] -= closeYd;
+                    volume -= closeYd;
+                }
+                tdLongPositions[tevent->tradeField.InstrumentID] -= volume;
+            } else {
+                int yd_pos = ydShortPositions[tevent->tradeField.InstrumentID];
+                int closeYd = qMin(yd_pos, volume);
+                if (closeYd > 0) {
+                    ydShortPositions[tevent->tradeField.InstrumentID] -= closeYd;
+                    volume -= closeYd;
+                }
+                tdShortPositions[tevent->tradeField.InstrumentID] -= volume;
+            }
             break;
         case THOST_FTDC_OF_CloseToday:      //平今
-            td_pos_map[tevent->tradeField.InstrumentID] += volume;
+            if (direction) {
+                tdLongPositions[tevent->tradeField.InstrumentID] -= volume;
+            } else {
+                tdShortPositions[tevent->tradeField.InstrumentID] -= volume;
+            }
             break;
         case THOST_FTDC_OF_CloseYesterday:  //平昨
-            yd_pos_map[tevent->tradeField.InstrumentID] += volume;
+            if (direction) {
+                ydLongPositions[tevent->tradeField.InstrumentID] -= volume;
+            } else {
+                ydShortPositions[tevent->tradeField.InstrumentID] -= volume;
+            }
             break;
         default:
-            td_pos_map[tevent->tradeField.InstrumentID] += volume;
+            // FIXME 默认当平今处理
+            if (direction) {
+                tdLongPositions[tevent->tradeField.InstrumentID] -= volume;
+            } else {
+                tdShortPositions[tevent->tradeField.InstrumentID] -= volume;
+            }
             break;
         }
 
@@ -354,18 +399,19 @@ void CtpExecuter::customEvent(QEvent *event)
     case RSP_QRY_POSITION:
     {
         auto *pevent = static_cast<PositionEvent*>(event);
-        yd_pos_map.clear();
-        td_pos_map.clear();
+        ydLongPositions.clear();
+        ydShortPositions.clear();
+        tdLongPositions.clear();
+        tdShortPositions.clear();
 
         for (const auto &item : pevent->positionList) {
-            int YdPosition = item.YdPosition;   // 昨仓数据不会更新
-            int TdPosition = item.TodayPosition;
-            if (item.PosiDirection == THOST_FTDC_PD_Short) {
-                YdPosition *= -1;
-                TdPosition *= -1;
+            if (item.PosiDirection == THOST_FTDC_PD_Long) {
+                ydLongPositions[item.InstrumentID] = item.Position - item.TodayPosition;
+                tdLongPositions[item.InstrumentID] = item.TodayPosition;
+            } else {
+                ydShortPositions[item.InstrumentID] = item.Position - item.TodayPosition;
+                tdShortPositions[item.InstrumentID] = item.TodayPosition;
             }
-            yd_pos_map[item.InstrumentID] += YdPosition;
-            td_pos_map[item.InstrumentID] += TdPosition;
         }
         pos_update_time = QDateTime::currentDateTime();
     }
@@ -373,27 +419,26 @@ void CtpExecuter::customEvent(QEvent *event)
     case RSP_QRY_POSITION_DETAIL:
     {
         auto *pevent = static_cast<PositionDetailEvent*>(event);
-
-        QSet<QString> updateSet;
-        for (const auto &item : pevent->positionDetailList) {
-            updateSet.insert(item.InstrumentID);
-        }
-
-        for (const auto &item : updateSet) {
-            yd_pos_map.remove(item);
-            td_pos_map.remove(item);
-        }
+        ydLongPositions.clear();
+        ydShortPositions.clear();
+        tdLongPositions.clear();
+        tdShortPositions.clear();
 
         for (const auto &item : pevent->positionDetailList) {
             qDebug() << item.InstrumentID << "position:" << item.Volume << item.OpenDate << item.TradingDay << item.ExchangeID;
-            int volume = item.Volume;
-            if (item.Direction == THOST_FTDC_D_Sell) {
-                volume *= -1;
-            }
-            if (strcmp(item.OpenDate, item.TradingDay) == 0) {
-                td_pos_map[item.InstrumentID] += volume;
+
+            if (item.Direction == THOST_FTDC_D_Buy) {
+                if (strcmp(item.OpenDate, item.TradingDay) == 0) {
+                    tdLongPositions[item.InstrumentID] += item.Volume;
+                } else {
+                    ydLongPositions[item.InstrumentID] += item.Volume;
+                }
             } else {
-                yd_pos_map[item.InstrumentID] += volume;
+                if (strcmp(item.OpenDate, item.TradingDay) == 0) {
+                    tdShortPositions[item.InstrumentID] += item.Volume;
+                } else {
+                    ydShortPositions[item.InstrumentID] += item.Volume;
+                }
             }
         }
         pos_update_time = QDateTime::currentDateTime();
@@ -646,9 +691,9 @@ int CtpExecuter::qryInstrument(const QString &instrument, const QString &exchang
 
 /*!
  * \brief CtpExecuter::qryDepthMarketData
- * 发送查询行情请求
+ * 发送查询合约行情请求
  *
- * \param instrument 要查询的合约代码
+ * \param instrument 合约代码
  * \return nRequestID
  */
 int CtpExecuter::qryDepthMarketData(const QString &instrument)
@@ -664,14 +709,14 @@ int CtpExecuter::qryDepthMarketData(const QString &instrument)
  * 下限价单 (包括FOK, FAK)
  *
  * \param instrument 合约代码
- * \param open 开仓(true)/平仓(false)
+ * \param openClose 开平标志(通用宏定义)
  * \param volume 手数(非零整数, 正数代表开多/平空, 负数代表开空/平多)
  * \param price 价格(限价, 不得超出涨跌停范围)
  * \param allOrAny 全部成交或撤单(true)/任意数量成交剩余撤单(false)
  * \param gfdOrIoc 今日有效(true)/立即成交否则撤单(false)
  * \return nRequestID
  */
-int CtpExecuter::insertLimitOrder(const QString &instrument, bool open, int volume, double price, bool allOrAny, bool gfdOrIoc)
+int CtpExecuter::insertLimitOrder(const QString &instrument, int openClose, int volume, double price, bool allOrAny, bool gfdOrIoc)
 {
     Q_ASSERT(volume != 0);
 
@@ -685,7 +730,7 @@ int CtpExecuter::insertLimitOrder(const QString &instrument, bool open, int volu
 //	orderRef++;
 
     inputOrder.Direction = volume > 0 ? THOST_FTDC_D_Buy : THOST_FTDC_D_Sell;
-    inputOrder.CombOffsetFlag[0] = open ? THOST_FTDC_OF_Open : THOST_FTDC_OF_Close;
+    inputOrder.CombOffsetFlag[0] = ctpOffsetFlags[openClose];
     inputOrder.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
     inputOrder.VolumeTotalOriginal = qAbs(volume);
     inputOrder.VolumeCondition = allOrAny ? THOST_FTDC_VC_CV : THOST_FTDC_VC_AV;
@@ -741,14 +786,14 @@ int CtpExecuter::orderAction(char* orderRef, int frontID, int sessionID, const Q
  * 预埋限价单 (包括FOK, FAK)
  *
  * \param instrument 合约代码
- * \param open 开仓(true)/平仓(false)
+ * \param openClose 开平标志(通用宏定义)
  * \param volume 手数(非零整数, 正数代表开多/平空, 负数代表开空/平多)
  * \param price 价格(限价, 不得超出涨跌停范围)
  * \param allOrAny 全部成交或撤单(true)/任意数量成交剩余撤单(false)
  * \param gfdOrIoc 今日有效(true)/立即成交否则撤单(false)
  * \return nRequestID
  */
-int CtpExecuter::insertParkedLimitOrder(const QString &instrument, bool open, int volume, double price, bool allOrAny, bool gfdOrIoc)
+int CtpExecuter::insertParkedLimitOrder(const QString &instrument, int openClose, int volume, double price, bool allOrAny, bool gfdOrIoc)
 {
     Q_ASSERT(volume != 0);
 
@@ -762,7 +807,7 @@ int CtpExecuter::insertParkedLimitOrder(const QString &instrument, bool open, in
 //	orderRef++;
 
     parkedOrder.Direction = volume > 0 ? THOST_FTDC_D_Buy : THOST_FTDC_D_Sell;
-    parkedOrder.CombOffsetFlag[0] = open ? THOST_FTDC_OF_Open : THOST_FTDC_OF_Close;
+    parkedOrder.CombOffsetFlag[0] = ctpOffsetFlags[openClose];
     parkedOrder.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
     parkedOrder.VolumeTotalOriginal = qAbs(volume);
     parkedOrder.VolumeCondition = allOrAny ? THOST_FTDC_VC_CV : THOST_FTDC_VC_AV;
@@ -789,10 +834,10 @@ int CtpExecuter::insertParkedLimitOrder(const QString &instrument, bool open, in
  *
  * \param instrument 合约代码
  * \param direction 多空方向 (true: 多, false: 空)
- * \param offsetFlag 开平标志
+ * \param openClose 开平标志(通用宏定义)
  * \return nRequestID
  */
-int CtpExecuter::qryMaxOrderVolume(const QString &instrument, bool direction, char offsetFlag)
+int CtpExecuter::qryMaxOrderVolume(const QString &instrument, bool direction, int openClose)
 {
     auto *pField = (CThostFtdcQueryMaxOrderVolumeField *) malloc(sizeof(CThostFtdcQueryMaxOrderVolumeField));
     memset(pField, 0, sizeof(CThostFtdcQueryMaxOrderVolumeField));
@@ -800,7 +845,7 @@ int CtpExecuter::qryMaxOrderVolume(const QString &instrument, bool direction, ch
     strcpy(pField->InvestorID, c_userID);
     strcpy(pField->InstrumentID, instrument.toLatin1().data());
     pField->Direction = direction ? THOST_FTDC_D_Buy : THOST_FTDC_D_Sell;
-    pField->OffsetFlag = offsetFlag;
+    pField->OffsetFlag = ctpOffsetFlags[openClose];
     pField->HedgeFlag = THOST_FTDC_HF_Speculation;
 
     return callTraderApi(&CThostFtdcTraderApi::ReqQueryMaxOrderVolume, pField);
@@ -1041,6 +1086,24 @@ bool CtpExecuter::checkLimitOrder(const QString& instrument, double price, bool 
 }
 
 /*!
+ * \brief CtpExecuter::distinguishYdTd
+ * 判断平仓时是否需要使用"平昨"或"平今"标志
+ *
+ * \param instrument 合约代码
+ * \return true表示使用"平昨"或"平今"标志, false表示使用"平仓"标志(即不区分昨仓和今仓)
+ */
+bool CtpExecuter::distinguishYdTd(const QString &instrument)
+{
+    if (instrumentDataCache.contains(instrument)) {
+        // 上期所平仓时需要使用"平昨"或"平今"标志
+        if (instrumentDataCache.value(instrument).ExchangeID == "SHFE") {
+            return true;
+        }
+    }
+    return false;
+}
+
+/*!
  * \brief CtpExecuter::getStatus
  * 获取状态字符串
  *
@@ -1124,6 +1187,22 @@ QStringList CtpExecuter::getCachedInstruments(const QString &idPrefix) const
         }
     }
     return ret;
+}
+
+/*!
+ * \brief CtpExecuter::getExchangeID
+ * 从缓存中查询合约的交易所代码并返回
+ *
+ * \param instrument 合约代码
+ * \return 交易所代码
+ */
+QString CtpExecuter::getExchangeID(const QString &instrument)
+{
+    if (instrumentDataCache.contains(instrument)) {
+        return instrumentDataCache.value(instrument).ExchangeID;
+    } else {
+        return "";
+    }
 }
 
 /*!
@@ -1253,18 +1332,27 @@ void CtpExecuter::buyLimitAuto(const QString& instrument, int volume, double pri
     bool allOrAny, gfdOrIoc;
     analyzeOrderType(orderType, allOrAny, gfdOrIoc);
 
-    int position = getPosition(instrument);
+    int remainVol = volume;
+    if (distinguishYdTd(instrument)) {
+        int closeTd = qMin(tdShortPositions[instrument], remainVol);
+        if (closeTd > 0) {
+            insertLimitOrder(instrument, CLOSE_TODAY, closeTd, price, allOrAny, gfdOrIoc);
+            remainVol -= closeTd;
+        }
 
-    int remain_volume = volume;
-    if (position < 0) {
-        int close_short = qMin(qAbs(position), qAbs(remain_volume));
-        // Close short position
-        insertLimitOrder(instrument, false, close_short, price, allOrAny, gfdOrIoc);
-        remain_volume -= close_short;
+        int closeYd = qMin(ydShortPositions[instrument], remainVol);
+        if (closeYd > 0) {
+            insertLimitOrder(instrument, CLOSE_YESTERDAY, closeYd, price, allOrAny, gfdOrIoc);
+            remainVol -= closeYd;
+        }
+    } else {
+        int closeVol = qMin(tdShortPositions[instrument] + ydShortPositions[instrument], remainVol);
+        insertLimitOrder(instrument, CLOSE, closeVol, price, allOrAny, gfdOrIoc);
+        remainVol -= closeVol;
     }
 
-    if (remain_volume > 0) {
-        insertLimitOrder(instrument, true, remain_volume, price, allOrAny, gfdOrIoc);
+    if (remainVol > 0) {
+        insertLimitOrder(instrument, OPEN, remainVol, price, allOrAny, gfdOrIoc);
     }
 }
 
@@ -1288,32 +1376,40 @@ void CtpExecuter::sellLimitAuto(const QString& instrument, int volume, double pr
     bool allOrAny, gfdOrIoc;
     analyzeOrderType(orderType, allOrAny, gfdOrIoc);
 
-    int position = getPosition(instrument);
+    int remainVol = volume;
+    if (distinguishYdTd(instrument)) {
+        int closeTd = qMin(tdLongPositions[instrument], remainVol);
+        if (closeTd > 0) {
+            insertLimitOrder(instrument, CLOSE_TODAY, - closeTd, price, allOrAny, gfdOrIoc);
+            remainVol -= closeTd;
+        }
 
-    int remain_volume = volume;
-    if (position > 0) {
-        int close_long = qMin(qAbs(position), qAbs(remain_volume));
-        // Close long position
-        insertLimitOrder(instrument, false, - close_long, price, allOrAny, gfdOrIoc);
-        remain_volume -= close_long;
+        int closeYd = qMin(ydLongPositions[instrument], remainVol);
+        if (closeYd > 0) {
+            insertLimitOrder(instrument, CLOSE_YESTERDAY, - closeYd, price, allOrAny, gfdOrIoc);
+            remainVol -= closeYd;
+        }
+    } else {
+        int closeVol = qMin(tdLongPositions[instrument] + ydLongPositions[instrument], remainVol);
+        insertLimitOrder(instrument, CLOSE, - closeVol, price, allOrAny, gfdOrIoc);
+        remainVol -= closeVol;
     }
 
-    if (remain_volume > 0) {
-        insertLimitOrder(instrument, true, - remain_volume, price, allOrAny, gfdOrIoc);
+    if (remainVol > 0) {
+        insertLimitOrder(instrument, OPEN, - remainVol, price, allOrAny, gfdOrIoc);
     }
 }
 
 /*!
  * \brief CtpExecuter::buyLimit
- * 限价买进合约 (需指定开多或平空, 默认开多)
+ * 限价买进合约 (开多)
  *
  * \param instrument 合约代码
  * \param volume 买进数量 (大于零)
  * \param price 买进价格 (必须在涨跌停范围内)
- * \param open 开多(true)或平空(false)
  * \param orderType 订单类型 (0:普通限价单, 1:FAK, 2:FOK)
  */
-void CtpExecuter::buyLimit(const QString& instrument, int volume, double price, bool open, int orderType)
+void CtpExecuter::buyLimit(const QString& instrument, int volume, double price, int orderType)
 {
     qDebug() << DATE_TIME << "buyLimit" << instrument << ": volume =" << volume << ", price =" << price << ", orderType =" << orderType;
 
@@ -1324,20 +1420,19 @@ void CtpExecuter::buyLimit(const QString& instrument, int volume, double price, 
     bool allOrAny, gfdOrIoc;
     analyzeOrderType(orderType, allOrAny, gfdOrIoc);
 
-    insertLimitOrder(instrument, open, volume, price, allOrAny, gfdOrIoc);
+    insertLimitOrder(instrument, OPEN, volume, price, allOrAny, gfdOrIoc);
 }
 
 /*!
  * \brief CtpExecuter::sellLimit
- * 限价卖出合约 (需指定开空或平多, 默认开空)
+ * 限价卖出合约 (开空)
  *
  * \param instrument 合约代码
  * \param volume 卖出数量 (大于零)
  * \param price 卖出价格 (必须在涨跌停范围内)
- * \param open 开多(true)或平空(false)
  * \param orderType 订单类型 (0:普通限价单, 1:FAK, 2:FOK)
  */
-void CtpExecuter::sellLimit(const QString& instrument, int volume, double price, bool open, int orderType)
+void CtpExecuter::sellLimit(const QString& instrument, int volume, double price, int orderType)
 {
     qDebug() << DATE_TIME << "sellLimit" << instrument << ": volume =" << volume << ", price =" << price << ", orderType =" << orderType;
 
@@ -1348,28 +1443,28 @@ void CtpExecuter::sellLimit(const QString& instrument, int volume, double price,
     bool allOrAny, gfdOrIoc;
     analyzeOrderType(orderType, allOrAny, gfdOrIoc);
 
-    insertLimitOrder(instrument, open, - volume, price, allOrAny, gfdOrIoc);
+    insertLimitOrder(instrument, OPEN, - volume, price, allOrAny, gfdOrIoc);
 }
 
 /*!
  * \brief CtpExecuter::cancelOrder
  * 取消未成交的订单
  *
- * \param orderRefId 订单引用号
+ * \param orderRefID 订单引用号
  * \param frontID 前置编号
  * \param sessionID 会话编号
  * \param instrument 合约代码
  */
-void CtpExecuter::cancelOrder(int orderRefId, int frontID, int sessionID, const QString &instrument)
+void CtpExecuter::cancelOrder(int orderRefID, int frontID, int sessionID, const QString &instrument)
 {
     if (loggedIn) {
         TThostFtdcOrderRefType orderRef;
-        sprintf(orderRef, "%12d", orderRefId);
+        sprintf(orderRef, "%12d", orderRefID);
         orderAction(orderRef, frontID, sessionID, instrument);
 
         const auto orderList = orderMap.values();
         for (const auto &item : orderList) {
-            if (item.refId == orderRefId && item.frontId == frontID && item.sessionId == sessionID) {
+            if (item.refId == orderRefID && item.frontId == frontID && item.sessionId == sessionID) {
                 QString instrument = item.instrument;
                 orderCancelCountMap[instrument] ++;
                 qInfo() << DATE_TIME << "Cancel order count of" << item.instrument << ":" << orderCancelCountMap[item.instrument];
@@ -1421,7 +1516,7 @@ void CtpExecuter::parkBuyLimit(const QString& instrument, int volume, double pri
     bool allOrAny, gfdOrIoc;
     analyzeOrderType(orderType, allOrAny, gfdOrIoc);
 
-    insertParkedLimitOrder(instrument, true, volume, price, allOrAny, gfdOrIoc);
+    insertParkedLimitOrder(instrument, OPEN, volume, price, allOrAny, gfdOrIoc);
 }
 
 /*!
@@ -1440,7 +1535,7 @@ void CtpExecuter::parkSellLimit(const QString& instrument, int volume, double pr
     bool allOrAny, gfdOrIoc;
     analyzeOrderType(orderType, allOrAny, gfdOrIoc);
 
-    insertParkedLimitOrder(instrument, true, - volume, price, allOrAny, gfdOrIoc);
+    insertParkedLimitOrder(instrument, OPEN, - volume, price, allOrAny, gfdOrIoc);
 }
 
 /*!
@@ -1469,7 +1564,11 @@ int CtpExecuter::getPosition(const QString& instrument) const
     if (pos_update_time.isNull()) {
         return -INT_MAX;
     } else {
-        return yd_pos_map.value(instrument) + td_pos_map.value(instrument);
+        qDebug() << "ydLongPositions =" << ydLongPositions.value(instrument);
+        qDebug() << "tdLongPositions =" << tdLongPositions.value(instrument);
+        qDebug() << "ydShortPositions =" << ydShortPositions.value(instrument);
+        qDebug() << "tdShortPositions =" << tdShortPositions.value(instrument);
+        return ydLongPositions.value(instrument) + tdLongPositions.value(instrument) - ydShortPositions.value(instrument) - tdShortPositions.value(instrument);
     }
 }
 

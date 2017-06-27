@@ -54,8 +54,10 @@ protected:
     char* c_authenticateCode;
 
     QMap<QString, int> target_pos_map;
-    QMap<QString, int> yd_pos_map;
-    QMap<QString, int> td_pos_map;
+    QMap<QString, int> ydLongPositions;
+    QMap<QString, int> ydShortPositions;
+    QMap<QString, int> tdLongPositions;
+    QMap<QString, int> tdShortPositions;
     QDateTime pos_update_time;
 
     QMap<QString, CThostFtdcInstrumentMarginRateField> marginRateCache;
@@ -87,10 +89,10 @@ private slots:
     int qryInstrumentCommissionRate(const QString &instrument = QString());
     int qryInstrument(const QString &instrument = QString(), const QString &exchangeID = QString());
     int qryDepthMarketData(const QString &instrument = QString());
-    int insertLimitOrder(const QString &instrument, bool open, int volume, double price, bool allOrAny = false, bool gfdOrIoc = true);
+    int insertLimitOrder(const QString &instrument, int openClose, int volume, double price, bool allOrAny = false, bool gfdOrIoc = true);
     int orderAction(char* orderRef, int frontID, int sessionID, const QString &instrument);
-    int insertParkedLimitOrder(const QString &instrument, bool open, int volume, double price, bool allOrAny = false, bool gfdOrIoc = true);
-    int qryMaxOrderVolume(const QString &instrument, bool direction, char offsetFlag);
+    int insertParkedLimitOrder(const QString &instrument, int openClose, int volume, double price, bool allOrAny = false, bool gfdOrIoc = true);
+    int qryMaxOrderVolume(const QString &instrument, bool direction, int openClose);
     int qryOrder(const QString &instrument = QString());
     int qryTrade(const QString &instrument = QString());
     int qryPosition(const QString &instrument = QString());
@@ -100,6 +102,7 @@ private slots:
 
     void operate(const QString &instrument, int new_position);
     bool checkLimitOrder(const QString& instrument, double price, bool direction, int orderType);
+    bool distinguishYdTd(const QString &instrument);
 
 signals:
     void dealMade(const QString& instrument, int volume);
@@ -114,7 +117,9 @@ public slots:
 
     void updateInstrumentDataCache();
     QStringList getCachedInstruments(const QString &idPrefix = QString()) const;
+    QString getExchangeID(const QString &instrument);
     QString getExpireDate(const QString &instrument);
+
     double getUpperLimit(const QString &instrument);
     double getLowerLimit(const QString &instrument);
 
@@ -125,10 +130,10 @@ public slots:
 
     void buyLimitAuto(const QString& instrument, int volume, double price, int orderType = 0);
     void sellLimitAuto(const QString& instrument, int volume, double price, int orderType = 0);
-    void buyLimit(const QString& instrument, int volume, double price, bool open, int orderType = 0);
-    void sellLimit(const QString& instrument, int volume, double price, bool open, int orderType = 0);
+    void buyLimit(const QString& instrument, int volume, double price, int orderType = 0);
+    void sellLimit(const QString& instrument, int volume, double price, int orderType = 0);
 
-    void cancelOrder(int orderRefId, int frontID, int sessionID, const QString &instrument);
+    void cancelOrder(int orderRefID, int frontID, int sessionID, const QString &instrument);
     void cacelAllOrders(const QString &instrument = QString());
 
     void parkBuyLimit(const QString& instrument, int volume, double price, int orderType = 0);
