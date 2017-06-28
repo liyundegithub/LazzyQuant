@@ -321,48 +321,48 @@ void CtpExecuter::customEvent(QEvent *event)
             // 默认先平昨仓, 再平今仓
             // TODO 在考虑平今手续费减免的情况下, 应当先平今仓, 再平昨仓
             if (direction) {
-                int yd_pos = ydLongPositions[tevent->tradeField.InstrumentID];
-                int closeYd = qMin(yd_pos, volume);
-                if (closeYd > 0) {
-                    ydLongPositions[tevent->tradeField.InstrumentID] -= closeYd;
-                    volume -= closeYd;
-                }
-                tdLongPositions[tevent->tradeField.InstrumentID] -= volume;
-            } else {
-                int yd_pos = ydShortPositions[tevent->tradeField.InstrumentID];
-                int closeYd = qMin(yd_pos, volume);
+                int ydPosition = ydShortPositions[tevent->tradeField.InstrumentID];
+                int closeYd = qMin(ydPosition, volume);
                 if (closeYd > 0) {
                     ydShortPositions[tevent->tradeField.InstrumentID] -= closeYd;
                     volume -= closeYd;
                 }
                 tdShortPositions[tevent->tradeField.InstrumentID] -= volume;
+            } else {
+                int ydPosition = ydLongPositions[tevent->tradeField.InstrumentID];
+                int closeYd = qMin(ydPosition, volume);
+                if (closeYd > 0) {
+                    ydLongPositions[tevent->tradeField.InstrumentID] -= closeYd;
+                    volume -= closeYd;
+                }
+                tdLongPositions[tevent->tradeField.InstrumentID] -= volume;
             }
             break;
         case THOST_FTDC_OF_CloseToday:      //平今
             if (direction) {
-                tdLongPositions[tevent->tradeField.InstrumentID] -= volume;
-            } else {
                 tdShortPositions[tevent->tradeField.InstrumentID] -= volume;
+            } else {
+                tdLongPositions[tevent->tradeField.InstrumentID] -= volume;
             }
             break;
         case THOST_FTDC_OF_CloseYesterday:  //平昨
             if (direction) {
-                ydLongPositions[tevent->tradeField.InstrumentID] -= volume;
-            } else {
                 ydShortPositions[tevent->tradeField.InstrumentID] -= volume;
+            } else {
+                ydLongPositions[tevent->tradeField.InstrumentID] -= volume;
             }
             break;
         default:
             // FIXME 默认当平今处理
             if (direction) {
-                tdLongPositions[tevent->tradeField.InstrumentID] -= volume;
-            } else {
                 tdShortPositions[tevent->tradeField.InstrumentID] -= volume;
+            } else {
+                tdLongPositions[tevent->tradeField.InstrumentID] -= volume;
             }
             break;
         }
 
-        emit dealMade(tevent->tradeField.InstrumentID, volume);
+        emit dealMade(tevent->tradeField.InstrumentID, tevent->tradeField.Volume * (direction ? 1 : -1));
     }
         break;
     case RSP_QRY_ORDER:
@@ -406,11 +406,11 @@ void CtpExecuter::customEvent(QEvent *event)
 
         for (const auto &item : pevent->positionList) {
             if (item.PosiDirection == THOST_FTDC_PD_Long) {
-                ydLongPositions[item.InstrumentID] = item.Position - item.TodayPosition;
-                tdLongPositions[item.InstrumentID] = item.TodayPosition;
+                ydLongPositions[item.InstrumentID] += item.Position - item.TodayPosition;
+                tdLongPositions[item.InstrumentID] += item.TodayPosition;
             } else {
-                ydShortPositions[item.InstrumentID] = item.Position - item.TodayPosition;
-                tdShortPositions[item.InstrumentID] = item.TodayPosition;
+                ydShortPositions[item.InstrumentID] += item.Position - item.TodayPosition;
+                tdShortPositions[item.InstrumentID] += item.TodayPosition;
             }
         }
         pos_update_time = QDateTime::currentDateTime();
@@ -1347,8 +1347,10 @@ void CtpExecuter::buyLimitAuto(const QString& instrument, int volume, double pri
         }
     } else {
         int closeVol = qMin(tdShortPositions[instrument] + ydShortPositions[instrument], remainVol);
-        insertLimitOrder(instrument, CLOSE, closeVol, price, allOrAny, gfdOrIoc);
-        remainVol -= closeVol;
+        if (closeVol > 0) {
+            insertLimitOrder(instrument, CLOSE, closeVol, price, allOrAny, gfdOrIoc);
+            remainVol -= closeVol;
+        }
     }
 
     if (remainVol > 0) {
@@ -1391,8 +1393,10 @@ void CtpExecuter::sellLimitAuto(const QString& instrument, int volume, double pr
         }
     } else {
         int closeVol = qMin(tdLongPositions[instrument] + ydLongPositions[instrument], remainVol);
-        insertLimitOrder(instrument, CLOSE, - closeVol, price, allOrAny, gfdOrIoc);
-        remainVol -= closeVol;
+        if (closeVol > 0) {
+            insertLimitOrder(instrument, CLOSE, - closeVol, price, allOrAny, gfdOrIoc);
+            remainVol -= closeVol;
+        }
     }
 
     if (remainVol > 0) {
