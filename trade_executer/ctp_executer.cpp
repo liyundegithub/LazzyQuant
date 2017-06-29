@@ -752,6 +752,50 @@ int CtpExecuter::insertLimitOrder(const QString &instrument, int openClose, int 
 }
 
 /*!
+ * \brief CtpExecuter::insertMarketOrder
+ * 下市价单
+ *
+ * \param instrument 合约代码
+ * \param openClose 开平标志(通用宏定义)
+ * \param volume 手数(非零整数, 正数代表开多/平空, 负数代表开空/平多)
+ * \return nRequestID
+ */
+int CtpExecuter::insertMarketOrder(const QString &instrument, int openClose, int volume)
+{
+    Q_ASSERT(volume != 0);
+
+    CThostFtdcInputOrderField inputOrder;
+    memset(&inputOrder, 0, sizeof (CThostFtdcInputOrderField));
+    strcpy(inputOrder.BrokerID, c_brokerID);
+    strcpy(inputOrder.InvestorID, c_userID);
+    strcpy(inputOrder.InstrumentID, instrument.toLatin1().data());
+    strcpy(inputOrder.OrderRef, "");
+//	sprintf(inputOrder.OrderRef, "%12d", orderRef);
+//	orderRef++;
+
+    inputOrder.Direction = volume > 0 ? THOST_FTDC_D_Buy : THOST_FTDC_D_Sell;
+    inputOrder.CombOffsetFlag[0] = ctpOffsetFlags[openClose];
+    inputOrder.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+    inputOrder.VolumeTotalOriginal = qAbs(volume);
+    inputOrder.VolumeCondition = THOST_FTDC_VC_AV;
+    inputOrder.MinVolume = 1;
+    inputOrder.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+    inputOrder.IsAutoSuspend = 0;
+    inputOrder.UserForceClose = 0;
+    inputOrder.ContingentCondition = THOST_FTDC_CC_Immediately;
+    inputOrder.OrderPriceType = THOST_FTDC_OPT_AnyPrice;
+    inputOrder.LimitPrice = 0;
+    inputOrder.TimeCondition = THOST_FTDC_TC_IOC;
+
+    int id = nRequestID.fetchAndAddRelaxed(1);
+    traderApiMutex.lock();
+    int ret = pUserApi->ReqOrderInsert(&inputOrder, id);
+    traderApiMutex.unlock();
+    Q_UNUSED(ret);
+    return id;
+}
+
+/*!
  * \brief CtpExecuter::orderAction
  * 报单操作(仅支持撤单)
  *
@@ -1096,11 +1140,34 @@ bool CtpExecuter::distinguishYdTd(const QString &instrument)
 {
     if (instrumentDataCache.contains(instrument)) {
         // 上期所平仓时需要使用"平昨"或"平今"标志
-        if (instrumentDataCache.value(instrument).ExchangeID == "SHFE") {
+        if (strcmp(instrumentDataCache.value(instrument).ExchangeID, "SHFE") == 0) {
             return true;
         }
     }
     return false;
+}
+
+/*!
+ * \brief CtpExecuter::canUseAnyPrice
+ * 判断该合约是否支持市价单
+ *
+ * \param instrument 合约代码
+ * \return true表示支持市价单, false表示不支持市价单
+ */
+bool CtpExecuter::canUseAnyPrice(const QString &instrument)
+{
+    if (instrumentDataCache.contains(instrument)) {
+        // 上期所不支持市价单
+        if (strcmp(instrumentDataCache.value(instrument).ExchangeID, "SHFE") == 0) {
+            return false;
+        }
+        // 大商所期权合约不支持市价单
+        if (strcmp(instrumentDataCache.value(instrument).ExchangeID, "DCE") == 0 && isOption(instrument)) {
+            return false;
+        }
+        // TODO 中金所后两个季月合约不支持市价单
+    }
+    return true;
 }
 
 /*!
@@ -1448,6 +1515,132 @@ void CtpExecuter::sellLimit(const QString& instrument, int volume, double price,
     analyzeOrderType(orderType, allOrAny, gfdOrIoc);
 
     insertLimitOrder(instrument, OPEN, - volume, price, allOrAny, gfdOrIoc);
+}
+
+/*!
+ * \brief CtpExecuter::buyMarketAuto
+ * 市价买进合约 (开多或平空, 如有空头持仓先平仓)
+ *
+ * \param instrument 合约代码
+ * \param volume 买进数量 (大于零)
+ * \param useSimulation 使用涨停板限价单模拟市价单
+ */
+void CtpExecuter::buyMarketAuto(const QString &instrument, int volume, bool useSimulation)
+{
+    qDebug() << DATE_TIME << "buyMarketAuto" << instrument << ": volume =" << volume;
+
+    if (!canUseAnyPrice(instrument) || useSimulation) {
+        // Use FAK instead of market order
+        buyLimitAuto(instrument, volume, upperLowerLimitCache.value(instrument).first, 1);
+    } else {
+        int remainVol = volume;
+        if (distinguishYdTd(instrument)) {
+            int closeTd = qMin(tdShortPositions[instrument], remainVol);
+            if (closeTd > 0) {
+                insertMarketOrder(instrument, CLOSE_TODAY, closeTd);
+                remainVol -= closeTd;
+            }
+
+            int closeYd = qMin(ydShortPositions[instrument], remainVol);
+            if (closeYd > 0) {
+                insertMarketOrder(instrument, CLOSE_YESTERDAY, closeYd);
+                remainVol -= closeYd;
+            }
+        } else {
+            int closeVol = qMin(tdShortPositions[instrument] + ydShortPositions[instrument], remainVol);
+            if (closeVol > 0) {
+                insertMarketOrder(instrument, CLOSE, closeVol);
+                remainVol -= closeVol;
+            }
+        }
+
+        if (remainVol > 0) {
+            insertMarketOrder(instrument, OPEN, remainVol);
+        }
+    }
+}
+
+/*!
+ * \brief CtpExecuter::sellMarketAuto
+ * 市价卖出合约 (开空或平多, 如有多头持仓先平仓)
+ *
+ * \param instrument 合约代码
+ * \param volume 卖出数量 (大于零)
+ * \param useSimulation 使用跌停板限价单模拟市价单
+ */
+void CtpExecuter::sellMarketAuto(const QString &instrument, int volume, bool useSimulation)
+{
+    qDebug() << DATE_TIME << "sellMarketAuto" << instrument << ": volume =" << volume;
+
+    if (!canUseAnyPrice(instrument) || useSimulation) {
+        // Use FAK instead of market order
+        insertLimitOrder(instrument, volume, upperLowerLimitCache.value(instrument).second, 1);
+    } else {
+        int remainVol = volume;
+        if (distinguishYdTd(instrument)) {
+            int closeTd = qMin(tdLongPositions[instrument], remainVol);
+            if (closeTd > 0) {
+                insertMarketOrder(instrument, CLOSE_TODAY, - closeTd);
+                remainVol -= closeTd;
+            }
+
+            int closeYd = qMin(ydLongPositions[instrument], remainVol);
+            if (closeYd > 0) {
+                insertMarketOrder(instrument, CLOSE_YESTERDAY, - closeYd);
+                remainVol -= closeYd;
+            }
+        } else {
+            int closeVol = qMin(tdLongPositions[instrument] + ydLongPositions[instrument], remainVol);
+            if (closeVol > 0) {
+                insertMarketOrder(instrument, CLOSE, - closeVol);
+                remainVol -= closeVol;
+            }
+        }
+
+        if (remainVol > 0) {
+            insertMarketOrder(instrument, OPEN, - remainVol);
+        }
+    }
+}
+
+/*!
+ * \brief CtpExecuter::buyMarket
+ * 市价买进合约 (开多)
+ *
+ * \param instrument 合约代码
+ * \param volume 买进数量 (大于零)
+ * \param useSimulation 使用涨停板限价单模拟市价单
+ */
+void CtpExecuter::buyMarket(const QString &instrument, int volume, bool useSimulation)
+{
+    qDebug() << DATE_TIME << "buyMarket" << instrument << ": volume =" << volume;
+
+    if (!canUseAnyPrice(instrument) || useSimulation) {
+        // Use FAK instead of market order
+        buyLimit(instrument, volume, upperLowerLimitCache.value(instrument).first, 1);
+    } else {
+        insertMarketOrder(instrument, OPEN, volume);
+    }
+}
+
+/*!
+ * \brief CtpExecuter::sellMarket
+ * 市价卖出合约 (开空)
+ *
+ * \param instrument 合约代码
+ * \param volume 卖出数量 (大于零)
+ * \param useSimulation 使用跌停板限价单模拟市价单
+ */
+void CtpExecuter::sellMarket(const QString &instrument, int volume, bool useSimulation)
+{
+    qDebug() << DATE_TIME << "sellMarket" << instrument << ": volume =" << volume;
+
+    if (!canUseAnyPrice(instrument) || useSimulation) {
+        // Use FAK instead of market order
+        sellLimit(instrument, volume, upperLowerLimitCache.value(instrument).second, 1);
+    } else {
+        insertMarketOrder(instrument, OPEN, - volume);
+    }
 }
 
 /*!

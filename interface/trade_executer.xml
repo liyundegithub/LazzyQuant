@@ -119,6 +119,42 @@
       <arg name="volume" type="i" direction="in"/>
       <arg name="price" type="d" direction="in"/>
     </method>
+    <method name="buyMarketAuto">
+      <arg name="instrument" type="s" direction="in"/>
+      <arg name="volume" type="i" direction="in"/>
+      <arg name="useSimulation" type="b" direction="in"/>
+    </method>
+    <method name="buyMarketAuto">
+      <arg name="instrument" type="s" direction="in"/>
+      <arg name="volume" type="i" direction="in"/>
+    </method>
+    <method name="sellMarketAuto">
+      <arg name="instrument" type="s" direction="in"/>
+      <arg name="volume" type="i" direction="in"/>
+      <arg name="useSimulation" type="b" direction="in"/>
+    </method>
+    <method name="sellMarketAuto">
+      <arg name="instrument" type="s" direction="in"/>
+      <arg name="volume" type="i" direction="in"/>
+    </method>
+    <method name="buyMarket">
+      <arg name="instrument" type="s" direction="in"/>
+      <arg name="volume" type="i" direction="in"/>
+      <arg name="useSimulation" type="b" direction="in"/>
+    </method>
+    <method name="buyMarket">
+      <arg name="instrument" type="s" direction="in"/>
+      <arg name="volume" type="i" direction="in"/>
+    </method>
+    <method name="sellMarket">
+      <arg name="instrument" type="s" direction="in"/>
+      <arg name="volume" type="i" direction="in"/>
+      <arg name="useSimulation" type="b" direction="in"/>
+    </method>
+    <method name="sellMarket">
+      <arg name="instrument" type="s" direction="in"/>
+      <arg name="volume" type="i" direction="in"/>
+    </method>
     <method name="cancelOrder">
       <arg name="orderRefID" type="i" direction="in"/>
       <arg name="frontID" type="i" direction="in"/>
