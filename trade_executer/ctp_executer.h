@@ -6,7 +6,6 @@
 #include <QByteArray>
 #include <QMap>
 #include <QMutex>
-#include <QDateTime>
 #include <QPair>
 
 #include "common_utility.h"
@@ -53,12 +52,10 @@ protected:
     char* c_userProductInfo;
     char* c_authenticateCode;
 
-    QMap<QString, int> target_pos_map;
     QMap<QString, int> ydLongPositions;
     QMap<QString, int> ydShortPositions;
     QMap<QString, int> tdLongPositions;
     QMap<QString, int> tdShortPositions;
-    QDateTime pos_update_time;
 
     QMap<QString, CThostFtdcInstrumentMarginRateField> marginRateCache;
     QMap<QString, CThostFtdcInstrumentCommissionRateField> commissionRateCache;
@@ -101,7 +98,6 @@ private slots:
     int insertExecOrder(const QString &instrument, OPTION_TYPE type, int volume);
     int insertQuote(const QString &instrument);
 
-    void operate(const QString &instrument, int new_position);
     bool checkLimitOrder(const QString& instrument, double price, bool direction, int orderType);
     bool distinguishYdTd(const QString &instrument);
     bool canUseAnyPrice(const QString &instrument);

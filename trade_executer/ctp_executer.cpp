@@ -413,7 +413,6 @@ void CtpExecuter::customEvent(QEvent *event)
                 tdShortPositions[item.InstrumentID] += item.TodayPosition;
             }
         }
-        pos_update_time = QDateTime::currentDateTime();
     }
         break;
     case RSP_QRY_POSITION_DETAIL:
@@ -441,7 +440,6 @@ void CtpExecuter::customEvent(QEvent *event)
                 }
             }
         }
-        pos_update_time = QDateTime::currentDateTime();
     }
         break;
     case RSP_QRY_MAX_ORDER_VOL:
@@ -1029,51 +1027,6 @@ int CtpExecuter::insertQuote(const QString &instrument)
 }
 
 /*!
- * \brief CtpExecuter::operate
- * 操作合约(必要的话)使得其仓位与目标值一致
- *
- * \param instrument 合约代码
- * \param new_position 新目标仓位
- */
-void CtpExecuter::operate(const QString &instrument, int new_position)
-{
-    if (!upperLowerLimitCache.contains(instrument)) {
-        return;
-    }
-    const double high = upperLowerLimitCache[instrument].first;
-    const double low  = upperLowerLimitCache[instrument].second;
-
-    int position = getPosition(instrument);
-    int pending_order_pos = getPendingOrderVolume(instrument);
-
-    if (position != -INT_MAX) {
-        if (position + pending_order_pos != new_position) {
-            if (pending_order_pos == 0) {   // TODO 必须所有order的未成交volume都为0
-                if (new_position >= 0 && position < 0) {
-                    insertLimitOrder(instrument, false, -position, high);
-                    position = 0;
-                } else if (new_position <= 0 && position > 0) {
-                    insertLimitOrder(instrument, false, -position, low);
-                    position = 0;
-                }
-
-                int diff = new_position - position;
-
-                if (diff < 0 && new_position > 0) {
-                    insertLimitOrder(instrument, false, diff, low);
-                } else if (diff < 0 && 0 >= position) {
-                    insertLimitOrder(instrument, true, diff, low);
-                } else if (diff > 0 && 0 <= position) {
-                    insertLimitOrder(instrument, true, diff, high);
-                } else if (diff > 0 && new_position < 0) {
-                    insertLimitOrder(instrument, false, diff, high);
-                }
-            }
-        }
-    }
-}
-
-/*!
  * \brief CtpExecuter::checkLimitOrder
  * 1. 检查限价单价格是否合理, 即是否可能造成自成交
  * 2. 检查该合约撤单次数是否已超标
@@ -1574,7 +1527,7 @@ void CtpExecuter::sellMarketAuto(const QString &instrument, int volume, bool use
 
     if (!canUseAnyPrice(instrument) || useSimulation) {
         // Use FAK instead of market order
-        insertLimitOrder(instrument, volume, upperLowerLimitCache.value(instrument).second, 1);
+        sellLimitAuto(instrument, volume, upperLowerLimitCache.value(instrument).second, 1);
     } else {
         int remainVol = volume;
         if (distinguishYdTd(instrument)) {
@@ -1737,35 +1690,46 @@ void CtpExecuter::parkSellLimit(const QString& instrument, int volume, double pr
 
 /*!
  * \brief CtpExecuter::setPosition
- * 为该合约设置一个新的目标仓位, 如果与原仓位不同, 则执行相应操作以达成目标
+ * 为该合约设置一个新的目标仓位, 如果与当前仓位不同, 则执行相应操作以达成目标
  *
  * \param instrument 合约代码
- * \param new_position 新目标仓位
+ * \param newPosition 新目标仓位
  */
-void CtpExecuter::setPosition(const QString& instrument, int new_position)
+void CtpExecuter::setPosition(const QString& instrument, int newPosition)
 {
-    qDebug() << instrument << ":" << "new_position =" << new_position;
-    target_pos_map[instrument] = new_position;
-    operate(instrument, new_position);
+    qDebug() << instrument << ":" << "new position =" << newPosition;
+
+    const auto limit = upperLowerLimitCache.value(instrument);
+    int position = getPosition(instrument);
+
+    if (position != -INT_MAX) {
+        int diff = newPosition - position;
+        if (diff > 0) {
+            buyLimitAuto(instrument, diff, limit.first);
+        } else if (diff < 0) {
+            sellLimitAuto(instrument, diff, limit.second);
+        }
+    }
 }
 
 /*!
  * \brief CtpExecuter::getPosition
- * 获取实盘仓位
+ * 获取该合约的仓位, 如同时持有多仓和空仓则合并计算
  *
- * \param instrument 被查询的合约代码
- * \return 该合约实盘仓位, 如果查询结果已经过期返回-INT_MAX
+ * \param instrument 合约代码
+ * \return 该合约的仓位, 正数表示净多头, 负数表示净空头, 如果缓存未同步返回-INT_MAX
  */
 int CtpExecuter::getPosition(const QString& instrument) const
 {
-    if (pos_update_time.isNull()) {
-        return -INT_MAX;
-    } else {
+    if (cacheReady) {
         qDebug() << "ydLongPositions =" << ydLongPositions.value(instrument);
         qDebug() << "tdLongPositions =" << tdLongPositions.value(instrument);
         qDebug() << "ydShortPositions =" << ydShortPositions.value(instrument);
         qDebug() << "tdShortPositions =" << tdShortPositions.value(instrument);
         return ydLongPositions.value(instrument) + tdLongPositions.value(instrument) - ydShortPositions.value(instrument) - tdShortPositions.value(instrument);
+    } else {
+        qWarning() << DATE_TIME << "Cache is not ready!";
+        return -INT_MAX;
     }
 }
 
