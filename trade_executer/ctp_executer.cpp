@@ -1627,12 +1627,12 @@ void CtpExecuter::cancelOrder(int orderRefID, int frontID, int sessionID, const 
 }
 
 /*!
- * \brief CtpExecuter::cacelAllOrders
+ * \brief CtpExecuter::cancelAllOrders
  * 取消该合约未成交的订单
  *
  * \param instrument 合约代码, 如果为空代表取消所有合约上未成交的订单
  */
-void CtpExecuter::cacelAllOrders(const QString &instrument)
+void CtpExecuter::cancelAllOrders(const QString &instrument)
 {
     if (loggedIn) {
         const auto orderList = (instrument == "") ? orderMap.values() : orderMap.values(instrument);
@@ -1707,7 +1707,7 @@ void CtpExecuter::setPosition(const QString& instrument, int newPosition)
         if (diff > 0) {
             buyLimitAuto(instrument, diff, limit.first);
         } else if (diff < 0) {
-            sellLimitAuto(instrument, diff, limit.second);
+            sellLimitAuto(instrument, - diff, limit.second);
         }
     }
 }

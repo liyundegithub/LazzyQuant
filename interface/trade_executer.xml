@@ -161,10 +161,10 @@
       <arg name="sessionID" type="i" direction="in"/>
       <arg name="instrument" type="s" direction="in"/>
     </method>
-    <method name="cacelAllOrders">
+    <method name="cancelAllOrders">
       <arg name="instrument" type="s" direction="in"/>
     </method>
-    <method name="cacelAllOrders">
+    <method name="cancelAllOrders">
     </method>
     <method name="parkBuyLimit">
       <arg name="instrument" type="s" direction="in"/>

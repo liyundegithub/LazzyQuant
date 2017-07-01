@@ -479,11 +479,13 @@ void QuantTrader::onMarketData(const QString& instrumentID, uint time, double la
         if (position_map.contains(instrumentID) && position_map[instrumentID].is_initialized()) {
             if (position_map[instrumentID].get() != new_position_sum.get()) {
                 position_map[instrumentID] = new_position_sum;
+                pExecuter->cancelAllOrders(instrumentID);
                 pExecuter->setPosition(instrumentID, new_position_sum.get());
                 qDebug() << "New position for" << instrumentID << new_position_sum.get();
             }
         } else {
             position_map[instrumentID] = new_position_sum;
+            pExecuter->cancelAllOrders(instrumentID);
             pExecuter->setPosition(instrumentID, new_position_sum.get());
             qDebug() << "New position for" << instrumentID << new_position_sum.get();
         }

@@ -137,7 +137,7 @@ public slots:
     void sellMarket(const QString& instrument, int volume, bool useSimulation = true);
 
     void cancelOrder(int orderRefID, int frontID, int sessionID, const QString &instrument);
-    void cacelAllOrders(const QString &instrument = QString());
+    void cancelAllOrders(const QString &instrument = QString());
 
     void parkBuyLimit(const QString& instrument, int volume, double price, int orderType = 0);
     void parkSellLimit(const QString& instrument, int volume, double price, int orderType = 0);
