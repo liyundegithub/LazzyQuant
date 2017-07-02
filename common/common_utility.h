@@ -22,6 +22,11 @@ static inline bool isTimeCloseEnouogh(uint time1, uint time2, uint diff)
     }
 }
 
+static inline bool isTimeCloseEnouogh(uint time1, uint time2, uint time3, uint diff)
+{
+    return isTimeCloseEnouogh(time1, time2, diff) && isTimeCloseEnouogh(time2, time3, diff) && isTimeCloseEnouogh(time1, time3, diff);
+}
+
 enum OPTION_TYPE {
     CALL_OPT,
     PUT_OPT,
