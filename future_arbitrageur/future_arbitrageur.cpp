@@ -3,17 +3,12 @@
 #include "pair_trade.h"
 #include "butterfly.h"
 #include "future_arbitrageur.h"
-#include "sinyee_replayer_interface.h"
 
 #include <QSettings>
-
-com::lazzyquant::sinyee_replayer *pReplayer = nullptr;
 
 FutureArbitrageur::FutureArbitrageur(QObject *parent) : QObject(parent)
 {
     setupStrategies();
-    pReplayer = new com::lazzyquant::sinyee_replayer(REPLAYER_DBUS_SERVICE, REPLAYER_DBUS_OBJECT, QDBusConnection::sessionBus(), this);
-    connect(pReplayer, SIGNAL(newMarketData(QString,uint,double,int,double,int,double,int)), this, SLOT(onMarketData(QString,uint,double,int,double,int,double,int)));
 }
 
 FutureArbitrageur::~FutureArbitrageur()

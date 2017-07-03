@@ -15,7 +15,8 @@ SOURCES += main.cpp \
     depth_market.cpp \
     base_strategy.cpp \
     pair_trade.cpp \
-    butterfly.cpp
+    butterfly.cpp \
+    ../common/connection_manager.cpp
 
 HEADERS += ../config.h \
     ../common/common_utility.h \
@@ -23,7 +24,8 @@ HEADERS += ../config.h \
     depth_market.h \
     base_strategy.h \
     pair_trade.h \
-    butterfly.h
+    butterfly.h \
+    ../common/connection_manager.h
 
 INCLUDEPATH += ../ ../common/
-DBUS_INTERFACES += ../interface/sinyee_replayer.xml
+DBUS_INTERFACES += ../interface/sinyee_replayer.xml ../interface/market_watcher.xml ../interface/trade_executer.xml
