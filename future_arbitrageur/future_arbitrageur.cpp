@@ -28,18 +28,11 @@ void FutureArbitrageur::setupStrategies()
     for (const auto &strategyID : strategyIDs) {
         settings.beginGroup(strategyID);
 
-        QString first = settings.value("First").toString();
-        allInstruments << first;
-        QString second = settings.value("Second").toString();
-        allInstruments << second;
-
-        if (settings.contains("Third")) {
-            QString third = settings.value("Third").toString();
-            allInstruments << third;
-        }
-        if (settings.contains("Fourth")) {
-            QString fourth = settings.value("Fourth").toString();
-            allInstruments << fourth;
+        const QStringList ordinals = {"First", "Second", "Third", "Fourth", "Fifth"};
+        for (const auto &ordinal : ordinals) {
+            if (settings.contains(ordinal)) {
+                allInstruments << settings.value(ordinal).toString();
+            }
         }
 
         settings.endGroup();
