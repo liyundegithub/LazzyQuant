@@ -18,8 +18,6 @@ public:
     virtual ~BaseStrategy();
 
     virtual void onInstrumentChanged(int idx) = 0;
-
-    DepthMarketCollection* getDepthMarketCollection() const { return pDepthMarkets; }
 };
 
 #endif // BASE_STRATEGY_H

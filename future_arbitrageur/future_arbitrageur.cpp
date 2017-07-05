@@ -89,31 +89,18 @@ void FutureArbitrageur::onMarketData(const QString& instrumentID, uint time, dou
         return;
     }
 
-    const DepthMarket latest_market_data = {
-        time,
-        lastPrice,
-        askPrice1,
-        askVolume1,
-        bidPrice1,
-        bidVolume1
-    };
-
-    DepthMarket * pDM = nullptr;
-
     int idx = pMarketCollection->getIdxByInstrument(instrumentID);
-    if (idx == -1) {
-        return;
-    } else {
-        pDM = &(pMarketCollection->pMarket[idx]);
-    }
-
-    const bool significantChange = pDM->significantChange(latest_market_data);
-    *pDM = latest_market_data;
-    if (significantChange) {
+    if (idx != -1) {
+        pMarketCollection->pMarket[idx] = {
+            time,
+            lastPrice,
+            askPrice1,
+            askVolume1,
+            bidPrice1,
+            bidVolume1
+        };
         for (auto * pStrategy : qAsConst(pStrategyList)) {
             pStrategy->onInstrumentChanged(idx);
         }
-    } else {
-        // Market does not change much, do nothing
     }
 }

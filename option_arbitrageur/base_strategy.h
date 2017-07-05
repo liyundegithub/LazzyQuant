@@ -21,8 +21,6 @@ public:
 
     virtual void onUnderlyingChanged(int underlyingIdx) = 0;
     virtual void onOptionChanged(int underlyingIdx, OPTION_TYPE type, int kIdx) = 0;
-
-    DepthMarketCollection* getDepthMarketCollection() const { return pDepthMarkets; }
 };
 
 #endif // BASE_STRATEGY_H

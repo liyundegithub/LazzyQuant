@@ -100,7 +100,7 @@ private slots:
 
     bool checkLimitOrder(const QString& instrument, double price, bool direction, int orderType);
     bool distinguishYdTd(const QString &instrument);
-    bool canUseAnyPrice(const QString &instrument);
+    bool canUsetMarketOrder(const QString &instrument);
 
 signals:
     void dealMade(const QString& instrument, int volume);

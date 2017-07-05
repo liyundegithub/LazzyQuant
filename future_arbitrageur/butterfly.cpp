@@ -47,7 +47,7 @@ void Butterfly::check010()
     const bool openClose = (position >= 0);
     const auto threshold = openClose ? openThreshold : closeThreshold;
     if (diff > threshold && isTimeCloseEnouogh(first->time, second->time, third->time, 420)) {
-        const auto liquidity = qMin(qMin(first->askVolume, second->bidVolume), third->askVolume);
+        const auto liquidity = qMin(qMin(first->askVolume, third->askVolume), second->bidVolume / 2);
         auto vol = qMin(liquidity / 2, (openClose ? (maxPosition - position) : (-position)));
         if (vol > 0) {
             buyInstrument(firstIdx, vol);
@@ -82,7 +82,7 @@ void Butterfly::check101()
     const bool openClose = (position <= 0);
     const auto threshold = openClose ? openThreshold : closeThreshold;
     if (diff > threshold && isTimeCloseEnouogh(first->time, second->time, third->time, 420)) {
-        const auto liquidity = qMin(qMin(first->bidVolume, second->askVolume), third->bidVolume);
+        const auto liquidity = qMin(qMin(first->bidVolume, third->bidVolume), second->askVolume / 2);
         auto vol = qMin(liquidity / 2, (openClose ? (position - minPosition) : (position)));
         if (vol > 0) {
             sellInstrument(firstIdx, vol);
