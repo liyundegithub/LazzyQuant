@@ -8,10 +8,12 @@
 #include "sinyee_replayer_interface.h"
 #include "market_watcher_interface.h"
 #include "trade_executer_interface.h"
+#include "strategy_status.h"
 
 com::lazzyquant::sinyee_replayer *pReplayer = nullptr;
 com::lazzyquant::market_watcher *pWatcher = nullptr;
 com::lazzyquant::trade_executer *pExecuter = nullptr;
+StrategyStatusManager *pStatusManager = nullptr;
 
 int main(int argc, char *argv[])
 {
@@ -43,10 +45,20 @@ int main(int argc, char *argv[])
         pWatcher = new com::lazzyquant::market_watcher(WATCHER_DBUS_SERVICE, WATCHER_DBUS_OBJECT, QDBusConnection::sessionBus());
     }
     pExecuter = new com::lazzyquant::trade_executer(EXECUTER_DBUS_SERVICE, EXECUTER_DBUS_OBJECT, QDBusConnection::sessionBus());
+    pStatusManager = new StrategyStatusManager();
     FutureArbitrageur arbitrageur;
     ConnectionManager manager({pReplayer, pWatcher}, {&arbitrageur});
     if (replayMode) {
         pReplayer->startReplay(replayDate);
     }
-    return a.exec();
+    int ret = a.exec();
+    delete pStatusManager;
+    delete pExecuter;
+    if (pReplayer) {
+        delete pReplayer;
+    }
+    if (pWatcher) {
+        delete pWatcher;
+    }
+    return ret;
 }

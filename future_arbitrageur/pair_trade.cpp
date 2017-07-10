@@ -4,9 +4,8 @@
 
 #include <QDebug>
 
-PairTrade::PairTrade(int position, const QStringList &instruments, int maxPosition, int minPosition, double openThreshold, double closeThreshold, DepthMarketCollection *pDMC) :
-    BaseStrategy(pDMC),
-    position(position),
+PairTrade::PairTrade(const QString &strategyID, const QStringList &instruments, int maxPosition, int minPosition, double openThreshold, double closeThreshold, DepthMarketCollection *pDMC) :
+    BaseStrategy(strategyID, pDMC),
     maxPosition(maxPosition),
     minPosition(minPosition),
     openThreshold(openThreshold),

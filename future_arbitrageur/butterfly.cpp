@@ -3,9 +3,8 @@
 
 #include <QDebug>
 
-Butterfly::Butterfly(int position, const QStringList &instruments, int maxPosition, int minPosition, double openThreshold, double closeThreshold, DepthMarketCollection *pDMC) :
-    BaseStrategy(pDMC),
-    position(position),
+Butterfly::Butterfly(const QString &strategyID, const QStringList &instruments, int maxPosition, int minPosition, double openThreshold, double closeThreshold, DepthMarketCollection *pDMC) :
+    BaseStrategy(strategyID, pDMC),
     maxPosition(maxPosition),
     minPosition(minPosition),
     openThreshold(openThreshold),
@@ -55,6 +54,7 @@ void Butterfly::check010()
             buyInstrument(thirdIdx, vol);
 
             position += vol;
+            savePosition();
 
             qDebug() << (openClose ? "Open" : "Close") << "010 butterfly! diff =" << diff;
             qDebug() << pDepthMarkets->getInstrumentByIdx(firstIdx);  qDebug() << *first;
@@ -90,6 +90,7 @@ void Butterfly::check101()
             sellInstrument(thirdIdx, vol);
 
             position -= vol;
+            savePosition();
 
             qDebug() << (openClose ? "Open" : "Close") << "101 butterfly! diff =" << diff;
             qDebug() << pDepthMarkets->getInstrumentByIdx(firstIdx);  qDebug() << *first;

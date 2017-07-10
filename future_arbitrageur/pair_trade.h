@@ -6,14 +6,12 @@
 class PairTrade : public BaseStrategy
 {
 public:
-    PairTrade(int position, const QStringList &instruments, int maxPosition, int minPosition, double openThreshold, double closeThreshold, DepthMarketCollection *pDMC);
+    PairTrade(const QString &strategyID, const QStringList &instruments, int maxPosition, int minPosition, double openThreshold, double closeThreshold, DepthMarketCollection *pDMC);
     ~PairTrade();
 
     void onInstrumentChanged(int idx);
 
 protected:
-    int position;
-
     int firstIdx;
     int secondIdx;
     int thirdIdx;

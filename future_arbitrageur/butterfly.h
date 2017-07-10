@@ -8,14 +8,12 @@ class DepthMarket;
 class Butterfly : public BaseStrategy
 {
 public:
-    Butterfly(int position, const QStringList &instruments, int maxPosition, int minPosition, double openThreshold, double closeThreshold, DepthMarketCollection *pDMC);
+    Butterfly(const QString &strategyID, const QStringList &instruments, int maxPosition, int minPosition, double openThreshold, double closeThreshold, DepthMarketCollection *pDMC);
     ~Butterfly();
 
     void onInstrumentChanged(int idx);
 
 protected:
-    int position;
-
     int firstIdx;
     int secondIdx;
     int thirdIdx;

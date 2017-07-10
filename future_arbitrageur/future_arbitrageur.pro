@@ -10,6 +10,7 @@ TEMPLATE = app
 SOURCES += main.cpp \
     ../common/common_utility.cpp \
     ../common/connection_manager.cpp \
+    ../common/strategy_status.cpp \
     future_arbitrageur.cpp \
     depth_market.cpp \
     base_strategy.cpp \
@@ -19,6 +20,7 @@ SOURCES += main.cpp \
 HEADERS += ../config.h \
     ../common/common_utility.h \
     ../common/connection_manager.h \
+    ../common/strategy_status.h \
     future_arbitrageur.h \
     depth_market.h \
     base_strategy.h \

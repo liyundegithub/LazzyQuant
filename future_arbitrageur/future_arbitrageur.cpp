@@ -51,7 +51,6 @@ void FutureArbitrageur::setupStrategies()
         QString second = settings.value("Second").toString();
         instruments << first << second;
 
-        int position = settings.value("Position").toInt();
         int maxPosition = settings.value("MaxPosition").toInt();
         int minPosition = settings.value("MinPosition").toInt();
         int openThreshold = settings.value("OpenThreshold").toDouble();
@@ -62,9 +61,9 @@ void FutureArbitrageur::setupStrategies()
         if (strategyName == "Butterfly") {
             QString third = settings.value("Third").toString();
             instruments << third;
-            pStrategy = new Butterfly(position, instruments, maxPosition, minPosition, openThreshold, closeThreshold, pMarketCollection);
+            pStrategy = new Butterfly(strategyID, instruments, maxPosition, minPosition, openThreshold, closeThreshold, pMarketCollection);
         } else if (strategyName == "PairTrade") {
-            pStrategy = new PairTrade(position, instruments, maxPosition, minPosition, openThreshold, closeThreshold, pMarketCollection);
+            pStrategy = new PairTrade(strategyID, instruments, maxPosition, minPosition, openThreshold, closeThreshold, pMarketCollection);
         }
         if (pStrategy != nullptr) {
             pStrategyList.append(pStrategy);
