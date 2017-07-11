@@ -1,5 +1,3 @@
-#include <boost/optional.hpp>
-
 #include "strategy_status.h"
 #include "depth_market.h"
 #include "base_strategy.h"

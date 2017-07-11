@@ -190,13 +190,9 @@
     </method>
     <method name="setPosition">
       <arg name="instrument" type="s" direction="in"/>
-      <arg name="new_position" type="i" direction="in"/>
+      <arg name="newPosition" type="i" direction="in"/>
     </method>
     <method name="getPosition">
-      <arg type="i" direction="out"/>
-      <arg name="instrument" type="s" direction="in"/>
-    </method>
-    <method name="getPendingOrderVolume">
       <arg type="i" direction="out"/>
       <arg name="instrument" type="s" direction="in"/>
     </method>

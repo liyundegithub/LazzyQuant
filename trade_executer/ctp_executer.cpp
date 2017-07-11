@@ -523,6 +523,12 @@ int CtpExecuter::callTraderApi(int (CThostFtdcTraderApi::* pTraderApi)(T *,int),
     return id;
 }
 
+/*!
+ * \brief CtpExecuter::authenticate
+ * 发送认证请求
+ *
+ * \return nRequestID
+ */
 int CtpExecuter::authenticate()
 {
     CThostFtdcReqAuthenticateField reqAuthenticate;
@@ -1731,28 +1737,6 @@ int CtpExecuter::getPosition(const QString& instrument) const
         qWarning() << DATE_TIME << "Cache is not ready!";
         return -INT_MAX;
     }
-}
-
-/*!
- * \brief CtpExecuter::getPendingOrderVolume
- * 获取该合约未成交订单的仓位
- * 该函数必须在成功登陆并更新订单表之后调用
- *
- * \param instrument 被查询的合约代码
- * \return 该合约未成交订单的仓位之和
- */
-int CtpExecuter::getPendingOrderVolume(const QString &instrument) const
-{
-    int sum = 0;
-    const auto orderList = orderMap.values(instrument);
-    for (const auto& order : orderList) {
-        if (order.status == OrderStatus::UNKNOWN ||
-            order.status == OrderStatus::PENDING)
-        {
-            sum += order.remainVolume();
-        }
-    }
-    return sum;
 }
 
 /*!

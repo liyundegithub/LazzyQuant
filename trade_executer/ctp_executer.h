@@ -141,9 +141,8 @@ public slots:
 
     void parkBuyLimit(const QString& instrument, int volume, double price, int orderType = 0);
     void parkSellLimit(const QString& instrument, int volume, double price, int orderType = 0);
-    void setPosition(const QString& instrument, int new_position);
+    void setPosition(const QString& instrument, int newPosition);
     int getPosition(const QString& instrument) const;
-    int getPendingOrderVolume(const QString &instrument) const;
 
     void execOption(const QString &instrument, int volume);
     void quote(const QString &instrument);

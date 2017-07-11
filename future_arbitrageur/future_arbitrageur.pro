@@ -2,7 +2,7 @@ QT += core dbus
 QT -= gui
 
 TARGET = future_arbitrageur
-CONFIG += console C++14
+CONFIG += console c++14
 CONFIG -= app_bundle
 
 TEMPLATE = app

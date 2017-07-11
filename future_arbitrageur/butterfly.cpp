@@ -1,3 +1,4 @@
+#include "common_utility.h"
 #include "depth_market.h"
 #include "butterfly.h"
 
