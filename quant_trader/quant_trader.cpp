@@ -1,5 +1,6 @@
-#include <QMultiMap>
 #include <QSettings>
+#include <QString>
+#include <QTimer>
 
 #include "config.h"
 #include "market.h"
@@ -11,8 +12,10 @@
 #include "indicator/parabolicsar.h"
 #include "strategy/DblMaPsar_strategy.h"
 #include "strategy/bighit_strategy.h"
+#include "trade_executer_interface.h"
 
 extern QList<Market> markets;
+extern com::lazzyquant::trade_executer *pExecuter;
 
 QuantTrader* QuantTrader::instance;
 
@@ -41,10 +44,6 @@ QuantTrader::QuantTrader(QObject *parent) :
     saveBarTimer->setSingleShot(true);
     connect(saveBarTimer, SIGNAL(timeout()), this, SLOT(saveBarsAndResetTimer()));
     saveBarsAndResetTimer();
-
-    pExecuter = new com::lazzyquant::trade_executer(EXECUTER_DBUS_SERVICE, EXECUTER_DBUS_OBJECT, QDBusConnection::sessionBus(), this);
-    pWatcher = new com::lazzyquant::market_watcher(WATCHER_DBUS_SERVICE, WATCHER_DBUS_OBJECT, QDBusConnection::sessionBus(), this);
-    connect(pWatcher, SIGNAL(newMarketData(QString, uint, double, int, double, int, double, int)), this, SLOT(onMarketData(QString, uint, double, int)));
 }
 
 QuantTrader::~QuantTrader()
@@ -451,8 +450,14 @@ void QuantTrader::saveBarsAndResetTimer()
  * \param lastPrice 最新成交价
  * \param volume 成交量
  */
-void QuantTrader::onMarketData(const QString& instrumentID, uint time, double lastPrice, int volume)
+void QuantTrader::onMarketData(const QString& instrumentID, uint time, double lastPrice, int volume,
+                               double askPrice1, int askVolume1, double bidPrice1, int bidVolume1)
 {
+    Q_UNUSED(askPrice1)
+    Q_UNUSED(askVolume1)
+    Q_UNUSED(bidPrice1)
+    Q_UNUSED(bidVolume1)
+
     BarCollector *collector = collector_map.value(instrumentID, nullptr);
     bool isNewTick = false;
     if (collector != nullptr) {

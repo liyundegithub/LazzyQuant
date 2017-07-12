@@ -2,13 +2,10 @@
 #define QUANT_TRADER_H
 
 #include <boost/optional.hpp>
+#include <QObject>
+#include <QMap>
 
-#include "market_watcher_interface.h"
-#include "trade_executer_interface.h"
-
-template <typename T> class QList;
-template <typename Key, typename T> class QMap;
-template <typename Key, typename T> class QMultiMap;
+class QTimer;
 
 class Bar;
 class BarCollector;
@@ -19,9 +16,6 @@ class QuantTrader : public QObject
 {
     Q_OBJECT
 protected:
-    com::lazzyquant::market_watcher *pWatcher;
-    com::lazzyquant::trade_executer *pExecuter;
-
     // Following QString keys are instumentIDs
     QMap<QString, BarCollector*> collector_map;
     QMap<QString, QMap<int, QList<Bar>>> bars_map;
@@ -46,12 +40,15 @@ public:
     static QuantTrader *instance;
     AbstractIndicator* registerIndicator(const QString &instrumentID, const QString &time_frame_str, QString indicator_name, ...);
 
-signals:
-
 private slots:
-    void onMarketData(const QString& instrumentID, uint time, double lastPrice, int volume);
     void onNewBar(const QString &instrumentID, int time_frame, const Bar& bar);
     void saveBarsAndResetTimer();
+
+signals:
+
+public slots:
+    void onMarketData(const QString& instrumentID, uint time, double lastPrice, int volume,
+                      double askPrice1, int askVolume1, double bidPrice1, int bidVolume1);
 };
 
 #endif // QUANT_TRADER_H
