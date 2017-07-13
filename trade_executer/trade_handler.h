@@ -420,10 +420,10 @@ public:
     void postToReceiver(QEvent *event);
 
     template<class EVT, class F>
-    void handleSingleRsp(F *pField, CThostFtdcRspInfoField *pRspInfo, const int nRequestID = -1);
+    void handleSingleRsp(F *pField, CThostFtdcRspInfoField *pRspInfo, int nRequestID = -1);
 
     template<class EVT, class F>
-    void handleMultiRsp(QList<F> *pTList, F *pField, CThostFtdcRspInfoField *pRspInfo, const int nRequestID, const bool bIsLast);
+    void handleMultiRsp(QList<F> *pTList, F *pField, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
 
     void OnFrontConnected();
     void OnFrontDisconnected(int nReason);

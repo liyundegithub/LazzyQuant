@@ -57,6 +57,11 @@ static inline bool isWithinRangeExcludeEnd(const T &t, const T &rangeStart, cons
     }
 }
 
+// 三种类型的订单 (0:普通限价单, 1:Fill and Kill, 2:Fill or Kill)
+#define LIMIT_ORDER   0
+#define FAK_ORDER     1
+#define FOK_ORDER     2
+
 
 // 上海期货交易所                                   燃油, 线材
 const QString SQ[] = {"fu", "wr"};

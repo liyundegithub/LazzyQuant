@@ -1,4 +1,5 @@
 #include <QCoreApplication>
+#include <QDebug>
 
 #include "trade_handler.h"
 
@@ -10,7 +11,7 @@ CTradeHandler::CTradeHandler(QObject *obj) :
 
 CTradeHandler::~CTradeHandler()
 {
-    //
+    qDebug() << "~CTradeHandler()";
 }
 
 inline void CTradeHandler::postToReceiver(QEvent *event)
@@ -19,7 +20,7 @@ inline void CTradeHandler::postToReceiver(QEvent *event)
 }
 
 template<class EVT, class F>
-void CTradeHandler::handleSingleRsp(F *pField, CThostFtdcRspInfoField *pRspInfo, const int nRequestID)
+void CTradeHandler::handleSingleRsp(F *pField, CThostFtdcRspInfoField *pRspInfo, int nRequestID)
 {
     int err = -1;
     if (pRspInfo != NULL) {
@@ -32,7 +33,7 @@ void CTradeHandler::handleSingleRsp(F *pField, CThostFtdcRspInfoField *pRspInfo,
 }
 
 template<class EVT, class F>
-void CTradeHandler::handleMultiRsp(QList<F> *pTList, F *pField, CThostFtdcRspInfoField *pRspInfo, const int nRequestID, const bool bIsLast)
+void CTradeHandler::handleMultiRsp(QList<F> *pTList, F *pField, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
     if (nRequestID != lastRequestID) {  // 新Rsp
         lastRequestID = nRequestID;
@@ -170,10 +171,10 @@ void CTradeHandler::OnErrRtnOrderAction(CThostFtdcOrderActionField *pOrderAction
 
 void CTradeHandler::OnRspError(CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
-    puts(__FUNCTION__);
+    qDebug() << __FUNCTION__;
     if (pRspInfo != NULL)
-        printf("ErrorCode=[%d],ErrorMsg=[%s]\n",pRspInfo->ErrorID,pRspInfo->ErrorMsg);
-    printf("RequestID=[%d],Chain=[%d]\n",nRequestID,bIsLast);
+        qDebug() << "ErrorCode =" << pRspInfo->ErrorID << ",ErrorMsg =" << pRspInfo->ErrorMsg;
+    qDebug() << "RequestID =" << nRequestID << ",Chain =" << bIsLast;
 }
 
 void CTradeHandler::OnRtnOrder(CThostFtdcOrderField *pOrder)

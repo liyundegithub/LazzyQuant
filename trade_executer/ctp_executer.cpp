@@ -108,6 +108,7 @@ CtpExecuter::CtpExecuter(const CONFIG_ITEM &config, QObject *parent) :
 
 CtpExecuter::~CtpExecuter()
 {
+    qDebug() << "~CtpExecuter()";
     pUserApi->Release();
     delete pHandler;
 }
@@ -1107,13 +1108,13 @@ bool CtpExecuter::distinguishYdTd(const QString &instrument)
 }
 
 /*!
- * \brief CtpExecuter::canUsetMarketOrder
+ * \brief CtpExecuter::canUseMarketOrder
  * 判断该合约是否支持市价单
  *
  * \param instrument 合约代码
  * \return true表示支持市价单, false表示不支持市价单
  */
-bool CtpExecuter::canUsetMarketOrder(const QString &instrument)
+bool CtpExecuter::canUseMarketOrder(const QString &instrument)
 {
     if (instrumentDataCache.contains(instrument)) {
         // 上期所不支持市价单
@@ -1488,9 +1489,9 @@ void CtpExecuter::buyMarketAuto(const QString &instrument, int volume, bool useS
 {
     qDebug() << DATE_TIME << "buyMarketAuto" << instrument << ": volume =" << volume;
 
-    if (!canUsetMarketOrder(instrument) || useSimulation) {
+    if (!canUseMarketOrder(instrument) || useSimulation) {
         // Use FAK instead of market order
-        buyLimitAuto(instrument, volume, upperLowerLimitCache.value(instrument).first, 1);
+        buyLimitAuto(instrument, volume, upperLowerLimitCache.value(instrument).first, FAK_ORDER);
     } else {
         int remainVol = volume;
         if (distinguishYdTd(instrument)) {
@@ -1531,9 +1532,9 @@ void CtpExecuter::sellMarketAuto(const QString &instrument, int volume, bool use
 {
     qDebug() << DATE_TIME << "sellMarketAuto" << instrument << ": volume =" << volume;
 
-    if (!canUsetMarketOrder(instrument) || useSimulation) {
+    if (!canUseMarketOrder(instrument) || useSimulation) {
         // Use FAK instead of market order
-        sellLimitAuto(instrument, volume, upperLowerLimitCache.value(instrument).second, 1);
+        sellLimitAuto(instrument, volume, upperLowerLimitCache.value(instrument).second, FAK_ORDER);
     } else {
         int remainVol = volume;
         if (distinguishYdTd(instrument)) {
@@ -1574,9 +1575,9 @@ void CtpExecuter::buyMarket(const QString &instrument, int volume, bool useSimul
 {
     qDebug() << DATE_TIME << "buyMarket" << instrument << ": volume =" << volume;
 
-    if (!canUsetMarketOrder(instrument) || useSimulation) {
+    if (!canUseMarketOrder(instrument) || useSimulation) {
         // Use FAK instead of market order
-        buyLimit(instrument, volume, upperLowerLimitCache.value(instrument).first, 1);
+        buyLimit(instrument, volume, upperLowerLimitCache.value(instrument).first, FAK_ORDER);
     } else {
         insertMarketOrder(instrument, OPEN, volume);
     }
@@ -1594,9 +1595,9 @@ void CtpExecuter::sellMarket(const QString &instrument, int volume, bool useSimu
 {
     qDebug() << DATE_TIME << "sellMarket" << instrument << ": volume =" << volume;
 
-    if (!canUsetMarketOrder(instrument) || useSimulation) {
+    if (!canUseMarketOrder(instrument) || useSimulation) {
         // Use FAK instead of market order
-        sellLimit(instrument, volume, upperLowerLimitCache.value(instrument).second, 1);
+        sellLimit(instrument, volume, upperLowerLimitCache.value(instrument).second, FAK_ORDER);
     } else {
         insertMarketOrder(instrument, OPEN, - volume);
     }
