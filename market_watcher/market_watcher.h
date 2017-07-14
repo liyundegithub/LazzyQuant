@@ -9,7 +9,6 @@
 #include <QTime>
 
 class QSettings;
-class QTimer;
 class CThostFtdcMdApi;
 class CTickReceiver;
 struct CThostFtdcDepthMarketDataField;
@@ -25,6 +24,7 @@ public:
     ~MarketWatcher();
 
 protected:
+    const QString name;
     const bool replayMode;
     QString replayDate;
     QSettings *settings;
@@ -65,7 +65,6 @@ protected:
     void emitNewMarketData(const CThostFtdcDepthMarketDataField& depthMarketDataField);
 
 signals:
-    void heartBeatWarning(int nTimeLapse);
     void newMarketData(const QString& instrumentID, uint time, double lastPrice, int volume,
                        double askPrice1, int askVolume1, double bidPrice1, int bidVolume1);
 

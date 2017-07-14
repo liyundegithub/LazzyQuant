@@ -17,7 +17,9 @@ extern QList<Market> markets;
 TradingCalendar tradingCalendar;
 
 MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, const bool replayMode, QObject *parent) :
-    QObject(parent), replayMode(replayMode)
+    QObject(parent),
+    name(config.name),
+    replayMode(replayMode)
 {
     settings = new QSettings(QSettings::IniFormat, QSettings::UserScope, config.organization, config.name, this);
     const auto flowPath = settings->value("FlowPath").toByteArray();
@@ -158,6 +160,14 @@ QDataStream& operator>>(QDataStream& s, CThostFtdcDepthMarketDataField& dataFiel
     return s;
 }
 
+QDebug operator<<(QDebug dbg, const CThostFtdcDepthMarketDataField &dm)
+{
+    dbg.nospace() << "Ask 1:\t" << dm.AskPrice1 << '\t' << dm.AskVolume1 << '\n'
+                  << " ------ " << dm.UpdateTime << ":" << dm.UpdateMillisec << " lastPrice:" << dm.LastPrice << " ------ " << '\n'
+                  << "Bid 1:\t" << dm.BidPrice1 << '\t' << dm.BidVolume1;
+    return dbg.space();
+}
+
 void MarketWatcher::timesUp(int index)
 {
     const auto today = QDate::currentDate();
@@ -225,13 +235,14 @@ void MarketWatcher::setCurrentTradingTime(const QString &instrumentID)
 
 void MarketWatcher::customEvent(QEvent *event)
 {
-    qDebug() << "customEvent: " << int(event->type());
     switch (int(event->type())) {
     case FRONT_CONNECTED:
+        qInfo() << DATE_TIME << "Front Connected!";
         login();
         break;
     case FRONT_DISCONNECTED:
     {
+        qInfo() << DATE_TIME << "Front Disconnected!";
         loggedIn = false;
         auto *fevent = static_cast<FrontDisconnectedEvent*>(event);
         // TODO
@@ -252,14 +263,10 @@ void MarketWatcher::customEvent(QEvent *event)
     }
         break;
     case HEARTBEAT_WARNING:
-    {
-        auto *hevent = static_cast<HeartBeatWarningEvent*>(event);
-        emit heartBeatWarning(hevent->getLapseTime());
-    }
         break;
     case RSP_USER_LOGIN:
-        loggedIn = true;
         qInfo() << DATE_TIME << "Market watcher logged in OK!";
+        loggedIn = true;
         subscribe();
         break;
     case RSP_USER_LOGOUT:
@@ -271,6 +278,8 @@ void MarketWatcher::customEvent(QEvent *event)
     case DEPTH_MARKET_DATA:
     {
         auto *devent = static_cast<DepthMarketDataEvent*>(event);
+        qDebug() << DATE_TIME << devent->DepthMarketDataField.InstrumentID << name;
+        qDebug() << devent->DepthMarketDataField;
         processDepthMarketData(devent->DepthMarketDataField);
     }
         break;
