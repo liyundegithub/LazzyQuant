@@ -53,7 +53,7 @@ MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, const bool replayMode, Q
     dbus.registerService(config.dbusService);
 // 复盘模式和实盘模式共用的部分到此为止 ---------------------------------------
     if (replayMode) {
-        qDebug() << "Relay mode is ready!";
+        qInfo() << "Relay mode is ready!";
         return;
     }
 // 以下设置仅用于实盘模式 --------------------------------------------------
@@ -163,7 +163,8 @@ QDataStream& operator>>(QDataStream& s, CThostFtdcDepthMarketDataField& dataFiel
 QDebug operator<<(QDebug dbg, const CThostFtdcDepthMarketDataField &dm)
 {
     dbg.nospace() << "Ask 1:\t" << dm.AskPrice1 << '\t' << dm.AskVolume1 << '\n'
-                  << " ------ " << dm.UpdateTime << ":" << dm.UpdateMillisec << " lastPrice:" << dm.LastPrice << " ------ " << '\n'
+                  << " ------ " << QString("%1:%2").arg(dm.UpdateTime).arg(dm.UpdateMillisec, 3, 10, QLatin1Char('0'))
+                  << " lastPrice:" << dm.LastPrice << " ------ " << '\n'
                   << "Bid 1:\t" << dm.BidPrice1 << '\t' << dm.BidVolume1;
     return dbg.space();
 }
@@ -175,11 +176,9 @@ void MarketWatcher::timesUp(int index)
     if (!tradingCalendar.isTradingDay(today)) {
         if (!tradingCalendar.tradesTonight(today.addDays(-1))) {
             depthMarketDataListMap.clear();
-            return;
         } else {
             if (QTime::currentTime() > QTime(5, 0)) {
                 depthMarketDataListMap.clear();
-                return;
             }
         }
     }
