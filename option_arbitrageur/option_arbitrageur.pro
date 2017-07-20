@@ -1,5 +1,5 @@
-QT += core dbus xml
-QT -= gui
+QT += core gui dbus xml datavisualization
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = option_arbitrageur
 CONFIG += console c++11
