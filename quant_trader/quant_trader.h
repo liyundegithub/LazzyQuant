@@ -5,7 +5,7 @@
 #include <QObject>
 #include <QMap>
 
-class QTimer;
+class MultipleTimer;
 
 class Bar;
 class BarCollector;
@@ -28,10 +28,9 @@ protected:
     void loadTradeStrategySettings();
     QList<Bar>* getBars(const QString &instrumentID, const QString &time_frame_str);
 
-    QTimer *saveBarTimer;
+    MultipleTimer *multiTimer;
     QList<QTime> saveBarTimePoints;
     QList<QList<BarCollector*>> collectorsToSave;
-    int saveBarTimeIndex;
 
 public:
     explicit QuantTrader(QObject *parent = 0);
@@ -42,7 +41,7 @@ public:
 
 private slots:
     void onNewBar(const QString &instrumentID, int time_frame, const Bar& bar);
-    void saveBarsAndResetTimer();
+    void timesUp(int index);
 
 signals:
 

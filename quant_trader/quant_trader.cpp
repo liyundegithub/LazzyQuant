@@ -5,6 +5,7 @@
 #include "config.h"
 #include "market.h"
 #include "common_utility.h"
+#include "multiple_timer.h"
 #include "quant_trader.h"
 #include "bar.h"
 #include "bar_collector.h"
@@ -39,11 +40,8 @@ QuantTrader::QuantTrader(QObject *parent) :
     loadQuantTraderSettings();
     loadTradeStrategySettings();
 
-    saveBarTimeIndex = -1;
-    saveBarTimer = new QTimer(this);
-    saveBarTimer->setSingleShot(true);
-    connect(saveBarTimer, SIGNAL(timeout()), this, SLOT(saveBarsAndResetTimer()));
-    saveBarsAndResetTimer();
+    multiTimer = new MultipleTimer(saveBarTimePoints);
+    connect(multiTimer, &MultipleTimer::timesUp, this, &QuantTrader::timesUp);
 }
 
 QuantTrader::~QuantTrader()
@@ -216,7 +214,7 @@ QList<Bar>* QuantTrader::getBars(const QString &instrumentID, const QString &tim
 
         QList<KTExportBar> ktBarList;
         ktStream >> ktBarList;
-        qDebug() << ktBarList.size();
+        qDebug() << kt_export_file_name << ktBarList.size() << "bars";
         for (const auto &ktbar : qAsConst(ktBarList)) {
             barList.append(ktbar);
         }
@@ -230,6 +228,7 @@ QList<Bar>* QuantTrader::getBars(const QString &instrumentID, const QString &tim
     filters << "*.bars";
     collector_bar_dir.setNameFilters(filters);
     const QStringList entries = collector_bar_dir.entryList(QDir::Files | QDir::NoDotAndDotDot, QDir::Name);
+    QList<Bar> collectedBarList;
     for (const QString &barfilename : entries) {
         QFile barfile(collector_bar_path + "/" + barfilename);
         if (!barfile.open(QFile::ReadOnly)) {
@@ -240,24 +239,29 @@ QList<Bar>* QuantTrader::getBars(const QString &instrumentID, const QString &tim
         barStream.setFloatingPointPrecision(QDataStream::DoublePrecision);
         QList<Bar> tmpList;
         barStream >> tmpList;
-        qDebug() << tmpList.size();
-        barList.append(tmpList);
+        qDebug() << barfilename << tmpList.size() << "bars";
+        collectedBarList.append(tmpList);
     }
 
-    const int barListSize = barList.size();
+    int collectedSize = collectedBarList.size();
     QSet<int> invalidSet;
-    for (int i = 0; i < barListSize; i ++) {
-        for (int j = i + 1; j < barListSize; j++) {
-            if (barList[i].time >= barList[j].time) {
+    for (int i = 0; i < collectedSize; i ++) {
+        for (int j = i + 1; j < collectedSize; j++) {
+            if (collectedBarList[i].time >= collectedBarList[j].time) {
                 invalidSet.insert(j);
             }
         }
     }
-    auto invalidList = invalidSet.toList();
-    std::sort(invalidList.begin(), invalidList.end(), qGreater<int>());
-    for (const int i : qAsConst(invalidList)) {
-        barList.removeAt(i);
+
+    const auto ktLastTime = barList.last().time;
+    for (int i = 0; i < collectedSize; i++) {
+        if (collectedBarList[i].time > ktLastTime && !invalidSet.contains(i)) {
+            barList.append(collectedBarList[i]);
+        }
     }
+
+    int barListSize = barList.size();
+    qDebug() << instrumentID << time_frame_str << " barListSize =" << barListSize;
 
     if (!collector_map.contains(instrumentID)) {
         qWarning() << "Warning! Missing collector for" << instrumentID << "!";
@@ -412,31 +416,18 @@ AbstractIndicator* QuantTrader::registerIndicator(const QString &instrumentID, c
 }
 
 /*!
- * \brief QuantTrader::saveBarsAndResetTimer
- * 保存K线数据并重启计时器至下一个保存时点
+ * \brief QuantTrader::timesUp
+ * 保存K线数据
  */
-void QuantTrader::saveBarsAndResetTimer()
+void QuantTrader::timesUp(int index)
 {
     const int size = saveBarTimePoints.size();
-    if (saveBarTimeIndex >= 0 && saveBarTimeIndex < size) {
-        for (const auto &collector : qAsConst(collectorsToSave[saveBarTimeIndex])) {
+    if (index >= 0 && index < size) {
+        for (const auto &collector : qAsConst(collectorsToSave[index])) {
             collector->saveBars();
         }
-    }
-
-    int i;
-    for (i = 0; i < size; i++) {
-        int diff = QTime::currentTime().msecsTo(saveBarTimePoints[i]);
-        if (diff > 1000) {
-            saveBarTimer->start(diff);
-            saveBarTimeIndex = i;
-            break;
-        }
-    }
-    if (i == size) {
-        int diff = QTime::currentTime().msecsTo(saveBarTimePoints[0]);
-        saveBarTimer->start(diff + 86400000);   // diff should be negative, there are 86400 seconds in a day
-        saveBarTimeIndex = 0;
+    } else {
+        qFatal("Should never see this! index = %d", index);
     }
 }
 
