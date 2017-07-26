@@ -212,12 +212,12 @@ public:
 
 class RspRemoveParkedOrderActionEvent : public QEvent, public RspInfo {
 public:
-    const CThostFtdcRemoveParkedOrderActionField removeParkedOrderField;
+    const CThostFtdcRemoveParkedOrderActionField removeParkedOrderActionField;
 
     RspRemoveParkedOrderActionEvent(CThostFtdcRemoveParkedOrderActionField *pRemoveParkedOrderAction, int err, int id) :
         QEvent(QEvent::Type(RSP_REMOVE_PARKED_ORDER)),
         RspInfo(err, id),
-        removeParkedOrderField(*pRemoveParkedOrderAction) {}
+        removeParkedOrderActionField(*pRemoveParkedOrderAction) {}
 };
 
 class ErrRtnOrderInsertEvent: public QEvent, public RspInfo {

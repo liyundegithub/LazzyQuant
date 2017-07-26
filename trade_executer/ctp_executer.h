@@ -90,6 +90,9 @@ private slots:
     int insertMarketOrder(const QString &instrument, int openClose, int volume);
     int orderAction(char* orderRef, int frontID, int sessionID, const QString &instrument);
     int insertParkedLimitOrder(const QString &instrument, int openClose, int volume, double price, bool allOrAny = false, bool gfdOrIoc = true);
+    int insertParkedOrderAction(char* orderRef, int frontID, int sessionID, const QString &instrument);
+    int removeParkedOrder(char* parkedOrderID);
+    int removeParkedOrderAction(char* parkedOrderActionID);
     int qryMaxOrderVolume(const QString &instrument, bool direction, int openClose);
     int qryOrder(const QString &instrument = QString());
     int qryTrade(const QString &instrument = QString());
@@ -141,6 +144,11 @@ public slots:
 
     void parkBuyLimit(const QString& instrument, int volume, double price, int orderType = 0);
     void parkSellLimit(const QString& instrument, int volume, double price, int orderType = 0);
+    void parkOrderCancel(int orderRefID, int frontID, int sessionID, const QString &instrument);
+    void parkOrderCancelAll(const QString &instrument);
+    void removeParkedOrder(int id);
+    void removeParkedOrderAction(int id);
+
     void setPosition(const QString& instrument, int newPosition);
     int getPosition(const QString& instrument) const;
 
