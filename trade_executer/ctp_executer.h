@@ -62,9 +62,6 @@ protected:
     QMap<QString, CThostFtdcInstrumentField> instrumentDataCache;
     QMap<QString, QPair<double, double>> upperLowerLimitCache;
 
-    QList<CThostFtdcParkedOrderField> parkedOrders;
-    QList<CThostFtdcParkedOrderActionField> parkedOrderActions;
-
     void customEvent(QEvent *event) override;
     void timesUp(int index);
 

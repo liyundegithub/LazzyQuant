@@ -28,6 +28,17 @@ const TThostFtdcOffsetFlagType ctpOffsetFlags[] = {
     THOST_FTDC_OF_CloseYesterday,
 };
 
+const QMap<TThostFtdcDirectionType, QString> directionMap = {
+    {THOST_FTDC_D_Buy,  "Buy"},
+    {THOST_FTDC_D_Sell, "Sell"},
+};
+
+const QMap<TThostFtdcParkedOrderStatusType, QString> parkedOrderStatusMap = {
+    {THOST_FTDC_PAOS_NotSend, "NotSend"},
+    {THOST_FTDC_PAOS_Send,    "Send"},
+    {THOST_FTDC_PAOS_Deleted, "Deleted"},
+};
+
 #ifdef Q_OS_WIN
 #include <Windows.h>
 #endif
@@ -252,9 +263,8 @@ void CtpExecuter::customEvent(QEvent *event)
     {
         auto *pievent = static_cast<RspParkedOrderInsertEvent*>(event);
         if (pievent->errorID == 0) {
-            parkedOrders.append(pievent->parkedOrderField);
             qInfo() << "Inserted Parked Order ID =" << pievent->parkedOrderField.ParkedOrderID <<
-                       pievent->parkedOrderField.InstrumentID << pievent->parkedOrderField.Direction << pievent->parkedOrderField.LimitPrice << pievent->parkedOrderField.VolumeTotalOriginal;
+                       pievent->parkedOrderField.InstrumentID << directionMap[pievent->parkedOrderField.Direction] << pievent->parkedOrderField.LimitPrice << pievent->parkedOrderField.VolumeTotalOriginal;
         } else {
             qWarning() << "RSP_PARKED_ORDER_INSERT errorID =" << (pievent->errorID);
         }
@@ -264,7 +274,6 @@ void CtpExecuter::customEvent(QEvent *event)
     {
         auto *paevent = static_cast<RspParkedOrderActionEvent*>(event);
         if (paevent->errorID == 0) {
-            parkedOrderActions.append(paevent->parkedOrderActionField);
             int refId;
             sscanf(paevent->parkedOrderActionField.OrderRef, "%12d", &refId);
             const auto orders = orderMap.values(paevent->parkedOrderActionField.InstrumentID);
@@ -272,7 +281,7 @@ void CtpExecuter::customEvent(QEvent *event)
             for (const auto &order : orders) {
                 if (order.refId == refId && order.frontId == paevent->parkedOrderActionField.FrontID && order.sessionId == paevent->parkedOrderActionField.SessionID) {
                     qInfo() << "Inserted Parked Order Action ID =" << paevent->parkedOrderActionField.ParkedOrderActionID << paevent->parkedOrderActionField.InstrumentID << refId << paevent->parkedOrderActionField.FrontID << paevent->parkedOrderActionField.SessionID << "-->" <<
-                                order.direction << order.price << order.volRemain;
+                                directionMap[order.direction] << order.price << order.volRemain;
                     found = true;
                     break;
                 }
@@ -288,36 +297,20 @@ void CtpExecuter::customEvent(QEvent *event)
     case RSP_REMOVE_PARKED_ORDER:
     {
         auto *rpevent = static_cast<RspRemoveParkedOrderEvent*>(event);
-        int i = 0;
-        int len = parkedOrders.length();
-        for (; i < len; i++) {
-            if (memcmp(parkedOrders[i].ParkedOrderID, rpevent->removeParkedOrderField.ParkedOrderID, sizeof(TThostFtdcParkedOrderIDType)) == 0) {
-                break;
-            }
-        }
-        if (i < len) {
-            parkedOrders.removeAt(i);
+        if (rpevent->errorID == 0) {
             qInfo() << "Parked Order" << rpevent->removeParkedOrderField.ParkedOrderID << "Removed!";
         } else {
-            qWarning() << "Parked Order" << rpevent->removeParkedOrderField.ParkedOrderID << "Not Found!";
+            qWarning() << "RSP_REMOVE_PARKED_ORDER errorID =" << rpevent->errorID;
         }
     }
         break;
     case RSP_REMOVE_PARKED_ORDER_ACTION:
     {
         auto *rpaevent = static_cast<RspRemoveParkedOrderActionEvent*>(event);
-        int i = 0;
-        int len = parkedOrderActions.length();
-        for (; i < len; i++) {
-            if (memcpy(parkedOrderActions[i].ParkedOrderActionID, rpaevent->removeParkedOrderActionField.ParkedOrderActionID, sizeof(TThostFtdcParkedOrderActionIDType)) == 0) {
-                break;
-            }
-        }
-        if (i < len) {
-            parkedOrderActions.removeAt(i);
+        if (rpaevent->errorID == 0) {
             qInfo() << "Parked Order Action" << rpaevent->removeParkedOrderActionField.ParkedOrderActionID << "Removed!";
         } else {
-            qWarning() << "Parked Order Action" << rpaevent->removeParkedOrderActionField.ParkedOrderActionID << "Not Found!";
+            qWarning() << "RSP_REMOVE_PARKED_ORDER_ACTION errorID =" << rpaevent->errorID;
         }
     }
         break;
@@ -437,19 +430,17 @@ void CtpExecuter::customEvent(QEvent *event)
     case RSP_QRY_PARKED_ORDER:
     {
         auto *qpevent = static_cast<QryParkedOrderEvent*>(event);
-        parkedOrders = qpevent->parkedOrderList;
-        qInfo() << parkedOrders.size() << "parkedOrders";
-        for (const auto &item : qAsConst(parkedOrders)) {
-            qInfo() << item.ParkedOrderID << item.InstrumentID << item.Direction << item.LimitPrice << item.VolumeTotalOriginal;
+        qInfo() << qpevent->parkedOrderList.size() << "parkedOrders";
+        for (const auto &item : qpevent->parkedOrderList) {
+            qInfo() << item.ParkedOrderID << item.InstrumentID << directionMap[item.Direction] << item.LimitPrice << item.VolumeTotalOriginal << parkedOrderStatusMap[item.Status];
         }
     }
         break;
     case RSP_QRY_PARKED_ORDER_ACTION:
     {
         auto *qpaevent = static_cast<QryParkedOrderActionEvent*>(event);
-        parkedOrderActions = qpaevent->parkedOrderActionList;
-        qInfo() << parkedOrderActions.size() << "parkedOrderActions";
-        for (const auto &item : qAsConst(parkedOrderActions)) {
+        qInfo() << qpaevent->parkedOrderActionList.size() << "parkedOrderActions";
+        for (const auto &item : qpaevent->parkedOrderActionList) {
             const auto orders = orderMap.values(item.InstrumentID);
             int refId;
             sscanf(item.OrderRef, "%12d", &refId);
@@ -457,7 +448,7 @@ void CtpExecuter::customEvent(QEvent *event)
             for (const auto &order : orders) {
                 if (order.refId == refId && order.frontId == item.FrontID && order.sessionId == item.SessionID) {
                     qInfo() << item.ParkedOrderActionID << item.InstrumentID << refId << item.FrontID << item.SessionID << "-->" <<
-                                order.direction << order.price << order.volRemain;
+                                directionMap[order.direction] << order.price << order.volRemain;
                     found = true;
                     break;
                 }
