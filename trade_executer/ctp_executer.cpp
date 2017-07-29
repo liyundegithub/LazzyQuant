@@ -909,7 +909,7 @@ int CtpExecuter::insertParkedLimitOrder(const QString &instrument, int openClose
     Q_ASSERT(volume != 0);
 
     CThostFtdcParkedOrderField parkedOrder;
-    memset(&parkedOrder, 0, sizeof (CThostFtdcInputOrderField));
+    memset(&parkedOrder, 0, sizeof (CThostFtdcParkedOrderField));
     strcpy(parkedOrder.BrokerID, c_brokerID);
     strcpy(parkedOrder.InvestorID, c_userID);
     strcpy(parkedOrder.InstrumentID, instrument.toLatin1().data());
@@ -952,7 +952,7 @@ int CtpExecuter::insertParkedLimitOrder(const QString &instrument, int openClose
 int CtpExecuter::insertParkedOrderAction(char* orderRef, int frontID, int sessionID, const QString &instrument)
 {
     CThostFtdcParkedOrderActionField orderAction;
-    memset(&orderAction, 0, sizeof(CThostFtdcInputOrderActionField));
+    memset(&orderAction, 0, sizeof(CThostFtdcParkedOrderActionField));
     strcpy(orderAction.BrokerID, c_brokerID);
     strcpy(orderAction.InvestorID, c_userID);
     strcpy(orderAction.InstrumentID, instrument.toLatin1().data());
@@ -1776,7 +1776,7 @@ void CtpExecuter::cancelAllOrders(const QString &instrument)
             if (item.status == OrderStatus::UNKNOWN || item.status == OrderStatus::PENDING) {
                 TThostFtdcOrderRefType orderRef;
                 sprintf(orderRef, "%12d", item.refId);
-                orderAction(orderRef, item.frontId, item.sessionId, instrument);
+                orderAction(orderRef, item.frontId, item.sessionId, item.instrument);
                 orderCancelCountMap[item.instrument] ++;
                 qInfo() << DATE_TIME << "Cancel order count of" << instrument << ":" << orderCancelCountMap[instrument];
             }
@@ -1858,7 +1858,7 @@ void CtpExecuter::parkOrderCancelAll(const QString &instrument)
         if (item.status == OrderStatus::UNKNOWN || item.status == OrderStatus::PENDING) {
             TThostFtdcOrderRefType orderRef;
             sprintf(orderRef, "%12d", item.refId);
-            insertParkedOrderAction(orderRef, item.frontId, item.sessionId, instrument);
+            insertParkedOrderAction(orderRef, item.frontId, item.sessionId, item.instrument);
             orderCancelCountMap[item.instrument] ++;
             qInfo() << DATE_TIME << "Cancel order count of" << instrument << ":" << orderCancelCountMap[instrument];
         }

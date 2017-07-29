@@ -13,8 +13,6 @@
 struct CThostFtdcInstrumentMarginRateField;
 struct CThostFtdcInstrumentCommissionRateField;
 struct CThostFtdcInstrumentField;
-struct CThostFtdcParkedOrderField;
-struct CThostFtdcParkedOrderActionField;
 
 class CThostFtdcTraderApi;
 class CTradeHandler;
