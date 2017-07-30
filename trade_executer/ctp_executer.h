@@ -83,6 +83,7 @@ private slots:
     int qryDepthMarketData(const QString &instrument = QString());
     int insertLimitOrder(const QString &instrument, int openClose, int volume, double price, bool allOrAny = false, bool gfdOrIoc = true);
     int insertMarketOrder(const QString &instrument, int openClose, int volume);
+    int insertCombineOrder(const QString &instrument, int openClose1, int openClose2, int volume, double price, bool allOrAny = false, bool gfdOrIoc = true);
     int orderAction(char* orderRef, int frontID, int sessionID, const QString &instrument);
     int insertParkedLimitOrder(const QString &instrument, int openClose, int volume, double price, bool allOrAny = false, bool gfdOrIoc = true);
     int insertParkedOrderAction(char* orderRef, int frontID, int sessionID, const QString &instrument);
@@ -124,21 +125,24 @@ public slots:
     int qryParkedOrder(const QString &instrument = QString(), const QString &exchangeID = QString());
     int qryParkedOrderAction(const QString &instrument = QString(), const QString &exchangeID = QString());
 
-    void buyLimitAuto(const QString& instrument, int volume, double price, int orderType = 0);
-    void sellLimitAuto(const QString& instrument, int volume, double price, int orderType = 0);
-    void buyLimit(const QString& instrument, int volume, double price, int orderType = 0);
-    void sellLimit(const QString& instrument, int volume, double price, int orderType = 0);
+    void buyLimitAuto(const QString& instrument, int volume, double price, int orderType = LIMIT_ORDER);
+    void sellLimitAuto(const QString& instrument, int volume, double price, int orderType = LIMIT_ORDER);
+    void buyLimit(const QString& instrument, int volume, double price, int orderType = LIMIT_ORDER);
+    void sellLimit(const QString& instrument, int volume, double price, int orderType = LIMIT_ORDER);
 
     void buyMarketAuto(const QString& instrument, int volume, bool useSimulation = true);
     void sellMarketAuto(const QString& instrument, int volume, bool useSimulation = true);
     void buyMarket(const QString& instrument, int volume, bool useSimulation = true);
     void sellMarket(const QString& instrument, int volume, bool useSimulation = true);
 
+    void buyCombine(const QString& instrument1, const QString& instrument2, int volume, double price, int orderType = LIMIT_ORDER);
+    void sellCombine(const QString& instrument1, const QString& instrument2, int volume, double price, int orderType = LIMIT_ORDER);
+
     void cancelOrder(int orderRefID, int frontID, int sessionID, const QString &instrument);
     void cancelAllOrders(const QString &instrument = QString());
 
-    void parkBuyLimit(const QString& instrument, int volume, double price, int orderType = 0);
-    void parkSellLimit(const QString& instrument, int volume, double price, int orderType = 0);
+    void parkBuyLimit(const QString& instrument, int volume, double price, int orderType = LIMIT_ORDER);
+    void parkSellLimit(const QString& instrument, int volume, double price, int orderType = LIMIT_ORDER);
     void parkOrderCancel(int orderRefID, int frontID, int sessionID, const QString &instrument);
     void parkOrderCancelAll(const QString &instrument);
     void removeParkedOrder(int id);

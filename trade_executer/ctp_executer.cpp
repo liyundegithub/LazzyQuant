@@ -863,6 +863,55 @@ int CtpExecuter::insertMarketOrder(const QString &instrument, int openClose, int
 }
 
 /*!
+ * \brief CtpExecuter::insertCombineOrder
+ * 下组合单
+ *
+ * \param instrument 组合合约代码
+ * \param openClose 开平标志(通用宏定义)
+ * \param volume 手数(非零整数, 正数代表开多/平空, 负数代表开空/平多)
+ * \param price 价格(限价, 不得超出涨跌停范围)
+ * \param allOrAny 全部成交或撤单(true)/任意数量成交剩余撤单(false)
+ * \param gfdOrIoc 今日有效(true)/立即成交否则撤单(false)
+ * \return nRequestID
+ */
+int CtpExecuter::insertCombineOrder(const QString &instrument, int openClose1, int openClose2, int volume, double price, bool allOrAny, bool gfdOrIoc)
+{
+    Q_ASSERT(volume != 0);
+
+    CThostFtdcInputOrderField inputOrder;
+    memset(&inputOrder, 0, sizeof (CThostFtdcInputOrderField));
+    strcpy(inputOrder.BrokerID, c_brokerID);
+    strcpy(inputOrder.InvestorID, c_userID);
+    strcpy(inputOrder.InstrumentID, instrument.toLatin1().data());
+    strcpy(inputOrder.OrderRef, "");
+//	sprintf(inputOrder.OrderRef, "%12d", orderRef);
+//	orderRef++;
+
+    inputOrder.Direction = volume > 0 ? THOST_FTDC_D_Buy : THOST_FTDC_D_Sell;
+    inputOrder.CombOffsetFlag[0] = ctpOffsetFlags[openClose1];
+    inputOrder.CombOffsetFlag[1] = ctpOffsetFlags[openClose2];
+    inputOrder.CombHedgeFlag[0] = THOST_FTDC_HF_Speculation;
+    inputOrder.CombHedgeFlag[1] = THOST_FTDC_HF_Speculation;
+    inputOrder.VolumeTotalOriginal = qAbs(volume);
+    inputOrder.VolumeCondition = allOrAny ? THOST_FTDC_VC_CV : THOST_FTDC_VC_AV;
+    inputOrder.MinVolume = 1;
+    inputOrder.ForceCloseReason = THOST_FTDC_FCC_NotForceClose;
+    inputOrder.IsAutoSuspend = 0;
+    inputOrder.UserForceClose = 0;
+    inputOrder.ContingentCondition = THOST_FTDC_CC_Immediately;
+    inputOrder.OrderPriceType = THOST_FTDC_OPT_LimitPrice;
+    inputOrder.LimitPrice = price;
+    inputOrder.TimeCondition = gfdOrIoc ? THOST_FTDC_TC_GFD : THOST_FTDC_TC_IOC;
+
+    int id = nRequestID.fetchAndAddRelaxed(1);
+    traderApiMutex.lock();
+    int ret = pUserApi->ReqOrderInsert(&inputOrder, id);
+    traderApiMutex.unlock();
+    Q_UNUSED(ret);
+    return id;
+}
+
+/*!
  * \brief CtpExecuter::orderAction
  * 报单操作(仅支持撤单)
  *
@@ -951,19 +1000,19 @@ int CtpExecuter::insertParkedLimitOrder(const QString &instrument, int openClose
  */
 int CtpExecuter::insertParkedOrderAction(char* orderRef, int frontID, int sessionID, const QString &instrument)
 {
-    CThostFtdcParkedOrderActionField orderAction;
-    memset(&orderAction, 0, sizeof(CThostFtdcParkedOrderActionField));
-    strcpy(orderAction.BrokerID, c_brokerID);
-    strcpy(orderAction.InvestorID, c_userID);
-    strcpy(orderAction.InstrumentID, instrument.toLatin1().data());
-    memcpy(orderAction.OrderRef, orderRef, sizeof(TThostFtdcOrderRefType));
-    orderAction.FrontID = frontID;
-    orderAction.SessionID = sessionID;
-    orderAction.ActionFlag = THOST_FTDC_AF_Delete;
+    CThostFtdcParkedOrderActionField parkedOrderAction;
+    memset(&parkedOrderAction, 0, sizeof(CThostFtdcParkedOrderActionField));
+    strcpy(parkedOrderAction.BrokerID, c_brokerID);
+    strcpy(parkedOrderAction.InvestorID, c_userID);
+    strcpy(parkedOrderAction.InstrumentID, instrument.toLatin1().data());
+    memcpy(parkedOrderAction.OrderRef, orderRef, sizeof(TThostFtdcOrderRefType));
+    parkedOrderAction.FrontID = frontID;
+    parkedOrderAction.SessionID = sessionID;
+    parkedOrderAction.ActionFlag = THOST_FTDC_AF_Delete;
 
     int id = nRequestID.fetchAndAddRelaxed(1);
     traderApiMutex.lock();
-    int ret = pUserApi->ReqParkedOrderAction(&orderAction, id);
+    int ret = pUserApi->ReqParkedOrderAction(&parkedOrderAction, id);
     traderApiMutex.unlock();
     Q_UNUSED(ret);
     return id;
@@ -1741,6 +1790,28 @@ void CtpExecuter::sellMarket(const QString &instrument, int volume, bool useSimu
     }
 }
 
+void CtpExecuter::buyCombine(const QString &instrument1, const QString &instrument2, int volume, double price, int orderType)
+{
+    const QString combineInstrument = QString("SP %1&%2").arg(instrument1).arg(instrument2);
+    qDebug() << DATE_TIME << "buyCombine" << combineInstrument << ": volume =" << volume << ", price =" << price << ", orderType =" << orderType;
+
+    bool allOrAny, gfdOrIoc;
+    analyzeOrderType(orderType, allOrAny, gfdOrIoc);
+
+    insertCombineOrder(combineInstrument, OPEN, OPEN, volume, price, allOrAny, gfdOrIoc);
+}
+
+void CtpExecuter::sellCombine(const QString &instrument1, const QString &instrument2, int volume, double price, int orderType)
+{
+    const QString combineInstrument = QString("SP %1&%2").arg(instrument1).arg(instrument2);
+    qDebug() << DATE_TIME << "sellCombine" << combineInstrument << ": volume =" << volume << ", price =" << price << ", orderType =" << orderType;
+
+    bool allOrAny, gfdOrIoc;
+    analyzeOrderType(orderType, allOrAny, gfdOrIoc);
+
+    insertCombineOrder(combineInstrument, OPEN, OPEN, - volume, price, allOrAny, gfdOrIoc);
+}
+
 /*!
  * \brief CtpExecuter::cancelOrder
  * 取消未成交的订单
@@ -1778,7 +1849,7 @@ void CtpExecuter::cancelAllOrders(const QString &instrument)
                 sprintf(orderRef, "%12d", item.refId);
                 orderAction(orderRef, item.frontId, item.sessionId, item.instrument);
                 orderCancelCountMap[item.instrument] ++;
-                qInfo() << DATE_TIME << "Cancel order count of" << instrument << ":" << orderCancelCountMap[instrument];
+                qInfo() << DATE_TIME << "Cancel order count of" << item.instrument << ":" << orderCancelCountMap[item.instrument];
             }
         }
     } else {
@@ -1859,8 +1930,6 @@ void CtpExecuter::parkOrderCancelAll(const QString &instrument)
             TThostFtdcOrderRefType orderRef;
             sprintf(orderRef, "%12d", item.refId);
             insertParkedOrderAction(orderRef, item.frontId, item.sessionId, item.instrument);
-            orderCancelCountMap[item.instrument] ++;
-            qInfo() << DATE_TIME << "Cancel order count of" << instrument << ":" << orderCancelCountMap[instrument];
         }
     }
 }

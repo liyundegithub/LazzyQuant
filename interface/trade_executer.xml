@@ -155,6 +155,32 @@
       <arg name="instrument" type="s" direction="in"/>
       <arg name="volume" type="i" direction="in"/>
     </method>
+    <method name="buyCombine">
+      <arg name="instrument1" type="s" direction="in"/>
+      <arg name="instrument2" type="s" direction="in"/>
+      <arg name="volume" type="i" direction="in"/>
+      <arg name="price" type="d" direction="in"/>
+      <arg name="orderType" type="i" direction="in"/>
+    </method>
+    <method name="buyCombine">
+      <arg name="instrument1" type="s" direction="in"/>
+      <arg name="instrument2" type="s" direction="in"/>
+      <arg name="volume" type="i" direction="in"/>
+      <arg name="price" type="d" direction="in"/>
+    </method>
+    <method name="sellCombine">
+      <arg name="instrument1" type="s" direction="in"/>
+      <arg name="instrument2" type="s" direction="in"/>
+      <arg name="volume" type="i" direction="in"/>
+      <arg name="price" type="d" direction="in"/>
+      <arg name="orderType" type="i" direction="in"/>
+    </method>
+    <method name="sellCombine">
+      <arg name="instrument1" type="s" direction="in"/>
+      <arg name="instrument2" type="s" direction="in"/>
+      <arg name="volume" type="i" direction="in"/>
+      <arg name="price" type="d" direction="in"/>
+    </method>
     <method name="cancelOrder">
       <arg name="orderRefID" type="i" direction="in"/>
       <arg name="frontID" type="i" direction="in"/>
