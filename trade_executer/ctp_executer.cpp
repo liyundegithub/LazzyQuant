@@ -231,9 +231,14 @@ void CtpExecuter::customEvent(QEvent *event)
     case RSP_QRY_INSTRUMENT:
     {
         auto *qievent = static_cast<RspQryInstrumentEvent*>(event);
+        QStringList instrumentsWithAnd;
         for (const auto &item : qievent->instrumentList) {
             instrumentDataCache[item.InstrumentID] = item;
+            if (QString(item.InstrumentID).contains('&')) {
+                instrumentsWithAnd.append(item.InstrumentID);
+            }
         }
+        combineInstruments = instrumentsWithAnd;
         qInfo() << DATE_TIME << " Updated" << qievent->instrumentList.size() << "instruments!";
     }
         break;
@@ -1792,24 +1797,36 @@ void CtpExecuter::sellMarket(const QString &instrument, int volume, bool useSimu
 
 void CtpExecuter::buyCombine(const QString &instrument1, const QString &instrument2, int volume, double price, int orderType)
 {
-    const QString combineInstrument = QString("SP %1&%2").arg(instrument1).arg(instrument2);
-    qDebug() << DATE_TIME << "buyCombine" << combineInstrument << ": volume =" << volume << ", price =" << price << ", orderType =" << orderType;
+    // TODO optimize
+    for (const auto &combineInstrument : qAsConst(combineInstruments)) {
+        if (combineInstrument.contains(instrument1) && combineInstrument.contains(instrument2)) {
+            qDebug() << DATE_TIME << "buyCombine" << combineInstrument << ": volume =" << volume << ", price =" << price << ", orderType =" << orderType;
 
-    bool allOrAny, gfdOrIoc;
-    analyzeOrderType(orderType, allOrAny, gfdOrIoc);
+            bool allOrAny, gfdOrIoc;
+            analyzeOrderType(orderType, allOrAny, gfdOrIoc);
 
-    insertCombineOrder(combineInstrument, OPEN, OPEN, volume, price, allOrAny, gfdOrIoc);
+            insertCombineOrder(combineInstrument, OPEN, OPEN, volume, price, allOrAny, gfdOrIoc);
+            return;
+        }
+    }
+    qDebug() << DATE_TIME << "No such combination:" << instrument1 << instrument2;
 }
 
 void CtpExecuter::sellCombine(const QString &instrument1, const QString &instrument2, int volume, double price, int orderType)
 {
-    const QString combineInstrument = QString("SP %1&%2").arg(instrument1).arg(instrument2);
-    qDebug() << DATE_TIME << "sellCombine" << combineInstrument << ": volume =" << volume << ", price =" << price << ", orderType =" << orderType;
+    // TODO optimize
+    for (const auto &combineInstrument : qAsConst(combineInstruments)) {
+        if (combineInstrument.contains(instrument1) && combineInstrument.contains(instrument2)) {
+            qDebug() << DATE_TIME << "sellCombine" << combineInstrument << ": volume =" << volume << ", price =" << price << ", orderType =" << orderType;
 
-    bool allOrAny, gfdOrIoc;
-    analyzeOrderType(orderType, allOrAny, gfdOrIoc);
+            bool allOrAny, gfdOrIoc;
+            analyzeOrderType(orderType, allOrAny, gfdOrIoc);
 
-    insertCombineOrder(combineInstrument, OPEN, OPEN, - volume, price, allOrAny, gfdOrIoc);
+            insertCombineOrder(combineInstrument, OPEN, OPEN, - volume, price, allOrAny, gfdOrIoc);
+            return;
+        }
+    }
+    qDebug() << DATE_TIME << "No such combination:" << instrument1 << instrument2;
 }
 
 /*!

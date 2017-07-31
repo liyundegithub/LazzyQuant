@@ -59,6 +59,7 @@ protected:
     QMap<QString, CThostFtdcInstrumentCommissionRateField> commissionRateCache;
     QMap<QString, CThostFtdcInstrumentField> instrumentDataCache;
     QMap<QString, QPair<double, double>> upperLowerLimitCache;
+    QStringList combineInstruments;
 
     void customEvent(QEvent *event) override;
     void timesUp(int index);
