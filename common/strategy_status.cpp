@@ -4,6 +4,15 @@
 
 #include <QSettings>
 
+QDebug operator<<(QDebug dbg, const StrategyStatus &status)
+{
+    dbg.nospace() <<   "position = " << (status.position.is_initialized() ? QString::number(status.position.get()) : QString("uninitialized"))
+                  << ", take profit = " << (status.takeProfit.is_initialized() ? QString::number(status.takeProfit.get()) : QString("uninitialized"))
+                  << ", stop loss = " << (status.stopLoss.is_initialized() ? QString::number(status.stopLoss.get()) : QString("uninitialized"));
+
+    return dbg.space();
+}
+
 StrategyStatusManager::StrategyStatusManager()
 {
     pSettings = new QSettings(QSettings::IniFormat, QSettings::UserScope, ORGANIZATION, "strategy_status");

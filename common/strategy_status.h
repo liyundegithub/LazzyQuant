@@ -2,6 +2,7 @@
 #define STRATEGY_STATUS_H
 
 #include <QString>
+#include <QDebug>
 #include <boost/optional.hpp>
 
 class QSettings;
@@ -11,6 +12,8 @@ struct StrategyStatus {
     boost::optional<double> takeProfit;
     boost::optional<double> stopLoss;
 };
+
+QDebug operator<<(QDebug dbg, const StrategyStatus &status);
 
 class StrategyStatusManager {
     QSettings *pSettings;

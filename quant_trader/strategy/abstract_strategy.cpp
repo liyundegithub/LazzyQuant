@@ -5,31 +5,22 @@
 
 #include "config.h"
 #include "common_utility.h"
+#include "strategy_status.h"
 #include "abstract_strategy.h"
 #include "../bar.h"
 #include "../indicator/abstract_indicator.h"
 
+extern StrategyStatusManager *pStatusManager;
+
 AbstractStrategy::AbstractStrategy(const QString &id, const QString& instrumentID, const QString& time_frame, QObject *parent) :
     QObject(parent),
-    stratety_id(id),
+    strategyID(id),
     instrument(instrumentID),
     time_frame_str(time_frame)
 {
     qDebug() << "id = " << id << ", instrumentID = " << instrumentID << ", time_frame = " << time_frame;
 
-    result = new QSettings(QSettings::IniFormat, QSettings::UserScope, ORGANIZATION, "strategy_result");
-    auto groupList = result->childGroups();
-    if (groupList.contains(stratety_id)) {
-        result->beginGroup(stratety_id);
-        position = result->value("position", 0).toInt();
-        if (result->contains("tp_price")) {
-            tp_price = result->value("tp_price").toDouble();
-        }
-        if (result->contains("sl_price")) {
-            sl_price = result->value("sl_price").toDouble();
-        }
-        result->endGroup();
-    }
+    loadStatus();
 
     lastCalcualtedBarTime = -1;
 }
@@ -44,32 +35,33 @@ inline bool AbstractStrategy::isNewBar() const
     return (lastBar->time != lastCalcualtedBarTime);
 }
 
+void AbstractStrategy::loadStatus()
+{
+    const auto status = pStatusManager->getStatus(strategyID);
+    position = status.position;
+    tp_price = status.takeProfit;
+    sl_price = status.stopLoss;
+
+    qDebug() << "Load status:" << strategyID;
+    qDebug() << status;
+}
+
+void AbstractStrategy::saveStatus()
+{
+    const StrategyStatus status = {position, tp_price, sl_price};
+
+    qDebug() << "Save status:" << strategyID;
+    qDebug() << status;
+
+    pStatusManager->setStatus(strategyID, status);
+}
+
 inline void AbstractStrategy::resetPosition()
 {
     position = 0;
     tp_price.reset();
     sl_price.reset();
-    saveResult();
-}
-
-inline void AbstractStrategy::saveResult()
-{
-    result->beginGroup(stratety_id);
-    result->setValue("lastSave", DATE_TIME);
-    result->setValue("position", position.get());
-
-    if (tp_price.is_initialized()) {
-        result->setValue("tp_price", tp_price.get());
-    } else if (result->contains("tp_price")) {
-        result->remove("tp_price");
-    }
-
-    if (sl_price.is_initialized()) {
-        result->setValue("sl_price", sl_price.get());
-    } else if (result->contains("sl_price")) {
-        result->remove("sl_price");
-    }
-    result->endGroup();
+    saveStatus();
 }
 
 void AbstractStrategy::checkTPSL(double price)
@@ -110,7 +102,7 @@ void AbstractStrategy::checkIfNewBar()
         }
         onNewBar();
         if (position.is_initialized()) {
-            saveResult();
+            saveStatus();
         }
         lastCalcualtedBarTime = lastBar->time;
     }

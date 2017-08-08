@@ -13,7 +13,7 @@ class AbstractStrategy : public QObject
 {
     Q_OBJECT
 protected:
-    const QString stratety_id;
+    const QString strategyID;
     const QString instrument;
     const QString time_frame_str;
 
@@ -29,7 +29,8 @@ protected:
     uint lastCalcualtedBarTime;
     bool isNewBar() const;
     void resetPosition();
-    void saveResult();
+    void loadStatus();
+    void saveStatus();
     virtual void checkTPSL(double price);
     virtual void onNewBar() = 0;
 

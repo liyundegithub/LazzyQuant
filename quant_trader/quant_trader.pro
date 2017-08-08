@@ -12,6 +12,7 @@ SOURCES += main.cpp \
     ../common/common_utility.cpp \
     ../common/multiple_timer.cpp \
     ../common/connection_manager.cpp \
+    ../common/strategy_status.cpp \
     quant_trader.cpp \
     bar_collector.cpp \
     bar.cpp \
@@ -31,6 +32,7 @@ HEADERS += ../config.h \
     ../common/common_utility.h \
     ../common/multiple_timer.h \
     ../common/connection_manager.h \
+    ../common/strategy_status.h \
     quant_trader.h \
     bar_collector.h \
     bar.h \
