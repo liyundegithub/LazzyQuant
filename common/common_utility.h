@@ -74,7 +74,7 @@ const QString DY[] = {"a",  "b",  "m",  "y",  "p",  "j",  "jm", "i"};
 // 郑州商品交易所
 const QString ZZ[] = {"jr", "lr", "pm", "ri", "rs", "sf", "sm", "wh"};
 // 郑州商品交易所 (夜盘)
-const QString ZY[] = {"cf", "fg", "ma", "oi", "rm", "sr", "ta", "zc", "tc"};	// zc原来为tc
+const QString ZY[] = {"cf", "cy", "fg", "ma", "oi", "rm", "sr", "ta", "zc", "tc"};	// zc原来为tc
 // 中金所
 const QString ZJ[] = {"ic", "if", "ih", "t",  "tf"};
 
