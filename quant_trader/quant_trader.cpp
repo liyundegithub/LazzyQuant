@@ -51,18 +51,18 @@ QuantTrader::~QuantTrader()
 
 void QuantTrader::loadQuantTraderSettings()
 {
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, ORGANIZATION, "quant_trader");
+    auto settings = getSettingsSmart(ORGANIZATION, "quant_trader");
 
-    settings.beginGroup("HistoryPath");
-    kt_export_dir = settings.value("ktexport").toString();
-    BarCollector::collector_dir = settings.value("collector").toString();
-    settings.endGroup();
+    settings->beginGroup("HistoryPath");
+    kt_export_dir = settings->value("ktexport").toString();
+    BarCollector::collector_dir = settings->value("collector").toString();
+    settings->endGroup();
 
-    settings.beginGroup("Collector");
-    const auto instrumentIDs = settings.childKeys();
+    settings->beginGroup("Collector");
+    const auto instrumentIDs = settings->childKeys();
 
     for (const auto &instrumentID : instrumentIDs) {
-        QString combined_time_frame_string = settings.value(instrumentID).toString();
+        QString combined_time_frame_string = settings->value(instrumentID).toString();
         const QStringList time_frame_stringlist = combined_time_frame_string.split('|');
         BarCollector::TimeFrames time_frame_flags;
         for (const QString &tf : time_frame_stringlist) {
@@ -76,7 +76,7 @@ void QuantTrader::loadQuantTraderSettings()
         collector_map[instrumentID] = collector;
         qDebug() << instrumentID << ":\t" << time_frame_flags << "\t" << time_frame_stringlist;
     }
-    settings.endGroup();
+    settings->endGroup();
 
     QMap<QTime, QStringList> endPointsMap;
     for (const auto &instrumentID : instrumentIDs) {
@@ -108,27 +108,27 @@ void QuantTrader::loadTradeStrategySettings()
         return map;
     }();
 
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, ORGANIZATION, "trade_strategy");
-    const QStringList groups = settings.childGroups();
+    auto settings = getSettingsSmart(ORGANIZATION, "trade_strategy");
+    const QStringList groups = settings->childGroups();
     qDebug() << groups.size() << "stragegs in all.";
 
     for (const QString& group : groups) {
-        settings.beginGroup(group);
-        QString strategy_name = settings.value("strategy").toString();
-        QString instrument = settings.value("instrument").toString();
-        QString time_frame = settings.value("timeframe").toString();
+        settings->beginGroup(group);
+        QString strategy_name = settings->value("strategy").toString();
+        QString instrument = settings->value("instrument").toString();
+        QString time_frame = settings->value("timeframe").toString();
 
-        QVariant param1 = settings.value("param1");
-        QVariant param2 = settings.value("param2");
-        QVariant param3 = settings.value("param3");
-        QVariant param4 = settings.value("param4");
-        QVariant param5 = settings.value("param5");
-        QVariant param6 = settings.value("param6");
-        QVariant param7 = settings.value("param7");
-        QVariant param8 = settings.value("param8");
-        QVariant param9 = settings.value("param9");
+        QVariant param1 = settings->value("param1");
+        QVariant param2 = settings->value("param2");
+        QVariant param3 = settings->value("param3");
+        QVariant param4 = settings->value("param4");
+        QVariant param5 = settings->value("param5");
+        QVariant param6 = settings->value("param6");
+        QVariant param7 = settings->value("param7");
+        QVariant param8 = settings->value("param8");
+        QVariant param9 = settings->value("param9");
 
-        settings.endGroup();
+        settings->endGroup();
 
         const QMetaObject* strategy_meta_object = meta_object_map.value(strategy_name);
         QObject *object = strategy_meta_object->newInstance(Q_ARG(QString, group), Q_ARG(QString, instrument), Q_ARG(QString, time_frame), Q_ARG(QObject*, this));

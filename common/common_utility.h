@@ -1,6 +1,8 @@
 #ifndef COMMON_UTILITY_H
 #define COMMON_UTILITY_H
 
+#include <memory>
+
 #include <QString>
 #include <QDateTime>
 
@@ -36,6 +38,10 @@ QString getCode(const QString &instrumentID);
 bool parseOptionID(const QString &optionID, QString &futureID, OPTION_TYPE &type, int &exercisePrice);
 QString makeOptionID(const QString &futureID, const OPTION_TYPE type, const int exercisePrice);
 bool isOption(const QString &instrumentID);
+
+class QSettings;
+class QObject;
+std::unique_ptr<QSettings> getSettingsSmart(const QString &organization, const QString &name, QObject *parent = nullptr);
 
 template<class T>
 static inline bool isWithinRange(const T &t, const T &rangeStart, const T &rangeEnd)

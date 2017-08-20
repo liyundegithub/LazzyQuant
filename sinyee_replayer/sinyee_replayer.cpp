@@ -5,6 +5,7 @@
 #include <QPair>
 
 #include "config_struct.h"
+#include "common_utility.h"
 #include "sinyee_tick.h"
 #include "sinyee_replayer.h"
 #include "sinyee_replayer_adaptor.h"
@@ -12,18 +13,18 @@
 SinYeeReplayer::SinYeeReplayer(const CONFIG_ITEM &config, QObject *parent) :
     QObject(parent)
 {
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, config.organization, config.name, this);
+    auto settings = getSettingsSmart(config.organization, config.name, this);
 
-    sinYeeDataPath = settings.value("SinYeeDataPath").toString();
+    sinYeeDataPath = settings->value("SinYeeDataPath").toString();
 
-    settings.beginGroup("ReplayList");
-    const auto replayListTmp = settings.childKeys();
+    settings->beginGroup("ReplayList");
+    const auto replayListTmp = settings->childKeys();
     for (const auto &key : replayListTmp) {
-        if (settings.value(key).toBool()) {
+        if (settings->value(key).toBool()) {
             replayList.append(key);
         }
     }
-    settings.endGroup();
+    settings->endGroup();
     replayList.removeDuplicates();
 
     new Sinyee_replayerAdaptor(this);

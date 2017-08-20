@@ -1,4 +1,5 @@
 #include "config.h"
+#include "common_utility.h"
 #include "depth_market.h"
 #include "pair_trade.h"
 #include "butterfly.h"
@@ -21,21 +22,21 @@ FutureArbitrageur::~FutureArbitrageur()
 
 void FutureArbitrageur::setupStrategies()
 {
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, ORGANIZATION, "future_arbitrageur");
-    const auto strategyIDs = settings.childGroups();
+    auto settings = getSettingsSmart(ORGANIZATION, "future_arbitrageur");
+    const auto strategyIDs = settings->childGroups();
 
     QStringList allInstruments;
     for (const auto &strategyID : strategyIDs) {
-        settings.beginGroup(strategyID);
+        settings->beginGroup(strategyID);
 
         const QStringList ordinals = {"First", "Second", "Third", "Fourth", "Fifth"};
         for (const auto &ordinal : ordinals) {
-            if (settings.contains(ordinal)) {
-                allInstruments << settings.value(ordinal).toString();
+            if (settings->contains(ordinal)) {
+                allInstruments << settings->value(ordinal).toString();
             }
         }
 
-        settings.endGroup();
+        settings->endGroup();
     }
 
     allInstruments.removeDuplicates();
@@ -44,22 +45,22 @@ void FutureArbitrageur::setupStrategies()
     pMarketCollection = new DepthMarketCollection(allInstruments);
 
     for (const auto &strategyID : strategyIDs) {
-        settings.beginGroup(strategyID);
+        settings->beginGroup(strategyID);
 
         QStringList instruments;
-        QString first = settings.value("First").toString();
-        QString second = settings.value("Second").toString();
+        QString first = settings->value("First").toString();
+        QString second = settings->value("Second").toString();
         instruments << first << second;
 
-        int maxPosition = settings.value("MaxPosition").toInt();
-        int minPosition = settings.value("MinPosition").toInt();
-        int openThreshold = settings.value("OpenThreshold").toDouble();
-        int closeThreshold = settings.value("CloseThreshold").toDouble();
+        int maxPosition = settings->value("MaxPosition").toInt();
+        int minPosition = settings->value("MinPosition").toInt();
+        int openThreshold = settings->value("OpenThreshold").toDouble();
+        int closeThreshold = settings->value("CloseThreshold").toDouble();
 
-        QString strategyName = settings.value("Strategy").toString();
+        QString strategyName = settings->value("Strategy").toString();
         BaseStrategy *pStrategy = nullptr;
         if (strategyName == "Butterfly") {
-            QString third = settings.value("Third").toString();
+            QString third = settings->value("Third").toString();
             instruments << third;
             pStrategy = new Butterfly(strategyID, instruments, maxPosition, minPosition, openThreshold, closeThreshold, pMarketCollection);
         } else if (strategyName == "PairTrade") {
@@ -69,7 +70,7 @@ void FutureArbitrageur::setupStrategies()
             pStrategyList.append(pStrategy);
         }
 
-        settings.endGroup();
+        settings->endGroup();
     }
 }
 

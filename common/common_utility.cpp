@@ -1,6 +1,9 @@
 #include "common_utility.h"
 
 #include <QMap>
+#include <QFile>
+#include <QSettings>
+#include <QCoreApplication>
 
 /*!
  * \brief getInstrumentName
@@ -99,6 +102,25 @@ bool isOption(const QString &instrumentID)
     return instrumentID.length() >= 8;  // FIXME
 }
 
+/*!
+ * \brief getSettingsSmart
+ * 如果存在本地配置文件, 则使用本地配置文件
+ * 如果不存在本地配置文件, 则使用UserScope配置文件
+ *
+ * \param organization 公司或组织名
+ * \param name 配置文件名
+ * \return 配置文件对应的QSettings智能指针
+ */
+std::unique_ptr<QSettings> getSettingsSmart(const QString &organization, const QString &name, QObject *parent)
+{
+    const QString localFileName = QCoreApplication::applicationDirPath() + "/" + name + ".ini";
+    QFile localFile(localFileName);
+    if (localFile.exists()) {
+        return std::unique_ptr<QSettings>(new QSettings(localFileName, QSettings::IniFormat, parent));
+    } else {
+        return std::unique_ptr<QSettings>(new QSettings(QSettings::IniFormat, QSettings::UserScope, organization, name, parent));
+    }
+}
 
 #define String const QString&
 

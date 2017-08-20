@@ -21,7 +21,7 @@ MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, const bool replayMode, Q
     name(config.name),
     replayMode(replayMode)
 {
-    settings = new QSettings(QSettings::IniFormat, QSettings::UserScope, config.organization, config.name, this);
+    settings = getSettingsSmart(config.organization, config.name, this).release();
     const auto flowPath = settings->value("FlowPath").toByteArray();
     saveDepthMarketData = settings->value("SaveDepthMarketData").toBool();
     saveDepthMarketDataPath = settings->value("SaveDepthMarketDataPath").toString();

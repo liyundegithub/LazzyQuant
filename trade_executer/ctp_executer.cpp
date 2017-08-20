@@ -68,19 +68,19 @@ CtpExecuter::CtpExecuter(const CONFIG_ITEM &config, QObject *parent) :
     cacheReady = false;
     available = 0.0f;
 
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, config.organization, config.name);
-    QByteArray flowPath = settings.value("FlowPath").toByteArray();
-    preventSelfTrade = settings.value("PreventSelfTrade", 1).toBool();
-    orderCancelLimit = settings.value("OrderCancelLimit", 300).toInt();
+    auto settings = getSettingsSmart(config.organization, config.name);
+    QByteArray flowPath = settings->value("FlowPath").toByteArray();
+    preventSelfTrade = settings->value("PreventSelfTrade", 1).toBool();
+    orderCancelLimit = settings->value("OrderCancelLimit", 300).toInt();
 
-    settings.beginGroup("AccountInfo");
-    brokerID = settings.value("BrokerID").toByteArray();
-    userID = settings.value("UserID").toByteArray();
-    password = settings.value("Password").toByteArray();
-    userProductInfo = settings.value("UserProductInfo").toByteArray();
-    useAuthenticate = settings.value("UseAuthenticate").toBool();
-    authenticateCode = settings.value("AuthenticateCode").toByteArray();
-    settings.endGroup();
+    settings->beginGroup("AccountInfo");
+    brokerID = settings->value("BrokerID").toByteArray();
+    userID = settings->value("UserID").toByteArray();
+    password = settings->value("Password").toByteArray();
+    userProductInfo = settings->value("UserProductInfo").toByteArray();
+    useAuthenticate = settings->value("UseAuthenticate").toBool();
+    authenticateCode = settings->value("AuthenticateCode").toByteArray();
+    settings->endGroup();
 
     // Pre-convert QString to char*
     c_brokerID = brokerID.data();
@@ -96,14 +96,14 @@ CtpExecuter::CtpExecuter(const CONFIG_ITEM &config, QObject *parent) :
     pUserApi->SubscribePrivateTopic(THOST_TERT_QUICK);
     pUserApi->SubscribePublicTopic(THOST_TERT_QUICK);
 
-    settings.beginGroup("FrontSites");
-    const auto keys = settings.childKeys();
+    settings->beginGroup("FrontSites");
+    const auto keys = settings->childKeys();
     const QString protocol = "tcp://";
     for (const auto &str : keys) {
-        QString address = settings.value(str).toString();
+        QString address = settings->value(str).toString();
         pUserApi->RegisterFront((protocol + address).toLatin1().data());
     }
-    settings.endGroup();
+    settings->endGroup();
 
     new Trade_executerAdaptor(this);
     QDBusConnection dbus = QDBusConnection::sessionBus();
