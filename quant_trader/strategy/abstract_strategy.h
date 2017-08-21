@@ -21,7 +21,6 @@ protected:
     QList<Bar> *barList;
     Bar *lastBar;
 
-    QSettings *result;
     boost::optional<int> position;
     boost::optional<double> tp_price;
     boost::optional<double> sl_price;

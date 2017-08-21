@@ -11,16 +11,16 @@ QList<Market> markets;
 
 void loadCommonMarketData()
 {
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, ORGANIZATION, "common");
+    auto settings = getSettingsSmart(ORGANIZATION, "common");
 
-    settings.beginGroup("Markets");
-    const auto marketsKey = settings.childKeys();
+    settings->beginGroup("Markets");
+    const auto marketsKey = settings->childKeys();
     for (const auto &key : marketsKey) {
-        QString market_xml_file = settings.value(key).toString();
+        QString market_xml_file = settings->value(key).toString();
         auto market = loadMkt(market_xml_file);
         markets << market;
     }
-    settings.endGroup();
+    settings->endGroup();
 }
 
 Market loadMkt(const QString &file_name)

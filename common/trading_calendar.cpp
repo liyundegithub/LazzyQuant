@@ -1,18 +1,19 @@
 #include "config.h"
+#include "common_utility.h"
 #include "trading_calendar.h"
 
 #include <QSettings>
 
 TradingCalendar::TradingCalendar()
 {
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, ORGANIZATION, "trading_calander");
-    settings.beginGroup("NonTradingDays");
-    const auto nonTradingDaysStrs = settings.childKeys();
+    auto settings = getSettingsSmart(ORGANIZATION, "trading_calander");
+    settings->beginGroup("NonTradingDays");
+    const auto nonTradingDaysStrs = settings->childKeys();
     for (const auto &nonTradingDaysStr : nonTradingDaysStrs) {
         // TODO use bit definition to seperate different market
         nonTradingDays.append(QDate::fromString(nonTradingDaysStr, "yyyyMMdd"));
     }
-    settings.endGroup();
+    settings->endGroup();
 }
 
 bool TradingCalendar::isTradingDay(const QDate &date)

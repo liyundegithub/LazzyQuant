@@ -15,7 +15,7 @@ QDebug operator<<(QDebug dbg, const StrategyStatus &status)
 
 StrategyStatusManager::StrategyStatusManager()
 {
-    pSettings = new QSettings(QSettings::IniFormat, QSettings::UserScope, ORGANIZATION, "strategy_status");
+    pSettings = getSettingsSmart(ORGANIZATION, "strategy_status").release();
 }
 
 StrategyStatusManager::~StrategyStatusManager()
