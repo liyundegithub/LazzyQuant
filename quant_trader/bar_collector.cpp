@@ -47,7 +47,7 @@ BarCollector::~BarCollector()
 
 Bar* BarCollector::getCurrentBar(const QString &time_frame_str)
 {
-    int time_frame_value = BarCollector::staticMetaObject.enumerator(timeFrameEnumIdx).keyToValue(time_frame_str.trimmed().toLatin1().data());
+    int time_frame_value = BarCollector::staticMetaObject.enumerator(timeFrameEnumIdx).keyToValue(time_frame_str.trimmed().toLatin1().constData());
     TimeFrame time_frame = static_cast<BarCollector::TimeFrame>(time_frame_value);
     return &current_bar_map[time_frame];
 }

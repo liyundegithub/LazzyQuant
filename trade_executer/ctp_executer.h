@@ -44,11 +44,11 @@ protected:
     QByteArray userProductInfo;
     bool useAuthenticate;
     QByteArray authenticateCode;
-    char* c_brokerID;
-    char* c_userID;
-    char* c_password;
-    char* c_userProductInfo;
-    char* c_authenticateCode;
+    const char* c_brokerID;
+    const char* c_userID;
+    const char* c_password;
+    const char* c_userProductInfo;
+    const char* c_authenticateCode;
 
     QMap<QString, int> ydLongPositions;
     QMap<QString, int> ydShortPositions;

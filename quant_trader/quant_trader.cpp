@@ -66,7 +66,7 @@ void QuantTrader::loadQuantTraderSettings()
         const QStringList time_frame_stringlist = combined_time_frame_string.split('|');
         BarCollector::TimeFrames time_frame_flags;
         for (const QString &tf : time_frame_stringlist) {
-            int time_frame_value = BarCollector::staticMetaObject.enumerator(timeFrameEnumIdx).keyToValue(tf.trimmed().toLatin1().data());
+            int time_frame_value = BarCollector::staticMetaObject.enumerator(timeFrameEnumIdx).keyToValue(tf.trimmed().toLatin1().constData());
             BarCollector::TimeFrame time_frame = static_cast<BarCollector::TimeFrame>(time_frame_value);
             time_frame_flags |= time_frame;
         }
@@ -193,7 +193,7 @@ static inline QString getKTExportName(const QString &instrumentID) {
  */
 QList<Bar>* QuantTrader::getBars(const QString &instrumentID, const QString &time_frame_str)
 {
-    int time_frame_value = BarCollector::staticMetaObject.enumerator(timeFrameEnumIdx).keyToValue(time_frame_str.trimmed().toLatin1().data());
+    int time_frame_value = BarCollector::staticMetaObject.enumerator(timeFrameEnumIdx).keyToValue(time_frame_str.trimmed().toLatin1().constData());
     if (bars_map.contains(instrumentID)) {
         if (bars_map[instrumentID].contains(time_frame_value)) {
             return &bars_map[instrumentID][time_frame_value];

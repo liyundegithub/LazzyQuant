@@ -74,11 +74,11 @@ MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, const bool replayMode, Q
     settings->endGroup();
 
     // Pre-convert QString to char*
-    c_brokerID = brokerID.data();
-    c_userID = userID.data();
-    c_password = password.data();
+    c_brokerID = brokerID.constData();
+    c_userID = userID.constData();
+    c_password = password.constData();
 
-    pUserApi = CThostFtdcMdApi::CreateFtdcMdApi(flowPath.data());
+    pUserApi = CThostFtdcMdApi::CreateFtdcMdApi(flowPath.constData());
     pReceiver = new CTickReceiver(this);
     pUserApi->RegisterSpi(pReceiver);
 
@@ -314,7 +314,7 @@ void MarketWatcher::subscribe()
     char** ppInstrumentID = new char*[num];
     QSetIterator<QString> iterator(subscribeSet);
     for (int i = 0; i < num; i++) {
-        ppInstrumentID[i] = strcpy(subscribe_array + 32 * i, iterator.next().toLatin1().data());
+        ppInstrumentID[i] = strcpy(subscribe_array + 32 * i, iterator.next().toLatin1().constData());
     }
 
     pUserApi->SubscribeMarketData(ppInstrumentID, num);
@@ -454,7 +454,7 @@ void MarketWatcher::subscribeInstruments(const QStringList &instruments, bool up
 
     for (int i = 0; i < num; i++) {
         subscribeSet.insert(instruments[i]);    // 更新订阅列表
-        ppInstrumentID[i] = strcpy(subscribe_array + 32 * i, instruments[i].toLatin1().data());
+        ppInstrumentID[i] = strcpy(subscribe_array + 32 * i, instruments[i].toLatin1().constData());
     }
 
     if (loggedIn) {

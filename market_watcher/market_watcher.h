@@ -52,9 +52,9 @@ protected:
     QByteArray brokerID;
     QByteArray userID;
     QByteArray password;
-    char* c_brokerID;
-    char* c_userID;
-    char* c_password;
+    const char* c_brokerID;
+    const char* c_userID;
+    const char* c_password;
 
     void customEvent(QEvent *) override;
 

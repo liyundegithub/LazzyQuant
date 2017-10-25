@@ -83,13 +83,13 @@ CtpExecuter::CtpExecuter(const CONFIG_ITEM &config, QObject *parent) :
     settings->endGroup();
 
     // Pre-convert QString to char*
-    c_brokerID = brokerID.data();
-    c_userID = userID.data();
-    c_password = password.data();
-    c_userProductInfo = userProductInfo.data();
-    c_authenticateCode = authenticateCode.data();
+    c_brokerID = brokerID.constData();
+    c_userID = userID.constData();
+    c_password = password.constData();
+    c_userProductInfo = userProductInfo.constData();
+    c_authenticateCode = authenticateCode.constData();
 
-    pUserApi = CThostFtdcTraderApi::CreateFtdcTraderApi(flowPath.data());
+    pUserApi = CThostFtdcTraderApi::CreateFtdcTraderApi(flowPath.constData());
     pHandler = new CTradeHandler(this);
     pUserApi->RegisterSpi(pHandler);
 
@@ -719,7 +719,7 @@ int CtpExecuter::qryInstrumentMarginRate(const QString &instrument)
     memset(pField, 0, sizeof (CThostFtdcQryInstrumentMarginRateField));
     strcpy(pField->BrokerID, c_brokerID);
     strcpy(pField->InvestorID, c_userID);
-    strcpy(pField->InstrumentID, instrument.toLatin1().data());
+    strcpy(pField->InstrumentID, instrument.toLatin1().constData());
     pField->HedgeFlag = THOST_FTDC_HF_Speculation;
 
     return callTraderApi(&CThostFtdcTraderApi::ReqQryInstrumentMarginRate, pField);
@@ -738,7 +738,7 @@ int CtpExecuter::qryInstrumentCommissionRate(const QString &instrument)
     memset(pField, 0, sizeof (CThostFtdcQryInstrumentCommissionRateField));
     strcpy(pField->BrokerID, c_brokerID);
     strcpy(pField->InvestorID, c_userID);
-    strcpy(pField->InstrumentID, instrument.toLatin1().data());
+    strcpy(pField->InstrumentID, instrument.toLatin1().constData());
 
     return callTraderApi(&CThostFtdcTraderApi::ReqQryInstrumentCommissionRate, pField);
 }
@@ -755,8 +755,8 @@ int CtpExecuter::qryInstrument(const QString &instrument, const QString &exchang
 {
     auto * pField = (CThostFtdcQryInstrumentField*) malloc(sizeof(CThostFtdcQryInstrumentField));
     memset(pField, 0, sizeof(CThostFtdcQryInstrumentField));
-    strcpy(pField->InstrumentID, instrument.toLatin1().data());
-    strcpy(pField->ExchangeID, exchangeID.toLatin1().data());
+    strcpy(pField->InstrumentID, instrument.toLatin1().constData());
+    strcpy(pField->ExchangeID, exchangeID.toLatin1().constData());
 
     return callTraderApi(&CThostFtdcTraderApi::ReqQryInstrument, pField);
 }
@@ -771,7 +771,7 @@ int CtpExecuter::qryInstrument(const QString &instrument, const QString &exchang
 int CtpExecuter::qryDepthMarketData(const QString &instrument)
 {
     auto *pField = (CThostFtdcQryDepthMarketDataField*) malloc(sizeof(CThostFtdcQryDepthMarketDataField));
-    strcpy(pField->InstrumentID, instrument.toLatin1().data());
+    strcpy(pField->InstrumentID, instrument.toLatin1().constData());
 
     return callTraderApi(&CThostFtdcTraderApi::ReqQryDepthMarketData, pField);
 }
@@ -796,7 +796,7 @@ int CtpExecuter::insertLimitOrder(const QString &instrument, int openClose, int 
     memset(&inputOrder, 0, sizeof (CThostFtdcInputOrderField));
     strcpy(inputOrder.BrokerID, c_brokerID);
     strcpy(inputOrder.InvestorID, c_userID);
-    strcpy(inputOrder.InstrumentID, instrument.toLatin1().data());
+    strcpy(inputOrder.InstrumentID, instrument.toLatin1().constData());
     strcpy(inputOrder.OrderRef, "");
 //	sprintf(inputOrder.OrderRef, "%12d", orderRef);
 //	orderRef++;
@@ -840,7 +840,7 @@ int CtpExecuter::insertMarketOrder(const QString &instrument, int openClose, int
     memset(&inputOrder, 0, sizeof (CThostFtdcInputOrderField));
     strcpy(inputOrder.BrokerID, c_brokerID);
     strcpy(inputOrder.InvestorID, c_userID);
-    strcpy(inputOrder.InstrumentID, instrument.toLatin1().data());
+    strcpy(inputOrder.InstrumentID, instrument.toLatin1().constData());
     strcpy(inputOrder.OrderRef, "");
 //	sprintf(inputOrder.OrderRef, "%12d", orderRef);
 //	orderRef++;
@@ -887,7 +887,7 @@ int CtpExecuter::insertCombineOrder(const QString &instrument, int openClose1, i
     memset(&inputOrder, 0, sizeof (CThostFtdcInputOrderField));
     strcpy(inputOrder.BrokerID, c_brokerID);
     strcpy(inputOrder.InvestorID, c_userID);
-    strcpy(inputOrder.InstrumentID, instrument.toLatin1().data());
+    strcpy(inputOrder.InstrumentID, instrument.toLatin1().constData());
     strcpy(inputOrder.OrderRef, "");
 //	sprintf(inputOrder.OrderRef, "%12d", orderRef);
 //	orderRef++;
@@ -932,7 +932,7 @@ int CtpExecuter::orderAction(char* orderRef, int frontID, int sessionID, const Q
     memset(&orderAction, 0, sizeof(CThostFtdcInputOrderActionField));
     strcpy(orderAction.BrokerID, c_brokerID);
     strcpy(orderAction.InvestorID, c_userID);
-    strcpy(orderAction.InstrumentID, instrument.toLatin1().data());
+    strcpy(orderAction.InstrumentID, instrument.toLatin1().constData());
     memcpy(orderAction.OrderRef, orderRef, sizeof(TThostFtdcOrderRefType));
     orderAction.FrontID = frontID;
     orderAction.SessionID = sessionID;
@@ -966,7 +966,7 @@ int CtpExecuter::insertParkedLimitOrder(const QString &instrument, int openClose
     memset(&parkedOrder, 0, sizeof (CThostFtdcParkedOrderField));
     strcpy(parkedOrder.BrokerID, c_brokerID);
     strcpy(parkedOrder.InvestorID, c_userID);
-    strcpy(parkedOrder.InstrumentID, instrument.toLatin1().data());
+    strcpy(parkedOrder.InstrumentID, instrument.toLatin1().constData());
     strcpy(parkedOrder.OrderRef, "");
 //	sprintf(inputOrder.OrderRef, "%12d", orderRef);
 //	orderRef++;
@@ -1009,7 +1009,7 @@ int CtpExecuter::insertParkedOrderAction(char* orderRef, int frontID, int sessio
     memset(&parkedOrderAction, 0, sizeof(CThostFtdcParkedOrderActionField));
     strcpy(parkedOrderAction.BrokerID, c_brokerID);
     strcpy(parkedOrderAction.InvestorID, c_userID);
-    strcpy(parkedOrderAction.InstrumentID, instrument.toLatin1().data());
+    strcpy(parkedOrderAction.InstrumentID, instrument.toLatin1().constData());
     memcpy(parkedOrderAction.OrderRef, orderRef, sizeof(TThostFtdcOrderRefType));
     parkedOrderAction.FrontID = frontID;
     parkedOrderAction.SessionID = sessionID;
@@ -1084,7 +1084,7 @@ int CtpExecuter::qryMaxOrderVolume(const QString &instrument, bool direction, in
     memset(pField, 0, sizeof(CThostFtdcQueryMaxOrderVolumeField));
     strcpy(pField->BrokerID, c_brokerID);
     strcpy(pField->InvestorID, c_userID);
-    strcpy(pField->InstrumentID, instrument.toLatin1().data());
+    strcpy(pField->InstrumentID, instrument.toLatin1().constData());
     pField->Direction = direction ? THOST_FTDC_D_Buy : THOST_FTDC_D_Sell;
     pField->OffsetFlag = ctpOffsetFlags[openClose];
     pField->HedgeFlag = THOST_FTDC_HF_Speculation;
@@ -1105,7 +1105,7 @@ int CtpExecuter::qryOrder(const QString &instrument)
     memset(pField, 0, sizeof(CThostFtdcQryOrderField));
     strcpy(pField->BrokerID, c_brokerID);
     strcpy(pField->InvestorID, c_userID);
-    strcpy(pField->InstrumentID, instrument.toLatin1().data());
+    strcpy(pField->InstrumentID, instrument.toLatin1().constData());
 
     return callTraderApi(&CThostFtdcTraderApi::ReqQryOrder, pField);
 }
@@ -1123,7 +1123,7 @@ int CtpExecuter::qryTrade(const QString &instrument)
     memset(pField, 0, sizeof(CThostFtdcQryTradeField));
     strcpy(pField->BrokerID, c_brokerID);
     strcpy(pField->InvestorID, c_userID);
-    strcpy(pField->InstrumentID, instrument.toLatin1().data());
+    strcpy(pField->InstrumentID, instrument.toLatin1().constData());
 
     return callTraderApi(&CThostFtdcTraderApi::ReqQryTrade, pField);
 }
@@ -1141,7 +1141,7 @@ int CtpExecuter::qryPosition(const QString &instrument)
     memset(pField, 0, sizeof(CThostFtdcQryInvestorPositionField));
     strcpy(pField->BrokerID, c_brokerID);
     strcpy(pField->InvestorID, c_userID);
-    strcpy(pField->InstrumentID, instrument.toLatin1().data());
+    strcpy(pField->InstrumentID, instrument.toLatin1().constData());
 
     return callTraderApi(&CThostFtdcTraderApi::ReqQryInvestorPosition, pField);
 }
@@ -1159,7 +1159,7 @@ int CtpExecuter::qryPositionDetail(const QString &instrument)
     memset(pField, 0, sizeof(CThostFtdcQryInvestorPositionDetailField));
     strcpy(pField->BrokerID, c_brokerID);
     strcpy(pField->InvestorID, c_userID);
-    strcpy(pField->InstrumentID, instrument.toLatin1().data());
+    strcpy(pField->InstrumentID, instrument.toLatin1().constData());
 
     return callTraderApi(&CThostFtdcTraderApi::ReqQryInvestorPositionDetail, pField);
 }
@@ -1179,7 +1179,7 @@ int CtpExecuter::insertExecOrder(const QString &instrument, OPTION_TYPE type, in
     memset(&exc, 0, sizeof(CThostFtdcInputExecOrderField));
     strcpy(exc.BrokerID, c_brokerID);
     strcpy(exc.InvestorID, c_userID);
-    strcpy(exc.InstrumentID, instrument.toLatin1().data());
+    strcpy(exc.InstrumentID, instrument.toLatin1().constData());
     //memcpy(exc.ExecOrderRef, )
     exc.OffsetFlag = THOST_FTDC_OF_Close;
     exc.HedgeFlag = THOST_FTDC_HF_Speculation;
@@ -1214,7 +1214,7 @@ int CtpExecuter::insertQuote(const QString &instrument)
     memset(&quote, 0, sizeof(CThostFtdcInputForQuoteField));
     strcpy(quote.BrokerID, c_brokerID);
     strcpy(quote.InvestorID, c_userID);
-    strcpy(quote.InstrumentID, instrument.toLatin1().data());
+    strcpy(quote.InstrumentID, instrument.toLatin1().constData());
     //memcpy(quote.ForQuoteRef, )
 
     int id = nRequestID.fetchAndAddRelaxed(1);
@@ -1496,8 +1496,8 @@ int CtpExecuter::qryParkedOrder(const QString &instrument, const QString &exchan
     memset(pField, 0, sizeof(CThostFtdcQryParkedOrderField));
     strcpy(pField->BrokerID, c_brokerID);
     strcpy(pField->InvestorID, c_userID);
-    strcpy(pField->InstrumentID, instrument.toLatin1().data());
-    strcpy(pField->ExchangeID, exchangeID.toLatin1().data());
+    strcpy(pField->InstrumentID, instrument.toLatin1().constData());
+    strcpy(pField->ExchangeID, exchangeID.toLatin1().constData());
 
     return callTraderApi(&CThostFtdcTraderApi::ReqQryParkedOrder, pField);
 }
@@ -1508,8 +1508,8 @@ int CtpExecuter::qryParkedOrderAction(const QString &instrument, const QString &
     memset(pField, 0, sizeof(CThostFtdcQryParkedOrderActionField));
     strcpy(pField->BrokerID, c_brokerID);
     strcpy(pField->InvestorID, c_userID);
-    strcpy(pField->InstrumentID, instrument.toLatin1().data());
-    strcpy(pField->ExchangeID, exchangeID.toLatin1().data());
+    strcpy(pField->InstrumentID, instrument.toLatin1().constData());
+    strcpy(pField->ExchangeID, exchangeID.toLatin1().constData());
 
     return callTraderApi(&CThostFtdcTraderApi::ReqQryParkedOrderAction, pField);
 }
