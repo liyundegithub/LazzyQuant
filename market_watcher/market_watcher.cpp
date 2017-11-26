@@ -8,13 +8,11 @@
 #include "market.h"
 #include "common_utility.h"
 #include "multiple_timer.h"
-#include "trading_calendar.h"
 #include "market_watcher.h"
 #include "market_watcher_adaptor.h"
 #include "tick_receiver.h"
 
 extern QList<Market> markets;
-TradingCalendar tradingCalendar;
 
 MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, const bool replayMode, QObject *parent) :
     QObject(parent),

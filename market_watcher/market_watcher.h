@@ -8,6 +8,8 @@
 #include <QMap>
 #include <QTime>
 
+#include "trading_calendar.h"
+
 class QSettings;
 class CThostFtdcMdApi;
 class CTickReceiver;
@@ -24,6 +26,8 @@ public:
     ~MarketWatcher();
 
 protected:
+    TradingCalendar tradingCalendar;
+
     const QString name;
     const bool replayMode;
     QString replayDate;
