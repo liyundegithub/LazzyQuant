@@ -1,8 +1,6 @@
-#include <QMetaEnum>
 #include <QDebug>
 
 #include "config.h"
-#include "common_utility.h"
 #include "strategy_status.h"
 #include "abstract_strategy.h"
 #include "../bar.h"
@@ -16,7 +14,7 @@ AbstractStrategy::AbstractStrategy(const QString &id, const QString& instrumentI
     instrument(instrumentID),
     time_frame_str(time_frame)
 {
-    qDebug() << "AbstractStrategy ctor, id = " << id << ", instrumentID = " << instrumentID << ", time_frame = " << time_frame;
+    qDebug() << "AbstractStrategy ctor, id =" << id << ", instrumentID =" << instrumentID << ", time_frame =" << time_frame;
 
     loadStatus();
 
@@ -25,7 +23,7 @@ AbstractStrategy::AbstractStrategy(const QString &id, const QString& instrumentI
 
 AbstractStrategy::~AbstractStrategy()
 {
-    qDebug() << "~AbstractStrategy()" << ", id = " << strategyID << ", instrumentID = " << instrument << ", time_frame = " << time_frame_str;
+    qDebug() << "~AbstractStrategy dtor, id =" << strategyID << ", instrumentID =" << instrument << ", time_frame =" << time_frame_str;
 }
 
 inline bool AbstractStrategy::isNewBar() const

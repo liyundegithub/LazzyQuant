@@ -41,17 +41,19 @@ MQL5Indicator::MQL5Indicator(int indicator_buffers) :
     prev_calculated(0),
     indicator_buffers(indicator_buffers)
 {
-    remaped = false;
+    remapped = false;
 }
 
 MQL5Indicator::~MQL5Indicator()
 {
-    if (remaped) {
+    if (remapped) {
         delete time;
         delete open;
         delete high;
         delete low;
         delete close;
+        delete tick_volume;
+        delete volume;
     }
 }
 
@@ -66,17 +68,25 @@ void MQL5Indicator::setBarList(QList<Bar> *list, Bar *last)
     high = new RemapListMember<Bar, double>(list, &Bar::high, last);
     low = new RemapListMember<Bar, double>(list, &Bar::low, last);
     close = new RemapListMember<Bar, double>(list, &Bar::close, last);
-
-    // tick_volume, volume and spread are not implemented yet, don't use them in indicators
     tick_volume = new RemapListMember<Bar, qint64>(list, &Bar::tick_volume, last);
     volume = new RemapListMember<Bar, qint64>(list, &Bar::volume, last);
+
+    // spread is not implemented yet, don't use them in indicators
     spread = nullptr;
 
-    remaped = true;
+    remapped = true;
 }
 
 void MQL5Indicator::update()
 {
+    time->setAsSeries(false);
+    open->setAsSeries(false);
+    high->setAsSeries(false);
+    low->setAsSeries(false);
+    close->setAsSeries(false);
+    tick_volume->setAsSeries(false);
+    volume->setAsSeries(false);
+
     preCalculate();
     prev_calculated = OnCalculate(rates_total,
                                   prev_calculated,
@@ -159,6 +169,8 @@ int MQL5IndicatorOnSingleDataBuffer::OnCalculate(const int rates_total,         
     Q_UNUSED(tick_volume)
     Q_UNUSED(volume)
     Q_UNUSED(spread)
+
+    applied_price_buffer.setAsSeries(false);
 
     int limit;
     if (prev_calculated == 0) {

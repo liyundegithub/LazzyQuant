@@ -131,7 +131,7 @@ protected:
     int rates_total;
     int prev_calculated;
     QVector<IndicatorBuffer<double>*> indicator_buffers;
-    bool remaped;   // if true, delete following pointers in deconstructor
+    bool remapped;   // if true, delete following pointers in deconstructor
     _TimeSeries<uint> *time;
     _TimeSeries<double> *open;
     _TimeSeries<double> *high;
