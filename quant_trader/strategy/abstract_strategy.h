@@ -7,7 +7,6 @@
 
 class Bar;
 class AbstractIndicator;
-class QSettings;
 
 class AbstractStrategy : public QObject
 {

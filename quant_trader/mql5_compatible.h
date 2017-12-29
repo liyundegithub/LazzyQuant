@@ -60,7 +60,7 @@ double MathMax(double x, double y)
 template<typename T>
 class _TimeSeries {
 protected:
-    bool is_time_series;
+    mutable bool is_time_series;
 
 public:
     explicit _TimeSeries(bool is_time_series) :
@@ -71,7 +71,7 @@ public:
         //
     }
 
-    void setAsSeries(bool is_series) {
+    void setAsSeries(bool is_series) const {
         is_time_series = is_series;
     }
 
@@ -189,7 +189,7 @@ public:
 
 template<typename T>
 inline bool ArrayGetAsSeries(
-   _TimeSeries<T>&         array            // array for checking
+   const _TimeSeries<T>&   array            // array for checking
 )
 {
     return array.getAsSeries();
@@ -197,7 +197,7 @@ inline bool ArrayGetAsSeries(
 
 template<typename T>
 inline bool ArraySetAsSeries(
-   _TimeSeries<T>&         array,           // array by reference
+   const _TimeSeries<T>&   array,           // array by reference
    bool                    flag             // true denotes reverse order of indexing
 )
 {
