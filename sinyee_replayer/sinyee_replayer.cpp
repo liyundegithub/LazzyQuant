@@ -2,7 +2,6 @@
 #include <QDebug>
 #include <QDir>
 #include <QDataStream>
-#include <QPair>
 
 #include "config_struct.h"
 #include "common_utility.h"

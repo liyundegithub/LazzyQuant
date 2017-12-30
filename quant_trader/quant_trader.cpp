@@ -100,17 +100,15 @@ void QuantTrader::loadQuantTraderSettings()
 
 void QuantTrader::loadTradeStrategySettings()
 {
-    static const auto meta_object_map = []() -> QMap<QString, const QMetaObject*> {
-        QMap<QString, const QMetaObject*> map;
-        map.insert("DblMaPsarStrategy", &DblMaPsarStrategy::staticMetaObject);
-        map.insert("BigHitStrategy", &BigHitStrategy::staticMetaObject);
+    static const QMap<QString, const QMetaObject*> meta_object_map = {
+        {"DblMaPsarStrategy", &DblMaPsarStrategy::staticMetaObject},
+        {"BigHitStrategy", &BigHitStrategy::staticMetaObject},
         // Register more strategies here
-        return map;
-    }();
+    };
 
     auto settings = getSettingsSmart(ORGANIZATION, "trade_strategy");
     const QStringList groups = settings->childGroups();
-    qDebug() << groups.size() << "stragegs in all.";
+    qDebug() << groups.size() << "strategies in all.";
 
     for (const QString& group : groups) {
         settings->beginGroup(group);
@@ -253,7 +251,10 @@ QList<Bar>* QuantTrader::getBars(const QString &instrumentID, const QString &tim
         }
     }
 
-    const auto ktLastTime = barList.last().time;
+    uint ktLastTime = 0;
+    if (!barList.empty()) {
+        ktLastTime = barList.last().time;
+    }
     for (int i = 0; i < collectedSize; i++) {
         if (collectedBarList[i].time > ktLastTime && !invalidSet.contains(i)) {
             barList.append(collectedBarList[i]);
@@ -293,32 +294,13 @@ static QVariant getParam(const QByteArray &typeName, va_list &ap)
     return ret;
 }
 
-static bool compareVariant(const QVariant &v1, const QVariant &v2)
-{
-    const auto typeId = v1.userType();
-    if (typeId != v2.userType()) {
-        return false;
-    }
-    switch (typeId) {
-    case QMetaType::Int:
-        return v1.toInt() == v2.toInt();
-    case QMetaType::Double:
-        return v1.toDouble() == v2.toDouble();
-    default:
-        break;
-    }
-    return false;
-}
-
 AbstractIndicator* QuantTrader::registerIndicator(const QString &instrumentID, const QString &time_frame_str, QString indicator_name, ...)
 {
-    static const auto meta_object_map = []() -> QMap<QString, const QMetaObject*> {
-        QMap<QString, const QMetaObject*> map;
-        map.insert("MA", &MA::staticMetaObject);
-        map.insert("ParabolicSAR", &ParabolicSAR::staticMetaObject);
+    static const QMap<QString, const QMetaObject*> meta_object_map = {
+        {"MA", &MA::staticMetaObject},
+        {"ParabolicSAR", &ParabolicSAR::staticMetaObject},
         // Register more indicators here
-        return map;
-    }();
+    };
 
     const QMetaObject * metaObject = meta_object_map.value(indicator_name, nullptr);
     if (metaObject == nullptr) {
@@ -356,7 +338,7 @@ AbstractIndicator* QuantTrader::registerIndicator(const QString &instrumentID, c
             bool match = true;
             for (int i = 0; i < parameter_number; i++) {
                 QVariant value = obj->property(names[i]);
-                if (!compareVariant(params[i], value)) {
+                if (params[i] != value) {
                     match = false;
                 }
             }
@@ -417,7 +399,9 @@ AbstractIndicator* QuantTrader::registerIndicator(const QString &instrumentID, c
 
 /*!
  * \brief QuantTrader::timesUp
- * 保存K线数据
+ * 保存K线数据, 即刚结束的一段时间内的数据
+ *
+ * \param index 时间点序号
  */
 void QuantTrader::timesUp(int index)
 {
@@ -440,6 +424,10 @@ void QuantTrader::timesUp(int index)
  * \param time 时间
  * \param lastPrice 最新成交价
  * \param volume 成交量
+ * \param askPrice1  卖一价
+ * \param askVolume1 卖一量
+ * \param bidPrice1  买一价
+ * \param bidVolume1 买一量
  */
 void QuantTrader::onMarketData(const QString& instrumentID, uint time, double lastPrice, int volume,
                                double askPrice1, int askVolume1, double bidPrice1, int bidVolume1)
