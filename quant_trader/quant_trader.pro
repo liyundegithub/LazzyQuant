@@ -19,6 +19,7 @@ SOURCES += main.cpp \
     indicator/abstract_indicator.cpp \
     indicator/ma.cpp \
     indicator/parabolicsar.cpp \
+    indicator/bollinger_band.cpp \
     indicator/mql5_indicator.cpp \
     strategy/abstract_strategy.cpp \
     strategy/DblMaPsar_strategy.cpp \
@@ -41,6 +42,7 @@ HEADERS += ../config.h \
     indicator/ma.h \
     indicator/parabolicsar.h \
     indicator/mql5_indicator.h \
+    indicator/bollinger_band.h \
     strategy/abstract_strategy.h \
     strategy/DblMaPsar_strategy.h \
     strategy/BigHit_strategy.h

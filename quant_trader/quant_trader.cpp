@@ -11,6 +11,7 @@
 #include "bar_collector.h"
 #include "indicator/ma.h"
 #include "indicator/parabolicsar.h"
+#include "indicator/bollinger_band.h"
 #include "strategy/DblMaPsar_strategy.h"
 #include "strategy/bighit_strategy.h"
 #include "trade_executer_interface.h"
@@ -299,6 +300,7 @@ AbstractIndicator* QuantTrader::registerIndicator(const QString &instrumentID, c
     static const QMap<QString, const QMetaObject*> meta_object_map = {
         {"MA", &MA::staticMetaObject},
         {"ParabolicSAR", &ParabolicSAR::staticMetaObject},
+        {"BollingerBand", &BollingerBand::staticMetaObject},
         // Register more indicators here
     };
 
