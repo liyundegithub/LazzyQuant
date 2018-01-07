@@ -36,6 +36,9 @@ QList<QTime> MultipleTimer::getTimePoints()
 void MultipleTimer::setNextTimePoint()
 {
     const int size = timePoints.size();
+    if (size == 0) {
+        return;
+    }
     int i;
     for (i = 0; i < size; i++) {
         int diff = QTime::currentTime().msecsTo(timePoints[i]);

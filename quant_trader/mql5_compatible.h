@@ -35,6 +35,7 @@ void Print(...) {}
 #define _UninitReason
 
 // State Checking
+#define GetLastError() 1
 #define IsStopped() (false)
 
 inline
@@ -56,6 +57,9 @@ double MathMax(double x, double y)
     return fmax(x, y);
 #endif
 }
+
+#define MathPow(x, y) pow(x, y)
+#define MathSqrt(x) sqrt(x)
 
 template<typename T>
 class _TimeSeries {
@@ -85,7 +89,7 @@ public:
 template<typename T>
 class _ListProxy : public _TimeSeries<T> {
 protected:
-    QList<T> * const data;
+    QList<T> * data;
     T * lastT;
 public:
     _ListProxy(QList<T> *list, T *last) :
@@ -117,8 +121,8 @@ public:
 template<typename T>
 class _VectorProxy : public _TimeSeries<T> {
 protected:
-    QVector<T> * const data;
-    const bool is_data_owner;
+    QVector<T> * data;
+    bool is_data_owner;
 
 public:
     _VectorProxy() :
@@ -151,7 +155,7 @@ public:
         }
     }
 
-    T& operator[](int i) {
+    virtual T& operator[](int i) {
         if (this->is_time_series) {
             return data->operator[](data->size() - 1 - i);
         } else {
@@ -161,6 +165,10 @@ public:
 
     void initialize(const T& value) {
         data->fill(value);
+    }
+
+    int size() const {
+        return data->size();
     }
 };
 

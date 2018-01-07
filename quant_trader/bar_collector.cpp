@@ -55,26 +55,24 @@ Bar* BarCollector::getCurrentBar(const QString &time_frame_str)
 #define MIN_UNIT    60
 #define HOUR_UNIT   3600
 
-static const auto g_time_table = []() -> QMap<BarCollector::TimeFrame, uint> {
-    QMap<BarCollector::TimeFrame, uint> timeTable;
-    timeTable.insert(BarCollector::SEC3, 3);
-    timeTable.insert(BarCollector::SEC5, 5);
-    timeTable.insert(BarCollector::SEC6, 6);
-    timeTable.insert(BarCollector::SEC10, 10);
-    timeTable.insert(BarCollector::SEC12, 12);
-    timeTable.insert(BarCollector::SEC15, 15);
-    timeTable.insert(BarCollector::SEC20, 20);
-    timeTable.insert(BarCollector::SEC30, 30);
-    timeTable.insert(BarCollector::MIN1, 1 * MIN_UNIT);
-    timeTable.insert(BarCollector::MIN3, 3 * MIN_UNIT);
-    timeTable.insert(BarCollector::MIN5, 5 * MIN_UNIT);
-    timeTable.insert(BarCollector::MIN10, 10 * MIN_UNIT);
-    timeTable.insert(BarCollector::MIN15, 15 * MIN_UNIT);
-    timeTable.insert(BarCollector::MIN30, 30 * MIN_UNIT);
-    timeTable.insert(BarCollector::MIN60, 1 * HOUR_UNIT);
-    timeTable.insert(BarCollector::DAY, 24 * HOUR_UNIT);
-    return timeTable;
-}();
+static const QMap<BarCollector::TimeFrame, uint> g_time_table = {
+    {BarCollector::SEC3, 3},
+    {BarCollector::SEC5, 5},
+    {BarCollector::SEC6, 6},
+    {BarCollector::SEC10, 10},
+    {BarCollector::SEC12, 12},
+    {BarCollector::SEC15, 15},
+    {BarCollector::SEC20, 20},
+    {BarCollector::SEC30, 30},
+    {BarCollector::MIN1, 1 * MIN_UNIT},
+    {BarCollector::MIN3, 3 * MIN_UNIT},
+    {BarCollector::MIN5, 5 * MIN_UNIT},
+    {BarCollector::MIN10, 10 * MIN_UNIT},
+    {BarCollector::MIN15, 15 * MIN_UNIT},
+    {BarCollector::MIN30, 30 * MIN_UNIT},
+    {BarCollector::MIN60, 1 * HOUR_UNIT},
+    {BarCollector::DAY, 24 * HOUR_UNIT},
+};
 
 bool BarCollector::onMarketData(uint time, double lastPrice, int volume)
 {

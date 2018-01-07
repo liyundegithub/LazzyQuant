@@ -41,7 +41,7 @@ public:
     }
 
     // Should call setBarList after setParameter
-    void setBarList(QList<Bar> *list, Bar *last) {
+    virtual void setBarList(QList<Bar> *list, Bar *last) {
         barList = list;
         lastBar = last;
     }
