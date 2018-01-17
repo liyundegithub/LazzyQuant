@@ -15,6 +15,7 @@ class AbstractStrategy;
 class QuantTrader : public QObject
 {
     Q_OBJECT
+
 protected:
     // Following QString keys are instumentIDs
     QMap<QString, BarCollector*> collector_map;
@@ -32,22 +33,25 @@ protected:
     QList<QTime> saveBarTimePoints;
     QList<QList<BarCollector*>> collectorsToSave;
 
+    QString currentInstrumentID;
+    QString currentTimeFrameStr;
+
 public:
     explicit QuantTrader(QObject *parent = 0);
     ~QuantTrader();
 
-    static QuantTrader *instance;
     AbstractIndicator* registerIndicator(const QString &instrumentID, const QString &time_frame_str, QString indicator_name, ...);
 
 private slots:
-    void onNewBar(const QString &instrumentID, int time_frame, const Bar& bar);
     void timesUp(int index);
 
 signals:
 
 public slots:
-    void onMarketData(const QString& instrumentID, uint time, double lastPrice, int volume,
+    void setTradingDay(const QString& tradingDay);
+    void onMarketData(const QString& instrumentID, int time, double lastPrice, int volume,
                       double askPrice1, int askVolume1, double bidPrice1, int bidVolume1);
+    void onNewBar(const QString &instrumentID, int time_frame, const Bar& bar);
 };
 
 #endif // QUANT_TRADER_H

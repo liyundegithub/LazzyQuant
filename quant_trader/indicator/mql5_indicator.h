@@ -2,7 +2,7 @@
 #define MQL5_INDICATOR_H
 
 #include "abstract_indicator.h"
-#include "../mql5_compatible.h"
+#include "indicator_functions.h"
 
 enum ENUM_INDEXBUFFER_TYPE {
     INDICATOR_DATA,
@@ -49,23 +49,48 @@ inline bool IndicatorSetDouble (...) { return true; }
 inline bool IndicatorSetInteger(...) { return true; }
 inline bool IndicatorSetString (...) { return true; }
 inline bool PlotIndexSetDouble (...) { return true; }
-inline bool PlotIndexSetInteger(...) { return true; }
 inline bool PlotIndexSetString (...) { return true; }
 inline int  PlotIndexGetInteger(...) { return 0; }
 
 template<typename T>
 class IndicatorBuffer : public _VectorProxy<T> {
+    int shift;
+    T t;
 public:
-    IndicatorBuffer() :
-        _VectorProxy<T>() {
+    IndicatorBuffer(int shift = 0) :
+        _VectorProxy<T>(),
+        shift(shift) {
         this->data->reserve(8192);  // TODO need 16K or more?
     }
 
-    IndicatorBuffer(const _VectorProxy<T>& other) :
-        _VectorProxy<T>(other) {
+    ~IndicatorBuffer() {
     }
 
-    ~IndicatorBuffer() {
+    void setShift(int shift) {
+        this->shift = shift;
+    }
+
+    // Read as shifted
+    const T& operator[](int i) const {
+        if (this->is_time_series) {
+            int size = this->data->size();
+            if (i >= size - shift) {
+                return t;
+            } else {
+                return _VectorProxy<T>::operator [](i + shift);
+            }
+        } else {
+            if (i < shift) {
+                return t;
+            } else {
+                return _VectorProxy<T>::operator [](i - shift);
+            }
+        }
+    }
+
+    // Write as unshifted
+    T& operator[](int i) {
+        return _VectorProxy<T>::operator [](i);
     }
 
     void resize(int new_size) {
@@ -109,21 +134,25 @@ public:
     }
 };
 
-class Bar;
-
-class MQL5Indicator : public AbstractIndicator
+class MQL5Indicator : public IndicatorFunctions, public AbstractIndicator
 {
+    Q_OBJECT
+
 public:
-    explicit MQL5Indicator(int indicator_buffers);
+    explicit MQL5Indicator(int indicator_buffers, QObject *parent = 0);
     ~MQL5Indicator();
 
     virtual void OnInit() = 0;
 
-    const IndicatorBuffer<double>& getBufferByIndex(const int index = 0) const {
+    int barsCalculated() const {
+        return prev_calculated;
+    }
+
+    const IndicatorBuffer<double>& getBufferByIndex(int index = 0) const {
         return *(indicator_buffers[index]);
     }
 
-    const IndicatorBuffer<double>& operator[](const int index) const {
+    const IndicatorBuffer<double>& operator[](int index) const {
         return *(indicator_buffers[index]);
     }
 
@@ -132,7 +161,7 @@ protected:
     int prev_calculated;
     QVector<IndicatorBuffer<double>*> indicator_buffers;
     bool remapped;   // if true, delete following pointers in deconstructor
-    _TimeSeries<uint> *time;
+    _TimeSeries<qint64> *time;
     _TimeSeries<double> *open;
     _TimeSeries<double> *high;
     _TimeSeries<double> *low;
@@ -152,10 +181,16 @@ protected:
         ENUM_INDEXBUFFER_TYPE     data_type = INDICATOR_DATA    // what will be stored
     );
 
+    bool  PlotIndexSetInteger(
+       int  plot_index,        // plotting style index
+       int  prop_id,           // property identifier
+       int  prop_value         // value to be set
+    );
+
     virtual
     int OnCalculate (const int rates_total,                     // size of input time series
                      const int prev_calculated,                 // bars handled in previous call
-                     const _TimeSeries<uint>& time,             // Time
+                     const _TimeSeries<qint64>& time,           // Time
                      const _TimeSeries<double>& open,           // Open
                      const _TimeSeries<double>& high,           // High
                      const _TimeSeries<double>& low,            // Low
@@ -166,27 +201,44 @@ protected:
                      ) = 0;
 };
 
+inline
+int BarsCalculated(MQL5Indicator* indicator) {
+    return indicator->barsCalculated();
+}
+
+template<class T>
+int CopyBuffer(
+   MQL5Indicator*   indicator_handle,   // indicator handle
+   int              buffer_num,         // indicator buffer number
+   int              start_pos,          // start position
+   int              count,              // amount to copy
+   T&               buffer              // target array to copy
+   )
+{
+    IndicatorBuffer<double> src = indicator_handle->getBufferByIndex(buffer_num);
+    src.setAsSeries(true);
+    int srcIdx = start_pos;
+    bool isSeries = buffer.getAsSeries();
+    buffer.setAsSeries(true);
+    int copied = 0;
+    int dstIdx = 0;
+    int bufferSize = buffer.size();
+    while (copied < count && copied < bufferSize) {
+        buffer[dstIdx++] = src[srcIdx++];
+        copied++;
+    }
+    buffer.setAsSeries(isSeries);
+    return copied;
+}
+
 typedef double (* SIMPLIFY_PRICE)(double, double, double, double);
 
-class MQL5IndicatorOnSingleDataBuffer : public QObject, public MQL5Indicator {
+class MQL5IndicatorOnSingleDataBuffer : public MQL5Indicator {
     Q_OBJECT
-    Q_PROPERTY(ENUM_APPLIED_PRICE applyTo READ getAppliedTo CONSTANT)
-    Q_ENUMS(ENUM_APPLIED_PRICE)
+    Q_PROPERTY(ENUM_APPLIED_PRICE applyTo MEMBER applied CONSTANT)
+
 public:
-    enum ENUM_APPLIED_PRICE {
-        PRICE_CLOSE,    // Close price
-        PRICE_OPEN,     // Open price
-        PRICE_HIGH,     // The maximum price for the period
-        PRICE_LOW,      // The minimum price for the period
-        PRICE_MEDIAN,   // Median price, (high + low)/2
-        PRICE_TYPICAL,  // Typical price, (high + low + close)/3
-        PRICE_WEIGHTED, // Average price, (high + low + close + close)/4
-    };
-
     explicit MQL5IndicatorOnSingleDataBuffer(int indicator_buffers, ENUM_APPLIED_PRICE applyTo, QObject *parent = 0);
-    ~MQL5IndicatorOnSingleDataBuffer() {}
-
-    ENUM_APPLIED_PRICE getAppliedTo() const { return applied; }
 
 protected:
     const ENUM_APPLIED_PRICE applied;
@@ -196,7 +248,7 @@ protected:
     void preCalculate() override;
     int OnCalculate (const int rates_total,                     // size of input time series
                      const int prev_calculated,                 // bars handled in previous call
-                     const _TimeSeries<uint>& time,             // Time
+                     const _TimeSeries<qint64>& time,           // Time
                      const _TimeSeries<double>& open,           // Open
                      const _TimeSeries<double>& high,           // High
                      const _TimeSeries<double>& low,            // Low

@@ -36,12 +36,14 @@ static double price_weighted(double open, double high, double low, double close)
     return (high + low + close + close) / 4.0;
 }
 
-MQL5Indicator::MQL5Indicator(int indicator_buffers) :
+MQL5Indicator::MQL5Indicator(int indicator_buffers, QObject *parent) :
+    IndicatorFunctions(parent),
     rates_total(0),
     prev_calculated(0),
-    indicator_buffers(indicator_buffers)
+    indicator_buffers(indicator_buffers),
+    remapped(false)
 {
-    remapped = false;
+    //
 }
 
 MQL5Indicator::~MQL5Indicator()
@@ -63,7 +65,7 @@ void MQL5Indicator::setBarList(QList<Bar> *list, Bar *last)
 
     OnInit();
 
-    time = new RemapListMember<Bar, uint>(list, &Bar::time, last);
+    time = new RemapListMember<Bar, qint64>(list, &Bar::time, last);
     open = new RemapListMember<Bar, double>(list, &Bar::open, last);
     high = new RemapListMember<Bar, double>(list, &Bar::high, last);
     low = new RemapListMember<Bar, double>(list, &Bar::low, last);
@@ -79,6 +81,10 @@ void MQL5Indicator::setBarList(QList<Bar> *list, Bar *last)
 
 void MQL5Indicator::update()
 {
+    for (auto * indicator : dependIndicators) {
+        indicator->update();
+    }
+
     time->setAsSeries(false);
     open->setAsSeries(false);
     high->setAsSeries(false);
@@ -106,6 +112,14 @@ void MQL5Indicator::SetIndexBuffer(int index, IndicatorBuffer<double> & buffer, 
     indicator_buffers[index] = &buffer;
 }
 
+bool MQL5Indicator::PlotIndexSetInteger(int plot_index, int prop_id, int prop_value)
+{
+    if (prop_id == PLOT_SHIFT) {
+        indicator_buffers[plot_index]->setShift(prop_value);
+    }
+    return true;
+}
+
 void MQL5Indicator::preCalculate()
 {
     rates_total = barList->size() + 1;
@@ -115,8 +129,7 @@ void MQL5Indicator::preCalculate()
 }
 
 MQL5IndicatorOnSingleDataBuffer::MQL5IndicatorOnSingleDataBuffer(int indicator_buffers, ENUM_APPLIED_PRICE applyTo, QObject *parent) :
-    QObject(parent),
-    MQL5Indicator(indicator_buffers),
+    MQL5Indicator(indicator_buffers, parent),
     applied(applyTo)
 {
     switch (applied) {
@@ -155,7 +168,7 @@ void MQL5IndicatorOnSingleDataBuffer::preCalculate()
 
 int MQL5IndicatorOnSingleDataBuffer::OnCalculate(const int rates_total,                     // size of input time series
                                                  const int prev_calculated,                 // bars handled in previous call
-                                                 const _TimeSeries<uint>& time,             // Time
+                                                 const _TimeSeries<qint64>& time,           // Time
                                                  const _TimeSeries<double>& open,           // Open
                                                  const _TimeSeries<double>& high,           // High
                                                  const _TimeSeries<double>& low,            // Low

@@ -79,12 +79,10 @@ bool parseOptionID(const QString &optionID, QString &futureID, OPTION_TYPE &type
  */
 QString makeOptionID(const QString &futureID, const OPTION_TYPE type, const int exercisePrice)
 {
-    static const auto optionIdPatternMap = []() -> QMap<QString, QString> {
-        QMap<QString, QString> map;
-        map.insert("m", "%1-%2-%3");
-        map.insert("SR", "%1%2%3");
-        return map;
-    }();
+    static const QMap<QString, QString> optionIdPatternMap =  {
+        {"m", "%1-%2-%3"},
+        {"SR", "%1%2%3"},
+    };
 
     QString middle = (type == CALL_OPT) ? "C" : "P";
     return optionIdPatternMap[getCode(futureID)].arg(futureID).arg(middle).arg(exercisePrice);

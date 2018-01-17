@@ -1,32 +1,26 @@
-#ifndef PARABOLICSAR_H
-#define PARABOLICSAR_H
+#ifndef AWESOME_OSCILLATOR_H
+#define AWESOME_OSCILLATOR_H
 
 #include "mql5_indicator.h"
 
-class ParabolicSAR : public MQL5Indicator
+class AwesomeOscillator : public MQL5Indicator
 {
     Q_OBJECT
-    Q_CLASSINFO("parameter_number", "2")
-    Q_PROPERTY(double SARStep MEMBER InpSARStep CONSTANT)
-    Q_PROPERTY(double SARMaximum MEMBER InpSARMaximum CONSTANT)
+    Q_CLASSINFO("parameter_number", "0")
 
 public:
-    Q_INVOKABLE explicit ParabolicSAR(double SARStep = 0.02, double SARMaximum = 0.2, QObject *parent = 0);
+    Q_INVOKABLE explicit AwesomeOscillator(QObject *parent = 0);
 
     void OnInit() override;
 
 protected:
-    const double InpSARStep;
-    const double InpSARMaximum;
+    MQL5Indicator* ExtFastSMAHandle;
+    MQL5Indicator* ExtSlowSMAHandle;
 
-    IndicatorBuffer<double> ExtSARBuffer;
-    IndicatorBuffer<double> ExtEPBuffer;
-    IndicatorBuffer<double> ExtAFBuffer;
-
-    int    ExtLastRevPos;
-    bool   ExtDirectionLong;
-    double ExtSarStep;
-    double ExtSarMaximum;
+    IndicatorBuffer<double> ExtAOBuffer;
+    IndicatorBuffer<double> ExtColorBuffer;
+    IndicatorBuffer<double> ExtFastBuffer;
+    IndicatorBuffer<double> ExtSlowBuffer;
 
     int OnCalculate (const int rates_total,                     // size of input time series
                      const int prev_calculated,                 // bars handled in previous call
@@ -39,12 +33,6 @@ protected:
                      const _TimeSeries<qint64>& volume,         // Real Volume
                      const _TimeSeries<int>& spread             // Spread
                      ) override;
-    double GetHigh(int nPosition,int nStartPeriod,const _TimeSeries<double> &HiData);
-    double GetLow(int nPosition,int nStartPeriod,const _TimeSeries<double> &LoData);
-
-signals:
-
-public slots:
 };
 
-#endif // PARABOLICSAR_H
+#endif // AWESOME_OSCILLATOR_H

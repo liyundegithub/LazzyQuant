@@ -2,6 +2,7 @@
 #include <QDebug>
 #include <QDir>
 #include <QDataStream>
+#include <QPair>
 
 #include "config_struct.h"
 #include "common_utility.h"
@@ -103,7 +104,7 @@ void SinYeeReplayer::startReplay(const QString &date)
  */
 void SinYeeReplayer::startReplay(const QString &date, const QString &instrument)
 {
-    startReplay(date, QStringList(instrument));
+    startReplay(date, {instrument});
 }
 
 /*!
@@ -139,7 +140,7 @@ void SinYeeReplayer::startReplay(const QString &date, const QStringList &instrum
             Q_ASSERT(num >= 0);
             qInfo() << num << "items for" << contractName;
 
-            auto tickList = readTicks(tickStream, num);
+            const auto tickList = readTicks(tickStream, num);
             if (!contractName.endsWith("99")) {
                 for (const auto &item : tickList) {
                     tickPairList << qMakePair(contractName, item);
@@ -157,15 +158,19 @@ void SinYeeReplayer::startReplay(const QString &date, const QStringList &instrum
         }
     });
 
-    for (const auto &item : tickPairList) {
-        const int emitTime = item.second.time % 86400;
-        emit newMarketData(item.first,
-                           emitTime,
-                           item.second.price,
-                           item.second.volume,
-                           item.second.askPrice,
-                           item.second.askVolume,
-                           item.second.bidPrice,
-                           item.second.bidVolume);
+    if (!tickPairList.empty()) {
+        emit tradingDayChanged(date);
+        for (const auto &item : qAsConst(tickPairList)) {
+            const int emitTime = item.second.time % 86400;
+            emit newMarketData(item.first,
+                               emitTime,
+                               item.second.price,
+                               item.second.volume,
+                               item.second.askPrice,
+                               item.second.askVolume,
+                               item.second.bidPrice,
+                               item.second.bidVolume);
+        }
+        emit endOfReplay(date);
     }
 }

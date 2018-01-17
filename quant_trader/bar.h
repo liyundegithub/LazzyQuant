@@ -23,7 +23,7 @@ struct KTExportBar {
 
 class Bar {
 public:
-    uint   time;
+    qint64 time;
     double open;
     double high;
     double low;
@@ -32,10 +32,8 @@ public:
     qint64 volume;      // compatible with MT5
 
     Bar();
-    Bar(const Bar &other);
-    ~Bar();
-
     Bar(const KTExportBar &ktbar);
+    ~Bar();
 
     void init();
     bool isNewBar() const;

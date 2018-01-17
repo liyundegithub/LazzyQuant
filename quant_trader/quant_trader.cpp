@@ -12,14 +12,13 @@
 #include "indicator/ma.h"
 #include "indicator/parabolicsar.h"
 #include "indicator/bollinger_band.h"
+#include "indicator/awesome_oscillator.h"
 #include "strategy/DblMaPsar_strategy.h"
 #include "strategy/bighit_strategy.h"
 #include "trade_executer_interface.h"
 
 extern QList<Market> markets;
 extern com::lazzyquant::trade_executer *pExecuter;
-
-QuantTrader* QuantTrader::instance;
 
 int timeFrameEnumIdx;
 int MA_METHOD_enumIdx;
@@ -31,11 +30,9 @@ QuantTrader::QuantTrader(QObject *parent) :
     qRegisterMetaType<int>("ENUM_MA_METHOD");
     qRegisterMetaType<int>("ENUM_APPLIED_PRICE");
 
-    QuantTrader::instance = this;
-
     timeFrameEnumIdx = BarCollector::staticMetaObject.indexOfEnumerator("TimeFrame");
-    MA_METHOD_enumIdx = MA::staticMetaObject.indexOfEnumerator("ENUM_MA_METHOD");
-    APPLIED_PRICE_enumIdx = MQL5IndicatorOnSingleDataBuffer::staticMetaObject.indexOfEnumerator("ENUM_APPLIED_PRICE");
+    MA_METHOD_enumIdx = IndicatorFunctions::staticMetaObject.indexOfEnumerator("ENUM_MA_METHOD");
+    APPLIED_PRICE_enumIdx = IndicatorFunctions::staticMetaObject.indexOfEnumerator("ENUM_APPLIED_PRICE");
 
     loadCommonMarketData();
     loadQuantTraderSettings();
@@ -301,8 +298,16 @@ AbstractIndicator* QuantTrader::registerIndicator(const QString &instrumentID, c
         {"MA", &MA::staticMetaObject},
         {"ParabolicSAR", &ParabolicSAR::staticMetaObject},
         {"BollingerBand", &BollingerBand::staticMetaObject},
+        {"AwesomeOscillator", &AwesomeOscillator::staticMetaObject},
         // Register more indicators here
     };
+
+    if (instrumentID != nullptr && instrumentID.length() > 0) {
+        currentInstrumentID = instrumentID;
+    }
+    if (time_frame_str != nullptr && time_frame_str.length() > 0) {
+        currentTimeFrameStr = time_frame_str;
+    }
 
     const QMetaObject * metaObject = meta_object_map.value(indicator_name, nullptr);
     if (metaObject == nullptr) {
@@ -333,7 +338,7 @@ AbstractIndicator* QuantTrader::registerIndicator(const QString &instrumentID, c
 
     qDebug() << params;
 
-    const auto pIndicators = indicator_map.values(instrumentID);
+    const auto pIndicators = indicator_map.values(currentInstrumentID);
     for (AbstractIndicator *pIndicator : pIndicators) {
         QObject *obj = dynamic_cast<QObject*>(pIndicator);
         if (indicator_name == obj->metaObject()->className()) {
@@ -392,8 +397,8 @@ AbstractIndicator* QuantTrader::registerIndicator(const QString &instrumentID, c
 
     auto* ret = dynamic_cast<AbstractIndicator*>(obj);
 
-    indicator_map.insert(instrumentID, ret);
-    ret->setBarList(getBars(instrumentID, time_frame_str), collector_map[instrumentID]->getCurrentBar(time_frame_str));
+    indicator_map.insert(currentInstrumentID, ret);
+    ret->setBarList(getBars(currentInstrumentID, currentTimeFrameStr), collector_map[currentInstrumentID]->getCurrentBar(currentTimeFrameStr));
     ret->update();
 
     return ret;
@@ -418,6 +423,21 @@ void QuantTrader::timesUp(int index)
 }
 
 /*!
+ * \brief QuantTrader::setTradingDay
+ * 设定交易日期
+ *
+ * \param tradingDay 交易日(yyyyMMdd)
+ */
+void QuantTrader::setTradingDay(const QString &tradingDay)
+{
+    qDebug() << "Set Trading Day to" << tradingDay;
+
+    for (auto * collector : qAsConst(collector_map)) {
+        collector->setTradingDay(tradingDay);
+    }
+}
+
+/*!
  * \brief QuantTrader::onMarketData
  * 处理市场数据, 如果有新的成交则计算相关策略
  * 统计相关策略给出的仓位, 如果与旧数值不同则发送给执行模块
@@ -431,7 +451,7 @@ void QuantTrader::timesUp(int index)
  * \param bidPrice1  买一价
  * \param bidVolume1 买一量
  */
-void QuantTrader::onMarketData(const QString& instrumentID, uint time, double lastPrice, int volume,
+void QuantTrader::onMarketData(const QString& instrumentID, int time, double lastPrice, int volume,
                                double askPrice1, int askVolume1, double bidPrice1, int bidVolume1)
 {
     Q_UNUSED(askPrice1)
@@ -467,13 +487,13 @@ void QuantTrader::onMarketData(const QString& instrumentID, uint time, double la
                 position_map[instrumentID] = new_position_sum;
                 pExecuter->cancelAllOrders(instrumentID);
                 pExecuter->setPosition(instrumentID, new_position_sum.get());
-                qDebug() << "New position for" << instrumentID << new_position_sum.get();
+                qDebug() << QTime(0, 0).addSecs(time).toString() << "New position for" << instrumentID << new_position_sum.get() << ", price =" << lastPrice;
             }
         } else {
             position_map[instrumentID] = new_position_sum;
             pExecuter->cancelAllOrders(instrumentID);
             pExecuter->setPosition(instrumentID, new_position_sum.get());
-            qDebug() << "New position for" << instrumentID << new_position_sum.get();
+            qDebug() << QTime(0, 0).addSecs(time).toString() << "New position for" << instrumentID << new_position_sum.get() << ", price =" << lastPrice;
         }
     }
 }

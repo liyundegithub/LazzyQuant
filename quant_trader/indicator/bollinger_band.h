@@ -7,18 +7,14 @@ class BollingerBand : public MQL5IndicatorOnSingleDataBuffer
 {
     Q_OBJECT
     Q_CLASSINFO("parameter_number", "4")
-    Q_PROPERTY(int ExtBandsPeriod READ getBBPeriod CONSTANT)
-    Q_PROPERTY(int ExtBandsShift READ getBBShift CONSTANT)
-    Q_PROPERTY(double ExtBandsDeviations READ getBBDeviations CONSTANT)
+    Q_PROPERTY(int BandsPeriod MEMBER ExtBandsPeriod CONSTANT)
+    Q_PROPERTY(int BandsShift MEMBER ExtBandsShift CONSTANT)
+    Q_PROPERTY(double BandsDeviations MEMBER ExtBandsDeviations CONSTANT)
 
 public:
     Q_INVOKABLE explicit BollingerBand(int InpBandsPeriod, int InpBandsShift, double InpBandsDeviations, ENUM_APPLIED_PRICE applyTo, QObject *parent = 0);
 
     void OnInit() override;
-
-    int getBBPeriod() const { return ExtBandsPeriod; }
-    int getBBShift() const { return ExtBandsShift; }
-    double getBBDeviations() const { return ExtBandsDeviations; }
 
 protected:
     int ExtBandsPeriod;

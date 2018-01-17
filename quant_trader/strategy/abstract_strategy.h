@@ -1,22 +1,21 @@
 #ifndef ABSTRACT_STRATEGY_H
 #define ABSTRACT_STRATEGY_H
 
-#include <QObject>
-
 #include <boost/optional.hpp>
 
-class Bar;
-class AbstractIndicator;
+#include "../indicator/indicator_functions.h"
 
-class AbstractStrategy : public QObject
+class Bar;
+
+class AbstractStrategy : public IndicatorFunctions
 {
     Q_OBJECT
+
 protected:
     const QString strategyID;
     const QString instrument;
     const QString time_frame_str;
 
-    QList<AbstractIndicator*> indicators;
     QList<Bar> *barList;
     Bar *lastBar;
 
@@ -24,7 +23,7 @@ protected:
     boost::optional<double> tp_price;
     boost::optional<double> sl_price;
 
-    uint lastCalcualtedBarTime;
+    qint64 lastCalcualtedBarTime;
     bool isNewBar() const;
     void resetPosition();
     void loadStatus();
@@ -51,7 +50,7 @@ public:
                               const QVariant& param4, const QVariant& param5, const QVariant& param6,
                               const QVariant& param7, const QVariant& param8, const QVariant& param9) = 0;
     virtual void checkIfNewBar();
-    virtual void onNewTick(uint time, double lastPrice);
+    virtual void onNewTick(int time, double lastPrice);
 
 signals:
 

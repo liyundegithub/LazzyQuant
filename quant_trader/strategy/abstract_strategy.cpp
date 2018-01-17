@@ -9,7 +9,7 @@
 extern StrategyStatusManager *pStatusManager;
 
 AbstractStrategy::AbstractStrategy(const QString &id, const QString& instrumentID, const QString& time_frame, QObject *parent) :
-    QObject(parent),
+    IndicatorFunctions(parent),
     strategyID(id),
     instrument(instrumentID),
     time_frame_str(time_frame)
@@ -93,7 +93,7 @@ void AbstractStrategy::checkTPSL(double price)
 void AbstractStrategy::checkIfNewBar()
 {
     if (isNewBar()) {
-        for (auto* indicator : qAsConst(indicators)) {
+        for (auto* indicator : qAsConst(dependIndicators)) {
             indicator->update();
         }
         onNewBar();
@@ -104,7 +104,7 @@ void AbstractStrategy::checkIfNewBar()
     }
 }
 
-void AbstractStrategy::onNewTick(uint time, double lastPrice)
+void AbstractStrategy::onNewTick(int time, double lastPrice)
 {
     Q_UNUSED(time)
     checkTPSL(lastPrice);

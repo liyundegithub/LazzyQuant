@@ -143,6 +143,18 @@ public:
         }
     }
 
+    _VectorProxy& operator=(const _VectorProxy& other) {
+        if (&other != this) {
+            _TimeSeries<T>::operator=(other);
+            if (is_data_owner) {
+                delete data;
+            }
+            data = other.data;
+            is_data_owner = false;
+        }
+        return *this;
+    }
+
     operator QVector<T>&() const {
         return *data;
     }

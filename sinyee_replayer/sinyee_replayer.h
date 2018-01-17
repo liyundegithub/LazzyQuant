@@ -18,7 +18,9 @@ public:
     explicit SinYeeReplayer(const CONFIG_ITEM &config, QObject *parent = 0);
 
 signals:
-    void newMarketData(const QString& instrumentID, uint time, double lastPrice, int volume,
+    void tradingDayChanged(const QString& tradingDay);
+    void endOfReplay(const QString& tradingDay);
+    void newMarketData(const QString& instrumentID, int time, double lastPrice, int volume,
                        double askPrice1, int askVolume1, double bidPrice1, int bidVolume1);
 
 public slots:

@@ -1,14 +1,16 @@
 #include <QCoreApplication>
+#include <QCommandLineParser>
 
 #include "config.h"
 #include "quant_trader.h"
 #include "strategy_status.h"
 #include "connection_manager.h"
+#include "trading_calendar.h"
 
 #include "market_watcher_interface.h"
+#include "sinyee_replayer_interface.h"
 #include "trade_executer_interface.h"
 
-com::lazzyquant::market_watcher *pWatcher = nullptr;
 com::lazzyquant::trade_executer *pExecuter = nullptr;
 StrategyStatusManager *pStatusManager = nullptr;
 
@@ -18,16 +20,79 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationName("quant_trader");
     QCoreApplication::setApplicationVersion(VERSION_STR);
 
-    pWatcher = new com::lazzyquant::market_watcher(WATCHER_DBUS_SERVICE, WATCHER_DBUS_OBJECT, QDBusConnection::sessionBus());
+    QCommandLineParser parser;
+    parser.setApplicationDescription("Collect K lines, calculate indicators/strategies and call executer automatically.");
+    parser.addHelpOption();
+    parser.addVersionOption();
+
+    parser.addOptions({
+        // replay mode (-r, --replay)
+        {{"r", "replay"},
+            QCoreApplication::translate("main", "Replay Mode")},
+        {{"s", "start"},
+            QCoreApplication::translate("main", "Start Date"), "ReplayStartDate"},
+        {{"e", "end"},
+            QCoreApplication::translate("main", "End Date"), "ReplayEndDate"},
+    });
+
+    parser.process(a);
+    bool replayMode = parser.isSet("replay");
+    QString replayStartDate;
+    QString replayEndDate;
+    if (replayMode) {
+        replayStartDate = parser.value("start");
+        replayEndDate = parser.value("end");
+    }
+
+    com::lazzyquant::market_watcher *pWatcher = new com::lazzyquant::market_watcher(WATCHER_DBUS_SERVICE, WATCHER_DBUS_OBJECT, QDBusConnection::sessionBus());
+
+    QObject* pWatcherOrReplayer = nullptr;
+    if (replayMode) {
+        if (pWatcher->isValid() && pWatcher->isReplayMode()) {
+            pWatcherOrReplayer = pWatcher;
+        } else {
+            delete pWatcher;
+            com::lazzyquant::sinyee_replayer *pReplayer = new com::lazzyquant::sinyee_replayer(REPLAYER_DBUS_SERVICE, REPLAYER_DBUS_OBJECT, QDBusConnection::sessionBus());
+            if (pReplayer->isValid()) {
+                pWatcherOrReplayer = pReplayer;
+            } else {
+                delete pReplayer;
+                qWarning() << "No valid data source!";
+                return -1;
+            }
+        }
+    } else {
+        pWatcherOrReplayer = pWatcher;
+    }
+
     pExecuter = new com::lazzyquant::trade_executer(EXECUTER_DBUS_SERVICE, EXECUTER_DBUS_OBJECT, QDBusConnection::sessionBus());
     pStatusManager = new StrategyStatusManager();
     QuantTrader quantTrader;
-    ConnectionManager *manager = new ConnectionManager({pWatcher}, {&quantTrader});
+
+    ConnectionManager *pConnManager = new ConnectionManager({pWatcherOrReplayer}, {&quantTrader});
+
+    if (replayMode) {
+        TradingCalendar tc;
+        QStringList replayDates;
+        QDate startDate = QDate::fromString(replayStartDate, "yyyyMMdd");
+        QDate endDate = QDate::fromString(replayEndDate, "yyyyMMdd");
+        for (QDate date = startDate; date <= endDate; date = date.addDays(1)) {
+            if (tc.isTradingDay(date)) {
+                replayDates << date.toString("yyyyMMdd");
+            }
+        }
+
+        QTimer::singleShot(500, [pWatcherOrReplayer, replayDates]() -> void {
+                               for (const auto& date : qAsConst(replayDates)) {
+                                   pWatcherOrReplayer->metaObject()->invokeMethod(pWatcherOrReplayer, "startReplay", Q_ARG(QString, date));
+                               }
+                           });
+    }
 
     int ret = a.exec();
-    delete manager;
+    delete pConnManager;
     delete pStatusManager;
+    delete pWatcherOrReplayer;
     delete pExecuter;
-    delete pWatcher;
     return ret;
 }

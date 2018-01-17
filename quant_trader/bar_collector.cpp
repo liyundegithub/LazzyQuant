@@ -2,6 +2,7 @@
 #include <QDebug>
 #include <QMetaEnum>
 #include <QDateTime>
+#include <QTimeZone>
 #include <QFile>
 #include <QDir>
 
@@ -36,8 +37,6 @@ BarCollector::BarCollector(const QString& instrumentID, const TimeFrames &time_f
             keys << flag;
         }
     }
-
-    lastVolume = 0;
 }
 
 BarCollector::~BarCollector()
@@ -55,42 +54,35 @@ Bar* BarCollector::getCurrentBar(const QString &time_frame_str)
 #define MIN_UNIT    60
 #define HOUR_UNIT   3600
 
-static const QMap<BarCollector::TimeFrame, uint> g_time_table = {
-    {BarCollector::SEC3, 3},
-    {BarCollector::SEC5, 5},
-    {BarCollector::SEC6, 6},
+static const QMap<BarCollector::TimeFrame, int> g_time_table = {
+    {BarCollector::SEC3,   3},
+    {BarCollector::SEC5,   5},
+    {BarCollector::SEC6,   6},
     {BarCollector::SEC10, 10},
     {BarCollector::SEC12, 12},
     {BarCollector::SEC15, 15},
     {BarCollector::SEC20, 20},
     {BarCollector::SEC30, 30},
-    {BarCollector::MIN1, 1 * MIN_UNIT},
-    {BarCollector::MIN3, 3 * MIN_UNIT},
-    {BarCollector::MIN5, 5 * MIN_UNIT},
+    {BarCollector::MIN1,   1 * MIN_UNIT},
+    {BarCollector::MIN3,   3 * MIN_UNIT},
+    {BarCollector::MIN5,   5 * MIN_UNIT},
     {BarCollector::MIN10, 10 * MIN_UNIT},
     {BarCollector::MIN15, 15 * MIN_UNIT},
     {BarCollector::MIN30, 30 * MIN_UNIT},
-    {BarCollector::MIN60, 1 * HOUR_UNIT},
-    {BarCollector::DAY, 24 * HOUR_UNIT},
+    {BarCollector::MIN60,  1 * HOUR_UNIT},
+    {BarCollector::DAY,   24 * HOUR_UNIT},
 };
 
-bool BarCollector::onMarketData(uint time, double lastPrice, int volume)
+bool BarCollector::onMarketData(int time, double lastPrice, int volume)
 {
     const bool isNewTick = (volume == lastVolume);
-    QDateTime now = QDateTime::currentDateTime();
-    now.setTime(QTime(0, 0).addSecs(time));    // 当前的日期(YYMMDD)加上交易所的时间(HHMMSS)
-    const auto currentTime = now.toTime_t();
+    qint64 currentTime = baseSecOfDays + time;
 
     for (const auto key : qAsConst(keys)) {
         Bar & bar = current_bar_map[key];
-        const uint time_unit = g_time_table[static_cast<TimeFrame>(key)];  // TODO optimize, use time_unit as key
+        auto time_unit = g_time_table[static_cast<TimeFrame>(key)];  // TODO optimize, use time_unit as key
 
         if ((currentTime / time_unit) != (bar.time / time_unit)) {
-            if ((currentTime - bar.time) >= (24 * 3600) ||
-                ((currentTime - bar.time) > (4 * 3600) && QTime(17, 0) < now.time())) {
-                    lastVolume = 0;
-            }
-
             if (bar.tick_volume > 0) {
                 bar_list_map[key].append(bar);
                 emit collectedBar(instrument, key, bar);
@@ -122,6 +114,17 @@ bool BarCollector::onMarketData(uint time, double lastPrice, int volume)
     }
     lastVolume = volume;
     return isNewTick;
+}
+
+void BarCollector::setTradingDay(const QString& tradingDay)
+{
+    auto date = QDateTime::fromString(tradingDay, "yyyyMMdd");
+    date.setTimeZone(QTimeZone::utc());
+    auto newSecOfDays = date.toSecsSinceEpoch();
+    if (baseSecOfDays != newSecOfDays) {
+        baseSecOfDays = newSecOfDays;
+        lastVolume = 0;
+    }
 }
 
 void BarCollector::saveBars()

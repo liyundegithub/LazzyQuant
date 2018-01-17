@@ -155,7 +155,7 @@ int MA::OnCalculate (const int rates_total,                     // size of the p
                      )
   {
 //--- check for bars count
-   if(rates_total<InpMAPeriod-1+begin)
+   if(rates_total<InpMAPeriod+1+begin)
       return(0);// not enough bars for calculation
 //--- first calculation or number of bars was changed
    if(prev_calculated==0)

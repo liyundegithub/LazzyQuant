@@ -10,6 +10,7 @@ class BarCollector : public QObject
 {
     Q_OBJECT
     Q_ENUMS(TimeFrame)
+
 public:
     enum TimeFrame {
         SEC3  = 0x0001,
@@ -36,18 +37,21 @@ public:
 
     static QString collector_dir;
     Bar *getCurrentBar(const QString &time_frame_str);
-    bool onMarketData(uint time, double lastPrice, int volume);
+    bool onMarketData(int time, double lastPrice, int volume);
 
 protected:
     const QString instrument;
+    qint64 lastVolume = 0;
+    qint64 baseSecOfDays = 0;
+
     QList<int> keys;
     QMap<int, QList<Bar>> bar_list_map;
     QMap<int, Bar> current_bar_map;
-    int lastVolume;
 
 signals:
     void collectedBar(const QString& instrumentID, int time_frame, const Bar& bar);
 public slots:
+    void setTradingDay(const QString &tradingDay);
     void saveBars();
 };
 

@@ -30,7 +30,6 @@ protected:
 
     const QString name;
     const bool replayMode;
-    QString replayDate;
     QSettings *settings;
 
     QAtomicInt nRequestID;
@@ -69,7 +68,9 @@ protected:
     void emitNewMarketData(const CThostFtdcDepthMarketDataField& depthMarketDataField);
 
 signals:
-    void newMarketData(const QString& instrumentID, uint time, double lastPrice, int volume,
+    void tradingDayChanged(const QString& tradingDay);
+    void endOfReplay(const QString& tradingDay);
+    void newMarketData(const QString& instrumentID, int time, double lastPrice, int volume,
                        double askPrice1, int askVolume1, double bidPrice1, int bidVolume1);
 
 public slots:
@@ -79,8 +80,7 @@ public slots:
     QString getTradingDay() const;
     void subscribeInstruments(const QStringList &instruments, bool updateIni = true);
     QStringList getSubscribeList() const;
-    void setReplayDate(const QString &date) { replayDate = date; }
-    void startReplay(const QString &date, bool realSpeed = false);
+    void startReplay(const QString &date);
     void quit();
 };
 

@@ -426,7 +426,7 @@ QString MarketWatcher::getStatus() const
 QString MarketWatcher::getTradingDay() const
 {
     if (replayMode) {
-        return replayDate;
+        return "ReplayMode";    // FIXME
     } else {
         return pUserApi->GetTradingDay();
     }
@@ -511,16 +511,13 @@ QStringList MarketWatcher::getSubscribeList() const
  * 复盘某一天的行情
  *
  * \param date 希望复盘的日期 (格式YYYYMMDD)
- * \param realSpeed 是否以实际速度复盘 (默认为false)
  */
-void MarketWatcher::startReplay(const QString &date, bool realSpeed)
+void MarketWatcher::startReplay(const QString &date)
 {
     if (!replayMode) {
         qWarning() << "Not in replay mode!";
         return;
     }
-
-    Q_UNUSED(realSpeed) // TODO realSpeed = true
 
     qDebug() << "Start replaying" << date;
     QList<CThostFtdcDepthMarketDataField> mdList;
@@ -558,8 +555,13 @@ void MarketWatcher::startReplay(const QString &date, bool realSpeed)
         }
     });
 
-    for (const auto &md : mdList) {
-        emitNewMarketData(md);
+    if (!mdList.empty()) {
+        emit tradingDayChanged(date);
+
+        for (const auto &md : mdList) {
+            emitNewMarketData(md);
+        }
+        emit endOfReplay(date);
     }
 }
 

@@ -2,13 +2,13 @@
 #include <QDebug>
 
 #include "../bar.h"
-#include "../quant_trader.h"
+#include "../indicator/mql5_indicator.h"
 #include "DblMaPsar_strategy.h"
 
 extern int MA_METHOD_enumIdx;
 extern int APPLIED_PRICE_enumIdx;
 
-DblMaPsarStrategy::DblMaPsarStrategy(const QString &id, const QString& instrumentID, const QString& time_frame, QObject *parent) :
+DblMaPsarStrategy::DblMaPsarStrategy(const QString& id, const QString& instrumentID, const QString& time_frame, QObject *parent) :
     AbstractStrategy(id, instrumentID, time_frame, parent)
 {
     //
@@ -21,11 +21,11 @@ void DblMaPsarStrategy::setParameter(const QVariant& param1, const QVariant& par
     int fastPeriod = param1.toInt();
     int slowPeriod = param2.toInt();
 
-    int ma_method_value = MA::staticMetaObject.enumerator(MA_METHOD_enumIdx).keyToValue(param3.toString().trimmed().toLatin1().constData());
+    int ma_method_value = IndicatorFunctions::staticMetaObject.enumerator(MA_METHOD_enumIdx).keyToValue(param3.toString().trimmed().toLatin1().constData());
     if (ma_method_value < 0) {
         qCritical() << "Parameter3 ma_method error!";
     }
-    int applied_price_value = MQL5IndicatorOnSingleDataBuffer::staticMetaObject.enumerator(APPLIED_PRICE_enumIdx).keyToValue(param4.toString().trimmed().toLatin1().constData());
+    int applied_price_value = IndicatorFunctions::staticMetaObject.enumerator(APPLIED_PRICE_enumIdx).keyToValue(param4.toString().trimmed().toLatin1().constData());
     if (applied_price_value < 0) {
         qCritical() << "Parameter4 applied_price error!";
     }
@@ -33,20 +33,16 @@ void DblMaPsarStrategy::setParameter(const QVariant& param1, const QVariant& par
     double SARStep = param5.toDouble();
     double SARMaximum = param6.toDouble();
 
-    setParameter(fastPeriod, slowPeriod, static_cast<MA::ENUM_MA_METHOD>(ma_method_value), static_cast<MQL5IndicatorOnSingleDataBuffer::ENUM_APPLIED_PRICE>(applied_price_value), SARStep, SARMaximum);
+    setParameter(fastPeriod, slowPeriod, static_cast<ENUM_MA_METHOD>(ma_method_value), static_cast<ENUM_APPLIED_PRICE>(applied_price_value), SARStep, SARMaximum);
 }
 
-void DblMaPsarStrategy::setParameter(int fastPeriod, int slowPeriod, MA::ENUM_MA_METHOD ma_method, MQL5IndicatorOnSingleDataBuffer::ENUM_APPLIED_PRICE applied_price, double SARStep, double SARMaximum)
+void DblMaPsarStrategy::setParameter(int fastPeriod, int slowPeriod, ENUM_MA_METHOD ma_method, ENUM_APPLIED_PRICE applied_price, double SARStep, double SARMaximum)
 {
     qDebug() << "fastPeriod = " << fastPeriod << ", slowPeriod = " << slowPeriod << ", ma_method = " << ma_method << ", applied_price = " << applied_price << ", SARStep = " << SARStep << ", SARMaximum = " << SARMaximum;
 
-    fast_ma = (MQL5Indicator*)QuantTrader::instance->registerIndicator(instrument, time_frame_str, "MA", fastPeriod, 0, ma_method, applied_price);
-    slow_ma = (MQL5Indicator*)QuantTrader::instance->registerIndicator(instrument, time_frame_str, "MA", slowPeriod, 0, ma_method, applied_price);
-    psar = (MQL5Indicator*)QuantTrader::instance->registerIndicator(instrument, time_frame_str, "ParabolicSAR", SARStep, SARMaximum);
-
-    indicators.append(fast_ma);
-    indicators.append(slow_ma);
-    indicators.append(psar);
+    fast_ma = iMA(instrument, time_frame_str, fastPeriod, 0, ma_method, applied_price);
+    slow_ma = iMA(instrument, time_frame_str, slowPeriod, 0, ma_method, applied_price);
+    psar = iSAR(instrument, time_frame_str, SARStep, SARMaximum);
 }
 
 void DblMaPsarStrategy::onNewBar()
