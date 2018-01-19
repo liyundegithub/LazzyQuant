@@ -41,7 +41,7 @@ public:
 
 protected:
     const QString instrument;
-    qint64 lastVolume = 0;
+    int lastVolume = 0;
     qint64 baseSecOfDays = 0;
 
     QList<int> keys;

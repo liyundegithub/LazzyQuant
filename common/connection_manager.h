@@ -1,14 +1,13 @@
 #ifndef CONNECTION_MANAGER_H
 #define CONNECTION_MANAGER_H
 
-#include <QMetaObject>
+#include <QList>
 
-template <typename T> class QList;
 class QObject;
 
 class ConnectionManager
 {
-    QList<QMetaObject::Connection> connections;
+    QList<QObject *> senders;
 public:
     ConnectionManager(const QList<QObject *> &inputs, const QList<QObject *> &strategies);
     ~ConnectionManager();

@@ -3,7 +3,6 @@
 #include "config.h"
 #include "strategy_status.h"
 #include "abstract_strategy.h"
-#include "../bar.h"
 #include "../indicator/abstract_indicator.h"
 
 extern StrategyStatusManager *pStatusManager;
@@ -12,7 +11,8 @@ AbstractStrategy::AbstractStrategy(const QString &id, const QString& instrumentI
     IndicatorFunctions(parent),
     strategyID(id),
     instrument(instrumentID),
-    time_frame_str(time_frame)
+    time_frame_str(time_frame),
+    bars(nullptr, nullptr)
 {
     qDebug() << "AbstractStrategy ctor, id =" << id << ", instrumentID =" << instrumentID << ", time_frame =" << time_frame;
 
@@ -88,6 +88,14 @@ void AbstractStrategy::checkTPSL(double price)
             resetPosition();
         }
     }
+}
+
+void AbstractStrategy::setBarList(QList<Bar> *list, Bar *last)
+{
+    this->barList = list;
+    this->lastBar = last;
+    bars = _ListProxy<Bar>(list, last);
+    bars.setAsSeries(true);
 }
 
 void AbstractStrategy::checkIfNewBar()

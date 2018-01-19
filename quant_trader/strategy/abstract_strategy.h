@@ -3,9 +3,8 @@
 
 #include <boost/optional.hpp>
 
+#include "../bar.h"
 #include "../indicator/indicator_functions.h"
-
-class Bar;
 
 class AbstractStrategy : public IndicatorFunctions
 {
@@ -17,7 +16,8 @@ protected:
     const QString time_frame_str;
 
     QList<Bar> *barList;
-    Bar *lastBar;
+    Bar* lastBar;
+    _ListProxy<Bar> bars;
 
     boost::optional<int> position;
     boost::optional<double> tp_price;
@@ -40,10 +40,7 @@ public:
     }
 
     // Should call setBarList after setParameter
-    virtual void setBarList(QList<Bar> *list, Bar *last) {
-        barList = list;
-        lastBar = last;
-    }
+    virtual void setBarList(QList<Bar> *list, Bar *last);
 
     // Inherit from AbstractStrategy and override following virtual functions
     virtual void setParameter(const QVariant& param1, const QVariant& param2, const QVariant& param3,

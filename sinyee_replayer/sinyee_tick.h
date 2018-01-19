@@ -3,11 +3,10 @@
 
 #include <QDebug>
 
-class SinYeeTick
-{
-public:
-    SinYeeTick();
+class QDataStream;
 
+struct SinYeeTick
+{
     int time;
     qint16 msec;
     float price;
@@ -18,9 +17,9 @@ public:
     float askVolume;
     float openInterest;
     quint8 direction;
-
 };
 
 QDebug operator<<(QDebug dbg, const SinYeeTick &tick);
+QDataStream& operator>>(QDataStream& s, SinYeeTick& dataTick);
 
 #endif // SINYEE_TICK_H

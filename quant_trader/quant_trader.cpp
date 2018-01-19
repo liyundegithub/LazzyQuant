@@ -249,7 +249,7 @@ QList<Bar>* QuantTrader::getBars(const QString &instrumentID, const QString &tim
         }
     }
 
-    uint ktLastTime = 0;
+    qint64 ktLastTime = 0;
     if (!barList.empty()) {
         ktLastTime = barList.last().time;
     }
@@ -487,7 +487,7 @@ void QuantTrader::onMarketData(const QString& instrumentID, int time, double las
                 position_map[instrumentID] = new_position_sum;
                 pExecuter->cancelAllOrders(instrumentID);
                 pExecuter->setPosition(instrumentID, new_position_sum.get());
-                qDebug() << QTime(0, 0).addSecs(time).toString() << "New position for" << instrumentID << new_position_sum.get() << ", price =" << lastPrice;
+                qDebug().noquote() << QTime(0, 0).addSecs(time).toString() << "New position for" << instrumentID << new_position_sum.get() << ", price =" << lastPrice;
             }
         } else {
             position_map[instrumentID] = new_position_sum;

@@ -6,6 +6,7 @@
 #include "strategy_status.h"
 #include "connection_manager.h"
 #include "trading_calendar.h"
+#include "multiple_timer.h"
 
 #include "market_watcher_interface.h"
 #include "sinyee_replayer_interface.h"
@@ -68,6 +69,7 @@ int main(int argc, char *argv[])
     pExecuter = new com::lazzyquant::trade_executer(EXECUTER_DBUS_SERVICE, EXECUTER_DBUS_OBJECT, QDBusConnection::sessionBus());
     pStatusManager = new StrategyStatusManager();
     QuantTrader quantTrader;
+    MultipleTimer *multiTimer = nullptr;
 
     ConnectionManager *pConnManager = new ConnectionManager({pWatcherOrReplayer}, {&quantTrader});
 
@@ -87,10 +89,22 @@ int main(int argc, char *argv[])
                                    pWatcherOrReplayer->metaObject()->invokeMethod(pWatcherOrReplayer, "startReplay", Q_ARG(QString, date));
                                }
                            });
+    } else {
+        multiTimer = new MultipleTimer({{8, 50}, {20, 50}});
+        QObject::connect(multiTimer, &MultipleTimer::timesUp, [pWatcher, &quantTrader]() -> void {
+                             if (pWatcher->isValid() && pWatcher->getStatus() == "Ready") {
+                                 QString tradingDay = pWatcher->getTradingDay();
+                                 quantTrader.setTradingDay(tradingDay);
+                             }
+                         });
     }
 
     int ret = a.exec();
     delete pConnManager;
+    if (multiTimer) {
+        multiTimer->disconnect();
+        delete multiTimer;
+    }
     delete pStatusManager;
     delete pWatcherOrReplayer;
     delete pExecuter;

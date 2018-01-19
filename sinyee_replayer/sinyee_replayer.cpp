@@ -33,21 +33,6 @@ SinYeeReplayer::SinYeeReplayer(const CONFIG_ITEM &config, QObject *parent) :
     dbus.registerService(config.dbusService);
 }
 
-QDataStream& operator>>(QDataStream& s, SinYeeTick& dataTick)
-{
-    s >> dataTick.time;
-    s >> dataTick.msec;
-    s >> dataTick.price;
-    s >> dataTick.volume;
-    s >> dataTick.bidPrice;
-    s >> dataTick.bidVolume;
-    s >> dataTick.askPrice;
-    s >> dataTick.askVolume;
-    s >> dataTick.openInterest;
-    s >> dataTick.direction;
-    return s;
-}
-
 QStringList getAvailableContracts(QDataStream& tickStream)
 {
     qint16 num;
@@ -104,7 +89,7 @@ void SinYeeReplayer::startReplay(const QString &date)
  */
 void SinYeeReplayer::startReplay(const QString &date, const QString &instrument)
 {
-    startReplay(date, {instrument});
+    startReplay(date, QStringList() << instrument);
 }
 
 /*!
@@ -160,16 +145,19 @@ void SinYeeReplayer::startReplay(const QString &date, const QStringList &instrum
 
     if (!tickPairList.empty()) {
         emit tradingDayChanged(date);
+        QMap<QString, int> sumVol;
         for (const auto &item : qAsConst(tickPairList)) {
-            const int emitTime = item.second.time % 86400;
+            const auto &tick = item.second;
+            const int emitTime = tick.time % 86400;
+            sumVol[item.first] += tick.volume;
             emit newMarketData(item.first,
                                emitTime,
-                               item.second.price,
-                               item.second.volume,
-                               item.second.askPrice,
-                               item.second.askVolume,
-                               item.second.bidPrice,
-                               item.second.bidVolume);
+                               tick.price,
+                               sumVol[item.first],
+                               tick.askPrice,
+                               tick.askVolume,
+                               tick.bidPrice,
+                               tick.bidVolume);
         }
         emit endOfReplay(date);
     }

@@ -1,11 +1,7 @@
 #include "sinyee_tick.h"
 
 #include <QTime>
-
-SinYeeTick::SinYeeTick()
-{
-
-}
+#include <QDataStream>
 
 QDebug operator<<(QDebug dbg, const SinYeeTick &tick)
 {
@@ -13,4 +9,19 @@ QDebug operator<<(QDebug dbg, const SinYeeTick &tick)
                   << " ------ " << QTime(0, 0).addSecs(tick.time).toString() <<  " lastPrice:" << tick.price << " ------ " << '\n'
                   << "Bid 1:\t" << tick.bidPrice << '\t' << tick.bidVolume;
     return dbg.space();
+}
+
+QDataStream& operator>>(QDataStream& s, SinYeeTick& dataTick)
+{
+    s >> dataTick.time;
+    s >> dataTick.msec;
+    s >> dataTick.price;
+    s >> dataTick.volume;
+    s >> dataTick.bidPrice;
+    s >> dataTick.bidVolume;
+    s >> dataTick.askPrice;
+    s >> dataTick.askVolume;
+    s >> dataTick.openInterest;
+    s >> dataTick.direction;
+    return s;
 }

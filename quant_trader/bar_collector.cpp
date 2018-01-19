@@ -75,7 +75,7 @@ static const QMap<BarCollector::TimeFrame, int> g_time_table = {
 
 bool BarCollector::onMarketData(int time, double lastPrice, int volume)
 {
-    const bool isNewTick = (volume == lastVolume);
+    const bool isNewTick = (volume != lastVolume);
     qint64 currentTime = baseSecOfDays + time;
 
     for (const auto key : qAsConst(keys)) {
@@ -86,12 +86,12 @@ bool BarCollector::onMarketData(int time, double lastPrice, int volume)
             if (bar.tick_volume > 0) {
                 bar_list_map[key].append(bar);
                 emit collectedBar(instrument, key, bar);
-                qDebug() << instrument << ": " << bar;
+                qDebug().noquote() << instrument << ":" << bar;
                 bar.init();
             }
         }
 
-        if (isNewTick) {
+        if (!isNewTick) {
             continue;
         }
 
