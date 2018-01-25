@@ -4,7 +4,7 @@
 
 IndicatorFunctions::IndicatorFunctions(QObject *parent) : QObject(parent)
 {
-    pTrader = dynamic_cast<QuantTrader*>(parent);
+    pTrader = qobject_cast<QuantTrader*>(parent);
     Q_ASSERT(pTrader != nullptr);
 }
 

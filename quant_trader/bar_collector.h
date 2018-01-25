@@ -4,7 +4,7 @@
 #include <QObject>
 #include <QMap>
 
-class Bar;
+#include "bar.h"
 
 class BarCollector : public QObject
 {
@@ -36,7 +36,9 @@ public:
     ~BarCollector();
 
     static QString collector_dir;
-    Bar *getCurrentBar(const QString &time_frame_str);
+    Bar *getCurrentBar(int timeFrame) {
+        return &current_bar_map[timeFrame];
+    }
     bool onMarketData(int time, double lastPrice, int volume);
 
 protected:

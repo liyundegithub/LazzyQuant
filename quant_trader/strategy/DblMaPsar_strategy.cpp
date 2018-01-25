@@ -8,8 +8,8 @@
 extern int MA_METHOD_enumIdx;
 extern int APPLIED_PRICE_enumIdx;
 
-DblMaPsarStrategy::DblMaPsarStrategy(const QString& id, const QString& instrumentID, const QString& time_frame, QObject *parent) :
-    AbstractStrategy(id, instrumentID, time_frame, parent)
+DblMaPsarStrategy::DblMaPsarStrategy(const QString &id, const QString &instrumentID, int timeFrame, QObject *parent) :
+    SingleTimeFrameStrategy(id, instrumentID, timeFrame, parent)
 {
     //
 }
@@ -40,9 +40,9 @@ void DblMaPsarStrategy::setParameter(int fastPeriod, int slowPeriod, ENUM_MA_MET
 {
     qDebug() << "fastPeriod = " << fastPeriod << ", slowPeriod = " << slowPeriod << ", ma_method = " << ma_method << ", applied_price = " << applied_price << ", SARStep = " << SARStep << ", SARMaximum = " << SARMaximum;
 
-    fast_ma = iMA(instrument, time_frame_str, fastPeriod, 0, ma_method, applied_price);
-    slow_ma = iMA(instrument, time_frame_str, slowPeriod, 0, ma_method, applied_price);
-    psar = iSAR(instrument, time_frame_str, SARStep, SARMaximum);
+    fast_ma = iMA(instrument, timeFrame, fastPeriod, 0, ma_method, applied_price);
+    slow_ma = iMA(instrument, timeFrame, slowPeriod, 0, ma_method, applied_price);
+    psar = iSAR(instrument, timeFrame, SARStep, SARMaximum);
 }
 
 void DblMaPsarStrategy::onNewBar()
@@ -57,13 +57,13 @@ void DblMaPsarStrategy::onNewBar()
 
     if (fast_ma_buf[1] > slow_ma_buf[1] && fast_ma_buf[2] <= slow_ma_buf[2]) {
         if (psar_buf[1] < bars[1].low) {
-            position = 1;
+            setPosition(1);
         }
     }
 
     if (fast_ma_buf[1] < slow_ma_buf[1] && fast_ma_buf[2] >= slow_ma_buf[2]) {
         if (psar_buf[1] > bars[1].high) {
-            position = -1;
+            setPosition(-1);
         }
     }
 }

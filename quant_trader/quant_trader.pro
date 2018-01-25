@@ -12,7 +12,6 @@ SOURCES += main.cpp \
     ../common/common_utility.cpp \
     ../common/multiple_timer.cpp \
     ../common/connection_manager.cpp \
-    ../common/strategy_status.cpp \
     ../common/trading_calendar.cpp \
     quant_trader.cpp \
     bar_collector.cpp \
@@ -24,7 +23,8 @@ SOURCES += main.cpp \
     indicator/parabolicsar.cpp \
     indicator/bollinger_band.cpp \
     indicator/awesome_oscillator.cpp \
-    strategy/abstract_strategy.cpp \
+    strategy/template/trailing_stop.cpp \
+    strategy/template/single_time_frame_strategy.cpp \
     strategy/DblMaPsar_strategy.cpp \
     strategy/BigHit_strategy.cpp
 
@@ -36,7 +36,6 @@ HEADERS += ../config.h \
     ../common/common_utility.h \
     ../common/multiple_timer.h \
     ../common/connection_manager.h \
-    ../common/strategy_status.h \
     ../common/trading_calendar.h \
     quant_trader.h \
     bar_collector.h \
@@ -49,6 +48,8 @@ HEADERS += ../config.h \
     indicator/parabolicsar.h \
     indicator/bollinger_band.h \
     indicator/awesome_oscillator.h \
-    strategy/abstract_strategy.h \
+    strategy/template/trailing_stop.h \
+    strategy/template/abstract_strategy.h \
+    strategy/template/single_time_frame_strategy.h \
     strategy/DblMaPsar_strategy.h \
     strategy/BigHit_strategy.h

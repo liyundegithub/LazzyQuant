@@ -9,12 +9,8 @@
 #include "quant_trader.h"
 #include "bar.h"
 #include "bar_collector.h"
-#include "indicator/ma.h"
-#include "indicator/parabolicsar.h"
-#include "indicator/bollinger_band.h"
-#include "indicator/awesome_oscillator.h"
-#include "strategy/DblMaPsar_strategy.h"
-#include "strategy/bighit_strategy.h"
+#include "quant_global.h"
+
 #include "trade_executer_interface.h"
 
 extern QList<Market> markets;
@@ -98,12 +94,6 @@ void QuantTrader::loadQuantTraderSettings()
 
 void QuantTrader::loadTradeStrategySettings()
 {
-    static const QMap<QString, const QMetaObject*> meta_object_map = {
-        {"DblMaPsarStrategy", &DblMaPsarStrategy::staticMetaObject},
-        {"BigHitStrategy", &BigHitStrategy::staticMetaObject},
-        // Register more strategies here
-    };
-
     auto settings = getSettingsSmart(ORGANIZATION, "trade_strategy");
     const QStringList groups = settings->childGroups();
     qDebug() << groups.size() << "strategies in all.";
@@ -112,7 +102,13 @@ void QuantTrader::loadTradeStrategySettings()
         settings->beginGroup(group);
         QString strategy_name = settings->value("strategy").toString();
         QString instrument = settings->value("instrument").toString();
-        QString time_frame = settings->value("timeframe").toString();
+        QString combined_time_frame_string = settings->value("timeframe").toString();
+        const QStringList time_frame_stringlist = combined_time_frame_string.split('|');
+        QList<int> timeFrames;
+        for (const QString &tf : time_frame_stringlist) {
+            int timeFrame = BarCollector::staticMetaObject.enumerator(timeFrameEnumIdx).keyToValue(tf.trimmed().toLatin1().constData());
+            timeFrames << timeFrame;
+        }
 
         QVariant param1 = settings->value("param1");
         QVariant param2 = settings->value("param2");
@@ -126,22 +122,32 @@ void QuantTrader::loadTradeStrategySettings()
 
         settings->endGroup();
 
-        const QMetaObject* strategy_meta_object = meta_object_map.value(strategy_name);
-        QObject *object = strategy_meta_object->newInstance(Q_ARG(QString, group), Q_ARG(QString, instrument), Q_ARG(QString, time_frame), Q_ARG(QObject*, this));
-        if (object == NULL) {
+        const QMetaObject* strategy_meta_object = strategyMetaObjects.value(strategy_name);
+        QObject *object = nullptr;
+        if (strategy_meta_object->inherits(&SingleTimeFrameStrategy::staticMetaObject)) {
+            object = strategy_meta_object->newInstance(Q_ARG(QString, group), Q_ARG(QString, instrument), Q_ARG(int, timeFrames[0]), Q_ARG(QObject*, this));
+        } else {
+            object = strategy_meta_object->newInstance(Q_ARG(QString, group), Q_ARG(QString, instrument), Q_ARG(QList<int>, timeFrames), Q_ARG(QObject*, this));
+        }
+        if (object == nullptr) {
             qCritical() << "Instantiating strategy" << group << "failed!";
             continue;
         }
 
-        auto *strategy = qobject_cast<AbstractStrategy*>(object);
-        if (strategy == NULL) {
+        auto *strategy = dynamic_cast<AbstractStrategy*>(object);
+        if (strategy == nullptr) {
             qCritical() << "Cast strategy" << group << "failed!";
             delete object;
             continue;
         }
 
         strategy->setParameter(param1, param2, param3, param4, param5, param6, param7, param8, param9);
-        strategy->setBarList(getBars(instrument, time_frame), collector_map[instrument]->getCurrentBar(time_frame));
+        QMap<int, QPair<QList<Bar>*, Bar*>> multiTimeFrameBars;
+        for (int timeFrame : qAsConst(timeFrames)) {
+            multiTimeFrameBars.insert(timeFrame, qMakePair(getBars(instrument, timeFrame), collector_map[instrument]->getCurrentBar(timeFrame)));
+        }
+        strategy->setBarList(multiTimeFrameBars);
+        strategy->loadStatus();
         strategy_map.insert(instrument, strategy);
 
         auto position = strategy->getPosition();
@@ -184,20 +190,20 @@ static inline QString getKTExportName(const QString &instrumentID) {
  * 获取历史K线数据, 包括从飞狐交易师导出的数据和quant_trader保存的K线数据
  *
  * \param instrumentID 合约代码
- * \param time_frame_str 时间框架(字符串)
+ * \param timeFrame 时间框架(枚举)
  * \return 指向包含此合约历史K线数据的QList<Bar>指针
  */
-QList<Bar>* QuantTrader::getBars(const QString &instrumentID, const QString &time_frame_str)
+QList<Bar>* QuantTrader::getBars(const QString &instrumentID, int timeFrame)
 {
-    int time_frame_value = BarCollector::staticMetaObject.enumerator(timeFrameEnumIdx).keyToValue(time_frame_str.trimmed().toLatin1().constData());
     if (bars_map.contains(instrumentID)) {
-        if (bars_map[instrumentID].contains(time_frame_value)) {
-            return &bars_map[instrumentID][time_frame_value];
+        if (bars_map[instrumentID].contains(timeFrame)) {
+            return &bars_map[instrumentID][timeFrame];
         }
     }
 
     // Insert a new Bar List item in bars_map
-    auto &barList = bars_map[instrumentID][time_frame_value];
+    auto &barList = bars_map[instrumentID][timeFrame];
+    QString time_frame_str = BarCollector::staticMetaObject.enumerator(timeFrameEnumIdx).valueToKey(timeFrame);
 
     // Load KT Export Data
     const QString kt_export_file_name = kt_export_dir + "/" + time_frame_str + "/" + getKTExportName(instrumentID) + getSuffix(instrumentID);
@@ -292,24 +298,16 @@ static QVariant getParam(const QByteArray &typeName, va_list &ap)
     return ret;
 }
 
-AbstractIndicator* QuantTrader::registerIndicator(const QString &instrumentID, const QString &time_frame_str, QString indicator_name, ...)
+AbstractIndicator* QuantTrader::registerIndicator(const QString &instrumentID, int timeFrame, QString indicator_name, ...)
 {
-    static const QMap<QString, const QMetaObject*> meta_object_map = {
-        {"MA", &MA::staticMetaObject},
-        {"ParabolicSAR", &ParabolicSAR::staticMetaObject},
-        {"BollingerBand", &BollingerBand::staticMetaObject},
-        {"AwesomeOscillator", &AwesomeOscillator::staticMetaObject},
-        // Register more indicators here
-    };
-
     if (instrumentID != nullptr && instrumentID.length() > 0) {
         currentInstrumentID = instrumentID;
     }
-    if (time_frame_str != nullptr && time_frame_str.length() > 0) {
-        currentTimeFrameStr = time_frame_str;
+    if (timeFrame > 0) {
+        currentTimeFrame = timeFrame;
     }
 
-    const QMetaObject * metaObject = meta_object_map.value(indicator_name, nullptr);
+    const QMetaObject * metaObject = indicatorMetaObjects.value(indicator_name, nullptr);
     if (metaObject == nullptr) {
         qCritical() << "Indicator" << indicator_name << "not exist!";
         return nullptr;
@@ -398,7 +396,7 @@ AbstractIndicator* QuantTrader::registerIndicator(const QString &instrumentID, c
     auto* ret = dynamic_cast<AbstractIndicator*>(obj);
 
     indicator_map.insert(currentInstrumentID, ret);
-    ret->setBarList(getBars(currentInstrumentID, currentTimeFrameStr), collector_map[currentInstrumentID]->getCurrentBar(currentTimeFrameStr));
+    ret->setBarList(getBars(currentInstrumentID, currentTimeFrame), collector_map[currentInstrumentID]->getCurrentBar(currentTimeFrame));
     ret->update();
 
     return ret;
@@ -493,7 +491,7 @@ void QuantTrader::onMarketData(const QString& instrumentID, int time, double las
             position_map[instrumentID] = new_position_sum;
             pExecuter->cancelAllOrders(instrumentID);
             pExecuter->setPosition(instrumentID, new_position_sum.get());
-            qDebug() << QTime(0, 0).addSecs(time).toString() << "New position for" << instrumentID << new_position_sum.get() << ", price =" << lastPrice;
+            qDebug().noquote() << QTime(0, 0).addSecs(time).toString() << "New position for" << instrumentID << new_position_sum.get() << ", price =" << lastPrice;
         }
     }
 }
@@ -503,14 +501,14 @@ void QuantTrader::onMarketData(const QString& instrumentID, int time, double las
  * 储存新收集的K线数据并计算相关策略
  *
  * \param instrumentID 合约代码
- * \param time_frame 时间框架
+ * \param timeFrame 时间框架(枚举)
  * \param bar 新的K线数据
  */
-void QuantTrader::onNewBar(const QString &instrumentID, int time_frame, const Bar &bar)
+void QuantTrader::onNewBar(const QString &instrumentID, int timeFrame, const Bar &bar)
 {
-    bars_map[instrumentID][time_frame].append(bar);
+    bars_map[instrumentID][timeFrame].append(bar);
     const auto strategyList = strategy_map.values(instrumentID);
     for (auto *strategy : strategyList) {
-        strategy->checkIfNewBar();
+        strategy->checkIfNewBar(timeFrame);
     }
 }

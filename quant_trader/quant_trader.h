@@ -27,20 +27,20 @@ protected:
     QString kt_export_dir;
     void loadQuantTraderSettings();
     void loadTradeStrategySettings();
-    QList<Bar>* getBars(const QString &instrumentID, const QString &time_frame_str);
+    QList<Bar>* getBars(const QString &instrumentID, int timeFrame);
 
     MultipleTimer *multiTimer;
     QList<QTime> saveBarTimePoints;
     QList<QList<BarCollector*>> collectorsToSave;
 
     QString currentInstrumentID;
-    QString currentTimeFrameStr;
+    int currentTimeFrame;
 
 public:
     explicit QuantTrader(QObject *parent = 0);
     ~QuantTrader();
 
-    AbstractIndicator* registerIndicator(const QString &instrumentID, const QString &time_frame_str, QString indicator_name, ...);
+    AbstractIndicator* registerIndicator(const QString &instrumentID, int timeFrame, QString indicator_name, ...);
 
 private slots:
     void timesUp(int index);

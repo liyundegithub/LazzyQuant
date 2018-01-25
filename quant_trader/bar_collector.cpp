@@ -6,7 +6,6 @@
 #include <QFile>
 #include <QDir>
 
-#include "bar.h"
 #include "bar_collector.h"
 
 extern int timeFrameEnumIdx;
@@ -42,13 +41,6 @@ BarCollector::BarCollector(const QString& instrumentID, const TimeFrames &time_f
 BarCollector::~BarCollector()
 {
     saveBars();
-}
-
-Bar* BarCollector::getCurrentBar(const QString &time_frame_str)
-{
-    int time_frame_value = BarCollector::staticMetaObject.enumerator(timeFrameEnumIdx).keyToValue(time_frame_str.trimmed().toLatin1().constData());
-    TimeFrame time_frame = static_cast<BarCollector::TimeFrame>(time_frame_value);
-    return &current_bar_map[time_frame];
 }
 
 #define MIN_UNIT    60

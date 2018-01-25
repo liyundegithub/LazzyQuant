@@ -38,6 +38,18 @@ void Print(...) {}
 #define GetLastError() 1
 #define IsStopped() (false)
 
+#include "bar_collector.h"
+
+typedef int ENUM_TIMEFRAMES;
+#define PERIOD_M1   BarCollector::MIN1
+#define PERIOD_M3   BarCollector::MIN3
+#define PERIOD_M5   BarCollector::MIN5
+#define PERIOD_M10  BarCollector::MIN10
+#define PERIOD_M15  BarCollector::MIN15
+#define PERIOD_M30  BarCollector::MIN30
+#define PERIOD_M60  BarCollector::MIN60
+#define PERIOD_D1   BarCollector::DAY
+
 inline
 double MathMin(double x, double y)
 {
@@ -92,8 +104,8 @@ protected:
     QList<T> * data;
     T * lastT;
 public:
-    _ListProxy(QList<T> *list, T *last) :
-        _TimeSeries<T>(true),   // time series as default
+    _ListProxy(QList<T> *list = nullptr, T *last = nullptr, bool isTS = true) :
+        _TimeSeries<T>(isTS),   // time series as default
         data(list),
         lastT(last) {
     }

@@ -13,7 +13,6 @@
 #include "trade_executer_interface.h"
 
 com::lazzyquant::trade_executer *pExecuter = nullptr;
-StrategyStatusManager *pStatusManager = nullptr;
 
 int main(int argc, char *argv[])
 {
@@ -67,7 +66,6 @@ int main(int argc, char *argv[])
     }
 
     pExecuter = new com::lazzyquant::trade_executer(EXECUTER_DBUS_SERVICE, EXECUTER_DBUS_OBJECT, QDBusConnection::sessionBus());
-    pStatusManager = new StrategyStatusManager();
     QuantTrader quantTrader;
     MultipleTimer *multiTimer = nullptr;
 
@@ -105,7 +103,6 @@ int main(int argc, char *argv[])
         multiTimer->disconnect();
         delete multiTimer;
     }
-    delete pStatusManager;
     delete pWatcherOrReplayer;
     delete pExecuter;
     return ret;

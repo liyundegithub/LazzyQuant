@@ -9,8 +9,6 @@ class QuantTrader;
 class AbstractIndicator;
 class MQL5Indicator;
 
-typedef QString ENUM_TIMEFRAMES;
-
 class IndicatorFunctions : public QObject
 {
     Q_OBJECT
