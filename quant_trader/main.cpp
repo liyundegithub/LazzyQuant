@@ -12,7 +12,8 @@
 #include "sinyee_replayer_interface.h"
 #include "trade_executer_interface.h"
 
-com::lazzyquant::trade_executer *pExecuter = nullptr;
+using std::placeholders::_1;
+using std::placeholders::_2;
 
 int main(int argc, char *argv[])
 {
@@ -65,7 +66,7 @@ int main(int argc, char *argv[])
         pWatcherOrReplayer = pWatcher;
     }
 
-    pExecuter = new com::lazzyquant::trade_executer(EXECUTER_DBUS_SERVICE, EXECUTER_DBUS_OBJECT, QDBusConnection::sessionBus());
+    com::lazzyquant::trade_executer *pExecuter = nullptr;
     QuantTrader quantTrader;
     MultipleTimer *multiTimer = nullptr;
 
@@ -88,6 +89,10 @@ int main(int argc, char *argv[])
                                }
                            });
     } else {
+        pExecuter = new com::lazzyquant::trade_executer(EXECUTER_DBUS_SERVICE, EXECUTER_DBUS_OBJECT, QDBusConnection::sessionBus());
+        quantTrader.cancelAllOrders = std::bind(&com::lazzyquant::trade_executer::cancelAllOrders, pExecuter, _1);
+        quantTrader.setPosition = std::bind(&com::lazzyquant::trade_executer::setPosition, pExecuter, _1, _2);
+
         multiTimer = new MultipleTimer({{8, 50}, {20, 50}});
         QObject::connect(multiTimer, &MultipleTimer::timesUp, [pWatcher, &quantTrader]() -> void {
                              if (pWatcher->isValid() && pWatcher->getStatus() == "Ready") {
@@ -104,6 +109,8 @@ int main(int argc, char *argv[])
         delete multiTimer;
     }
     delete pWatcherOrReplayer;
-    delete pExecuter;
+    if (pExecuter) {
+        delete pExecuter;
+    }
     return ret;
 }

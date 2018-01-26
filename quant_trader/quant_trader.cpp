@@ -1,6 +1,5 @@
 #include <QSettings>
 #include <QString>
-#include <QTimer>
 
 #include "config.h"
 #include "market.h"
@@ -14,7 +13,6 @@
 #include "trade_executer_interface.h"
 
 extern QList<Market> markets;
-extern com::lazzyquant::trade_executer *pExecuter;
 
 int timeFrameEnumIdx;
 int MA_METHOD_enumIdx;
@@ -483,14 +481,14 @@ void QuantTrader::onMarketData(const QString& instrumentID, int time, double las
         if (position_map.contains(instrumentID) && position_map[instrumentID].is_initialized()) {
             if (position_map[instrumentID].get() != new_position_sum.get()) {
                 position_map[instrumentID] = new_position_sum;
-                pExecuter->cancelAllOrders(instrumentID);
-                pExecuter->setPosition(instrumentID, new_position_sum.get());
+                cancelAllOrders(instrumentID);
+                setPosition(instrumentID, new_position_sum.get());
                 qDebug().noquote() << QTime(0, 0).addSecs(time).toString() << "New position for" << instrumentID << new_position_sum.get() << ", price =" << lastPrice;
             }
         } else {
             position_map[instrumentID] = new_position_sum;
-            pExecuter->cancelAllOrders(instrumentID);
-            pExecuter->setPosition(instrumentID, new_position_sum.get());
+            cancelAllOrders(instrumentID);
+            setPosition(instrumentID, new_position_sum.get());
             qDebug().noquote() << QTime(0, 0).addSecs(time).toString() << "New position for" << instrumentID << new_position_sum.get() << ", price =" << lastPrice;
         }
     }

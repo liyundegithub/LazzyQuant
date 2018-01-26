@@ -1,6 +1,7 @@
 #ifndef QUANT_TRADER_H
 #define QUANT_TRADER_H
 
+#include <functional>
 #include <boost/optional.hpp>
 #include <QObject>
 #include <QMap>
@@ -39,6 +40,9 @@ protected:
 public:
     explicit QuantTrader(QObject *parent = 0);
     ~QuantTrader();
+
+    std::function<void(const QString&, int)> setPosition = [](auto, auto) -> void {};
+    std::function<void(const QString&)> cancelAllOrders = [](auto) -> void {};
 
     AbstractIndicator* registerIndicator(const QString &instrumentID, int timeFrame, QString indicator_name, ...);
 

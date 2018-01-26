@@ -190,8 +190,6 @@
     <method name="cancelAllOrders">
       <arg name="instrument" type="s" direction="in"/>
     </method>
-    <method name="cancelAllOrders">
-    </method>
     <method name="parkBuyLimit">
       <arg name="instrument" type="s" direction="in"/>
       <arg name="volume" type="i" direction="in"/>
