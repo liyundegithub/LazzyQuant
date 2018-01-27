@@ -34,6 +34,8 @@ int main(int argc, char *argv[])
             QCoreApplication::translate("main", "Start Date"), "ReplayStartDate"},
         {{"e", "end"},
             QCoreApplication::translate("main", "End Date"), "ReplayEndDate"},
+        {{"a", "save"},
+            QCoreApplication::translate("main", "Save Bars to DB")},
     });
 
     parser.process(a);
@@ -44,6 +46,8 @@ int main(int argc, char *argv[])
         replayStartDate = parser.value("start");
         replayEndDate = parser.value("end");
     }
+    bool explicitSave = parser.isSet("save");
+    bool saveBarsToDB = explicitSave || (!replayMode);
 
     com::lazzyquant::market_watcher *pWatcher = new com::lazzyquant::market_watcher(WATCHER_DBUS_SERVICE, WATCHER_DBUS_OBJECT, QDBusConnection::sessionBus());
 
@@ -67,7 +71,7 @@ int main(int argc, char *argv[])
     }
 
     com::lazzyquant::trade_executer *pExecuter = nullptr;
-    QuantTrader quantTrader;
+    QuantTrader quantTrader(saveBarsToDB);
     MultipleTimer *multiTimer = nullptr;
 
     ConnectionManager *pConnManager = new ConnectionManager({pWatcherOrReplayer}, {&quantTrader});
@@ -98,6 +102,8 @@ int main(int argc, char *argv[])
                              if (pWatcher->isValid() && pWatcher->getStatus() == "Ready") {
                                  QString tradingDay = pWatcher->getTradingDay();
                                  quantTrader.setTradingDay(tradingDay);
+                             } else {
+                                 qWarning() << "Market Watcher Not Ready!";
                              }
                          });
     }

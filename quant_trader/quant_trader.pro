@@ -1,4 +1,4 @@
-QT += core dbus xml
+QT += core dbus sql
 QT -= gui
 
 TARGET = quant_trader
@@ -8,7 +8,6 @@ CONFIG -= app_bundle
 TEMPLATE = app
 
 SOURCES += main.cpp \
-    ../common/market.cpp \
     ../common/common_utility.cpp \
     ../common/multiple_timer.cpp \
     ../common/connection_manager.cpp \
@@ -32,7 +31,6 @@ INCLUDEPATH += ../ ../common/
 DBUS_INTERFACES += ../interface/market_watcher.xml ../interface/trade_executer.xml ../interface/sinyee_replayer.xml
 
 HEADERS += ../config.h \
-    ../common/market.h \
     ../common/common_utility.h \
     ../common/multiple_timer.h \
     ../common/connection_manager.h \

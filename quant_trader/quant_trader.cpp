@@ -1,10 +1,11 @@
 #include <QSettings>
 #include <QString>
+#include <QSqlQuery>
+#include <QSqlError>
 
 #include "config.h"
-#include "market.h"
 #include "common_utility.h"
-#include "multiple_timer.h"
+#include "trading_calendar.h"
 #include "quant_trader.h"
 #include "bar.h"
 #include "bar_collector.h"
@@ -12,14 +13,13 @@
 
 #include "trade_executer_interface.h"
 
-extern QList<Market> markets;
-
 int timeFrameEnumIdx;
 int MA_METHOD_enumIdx;
 int APPLIED_PRICE_enumIdx;
 
-QuantTrader::QuantTrader(QObject *parent) :
-    QObject(parent)
+QuantTrader::QuantTrader(bool saveBarsToDB, QObject *parent) :
+    QObject(parent),
+    saveBarsToDB(saveBarsToDB)
 {
     qRegisterMetaType<int>("ENUM_MA_METHOD");
     qRegisterMetaType<int>("ENUM_APPLIED_PRICE");
@@ -28,17 +28,14 @@ QuantTrader::QuantTrader(QObject *parent) :
     MA_METHOD_enumIdx = IndicatorFunctions::staticMetaObject.indexOfEnumerator("ENUM_MA_METHOD");
     APPLIED_PRICE_enumIdx = IndicatorFunctions::staticMetaObject.indexOfEnumerator("ENUM_APPLIED_PRICE");
 
-    loadCommonMarketData();
     loadQuantTraderSettings();
     loadTradeStrategySettings();
-
-    multiTimer = new MultipleTimer(saveBarTimePoints);
-    connect(multiTimer, &MultipleTimer::timesUp, this, &QuantTrader::timesUp);
 }
 
 QuantTrader::~QuantTrader()
 {
     qDebug() << "~QuantTrader";
+    sqlDB.close();
 }
 
 void QuantTrader::loadQuantTraderSettings()
@@ -47,8 +44,24 @@ void QuantTrader::loadQuantTraderSettings()
 
     settings->beginGroup("HistoryPath");
     kt_export_dir = settings->value("ktexport").toString();
-    BarCollector::collector_dir = settings->value("collector").toString();
     settings->endGroup();
+
+    settings->beginGroup("Database");
+    dbDriver = settings->value("driver").toString();
+    dbHostName = settings->value("hostname").toString();
+    dbUserName = settings->value("username").toString();
+    dbPassword = settings->value("password").toString();
+    settings->endGroup();
+
+    sqlDB = QSqlDatabase::addDatabase(dbDriver);
+    sqlDB.setHostName(dbHostName);
+    sqlDB.setUserName(dbUserName);
+    sqlDB.setPassword(dbPassword);
+
+    bool ok = this->sqlDB.open();
+    if (!ok) {
+        qCritical() << "Open database failed!" << this->sqlDB.lastError().text();
+    }
 
     settings->beginGroup("Collector");
     const auto instrumentIDs = settings->childKeys();
@@ -63,31 +76,12 @@ void QuantTrader::loadQuantTraderSettings()
             time_frame_flags |= time_frame;
         }
 
-        BarCollector *collector = new BarCollector(instrumentID, time_frame_flags, this);
+        BarCollector *collector = new BarCollector(instrumentID, time_frame_flags, saveBarsToDB, this);
         connect(collector, SIGNAL(collectedBar(QString,int,Bar)), this, SLOT(onNewBar(QString,int,Bar)), Qt::DirectConnection);
         collector_map[instrumentID] = collector;
         qDebug() << instrumentID << ":\t" << time_frame_flags << "\t" << time_frame_stringlist;
     }
     settings->endGroup();
-
-    QMap<QTime, QStringList> endPointsMap;
-    for (const auto &instrumentID : instrumentIDs) {
-        const auto endPoints = getEndPoints(instrumentID);
-        for (const auto &item : endPoints) {
-            endPointsMap[item] << instrumentID;
-        }
-    }
-
-    auto keys = endPointsMap.keys();
-    std::sort(keys.begin(), keys.end());
-    for (const auto &item : qAsConst(keys)) {
-        QList<BarCollector*> collectors;
-        for (const auto &instrumentID : qAsConst(endPointsMap[item])) {
-            collectors << collector_map[instrumentID];
-        }
-        collectorsToSave << collectors;
-        saveBarTimePoints << item.addSecs(120); // Save bars 2 minutes after market close
-    }
 }
 
 void QuantTrader::loadTradeStrategySettings()
@@ -142,7 +136,7 @@ void QuantTrader::loadTradeStrategySettings()
         strategy->setParameter(param1, param2, param3, param4, param5, param6, param7, param8, param9);
         QMap<int, QPair<QList<Bar>*, Bar*>> multiTimeFrameBars;
         for (int timeFrame : qAsConst(timeFrames)) {
-            multiTimeFrameBars.insert(timeFrame, qMakePair(getBars(instrument, timeFrame), collector_map[instrument]->getCurrentBar(timeFrame)));
+            multiTimeFrameBars.insert(timeFrame, qMakePair(getBars(instrument, timeFrame), collector_map[instrument]->getBarPtr(timeFrame)));
         }
         strategy->setBarList(multiTimeFrameBars);
         strategy->loadStatus();
@@ -204,6 +198,7 @@ QList<Bar>* QuantTrader::getBars(const QString &instrumentID, int timeFrame)
     QString time_frame_str = BarCollector::staticMetaObject.enumerator(timeFrameEnumIdx).valueToKey(timeFrame);
 
     // Load KT Export Data
+    // Deprecated
     const QString kt_export_file_name = kt_export_dir + "/" + time_frame_str + "/" + getKTExportName(instrumentID) + getSuffix(instrumentID);
     QFile kt_export_file(kt_export_file_name);
     if (kt_export_file.open(QFile::ReadOnly)) {
@@ -222,25 +217,24 @@ QList<Bar>* QuantTrader::getBars(const QString &instrumentID, int timeFrame)
     }
 
     // Load Collector Bars
-    const QString collector_bar_path = BarCollector::collector_dir + "/" + instrumentID + "/" + time_frame_str;
-    QDir collector_bar_dir(collector_bar_path);
-    QStringList filters;
-    filters << "*.bars";
-    collector_bar_dir.setNameFilters(filters);
-    const QStringList entries = collector_bar_dir.entryList(QDir::Files | QDir::NoDotAndDotDot, QDir::Name);
     QList<Bar> collectedBarList;
-    for (const QString &barfilename : entries) {
-        QFile barfile(collector_bar_path + "/" + barfilename);
-        if (!barfile.open(QFile::ReadOnly)) {
-            qCritical() << "Open file:" << (collector_bar_path + "/" + barfilename) << "failed!";
-            continue;
+    const QString tableName = time_frame_str;
+    const QStringList tables = sqlDB.tables();
+    if (tables.contains(tableName, Qt::CaseInsensitive)) {
+        QSqlQuery qry(sqlDB);
+        bool ok = qry.exec("SELECT * from " + QString("%1.%2").arg(instrumentID).arg(tableName));
+        qDebug() << "select" << ok;
+        while (qry.next()) {
+            Bar bar;
+            bar.time = qry.value(0).toLongLong();
+            bar.open = qry.value(1).toDouble();
+            bar.high = qry.value(2).toDouble();
+            bar.low  = qry.value(3).toDouble();
+            bar.close= qry.value(4).toDouble();
+            bar.tick_volume = qry.value(5).toLongLong();
+            bar.volume = qry.value(6).toLongLong();
+            collectedBarList << bar;
         }
-        QDataStream barStream(&barfile);
-        barStream.setFloatingPointPrecision(QDataStream::DoublePrecision);
-        QList<Bar> tmpList;
-        barStream >> tmpList;
-        qDebug() << barfilename << tmpList.size() << "bars";
-        collectedBarList.append(tmpList);
     }
 
     int collectedSize = collectedBarList.size();
@@ -394,28 +388,10 @@ AbstractIndicator* QuantTrader::registerIndicator(const QString &instrumentID, i
     auto* ret = dynamic_cast<AbstractIndicator*>(obj);
 
     indicator_map.insert(currentInstrumentID, ret);
-    ret->setBarList(getBars(currentInstrumentID, currentTimeFrame), collector_map[currentInstrumentID]->getCurrentBar(currentTimeFrame));
+    ret->setBarList(getBars(currentInstrumentID, currentTimeFrame), collector_map[currentInstrumentID]->getBarPtr(currentTimeFrame));
     ret->update();
 
     return ret;
-}
-
-/*!
- * \brief QuantTrader::timesUp
- * 保存K线数据, 即刚结束的一段时间内的数据
- *
- * \param index 时间点序号
- */
-void QuantTrader::timesUp(int index)
-{
-    const int size = saveBarTimePoints.size();
-    if (index >= 0 && index < size) {
-        for (const auto &collector : qAsConst(collectorsToSave[index])) {
-            collector->saveBars();
-        }
-    } else {
-        qFatal("Should never see this! index = %d", index);
-    }
 }
 
 /*!
@@ -428,8 +404,15 @@ void QuantTrader::setTradingDay(const QString &tradingDay)
 {
     qDebug() << "Set Trading Day to" << tradingDay;
 
+    TradingCalendar tc;
+    QDate date = QDate::fromString(tradingDay, "yyyyMMdd");
+    do {
+        date = date.addDays(-1);
+    } while (!tc.isTradingDay(date));
+    QString lastTradingDay = date.toString("yyyyMMdd");
+
     for (auto * collector : qAsConst(collector_map)) {
-        collector->setTradingDay(tradingDay);
+        collector->setTradingDay(tradingDay, lastTradingDay);
     }
 }
 
@@ -447,7 +430,7 @@ void QuantTrader::setTradingDay(const QString &tradingDay)
  * \param bidPrice1  买一价
  * \param bidVolume1 买一量
  */
-void QuantTrader::onMarketData(const QString& instrumentID, int time, double lastPrice, int volume,
+void QuantTrader::onMarketData(const QString &instrumentID, int time, double lastPrice, int volume,
                                double askPrice1, int askVolume1, double bidPrice1, int bidVolume1)
 {
     Q_UNUSED(askPrice1)

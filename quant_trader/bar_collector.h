@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QMap>
+#include <QSqlDatabase>
 
 #include "bar.h"
 
@@ -32,29 +33,32 @@ public:
     };
     Q_DECLARE_FLAGS(TimeFrames, TimeFrame)
 
-    explicit BarCollector(const QString& instrumentID, const TimeFrames &time_frame_flags, QObject *parent = 0);
+    explicit BarCollector(const QString &instrumentID, const TimeFrames &timeFrameFlags, bool saveBarsToDB, QObject *parent = 0);
     ~BarCollector();
 
-    static QString collector_dir;
-    Bar *getCurrentBar(int timeFrame) {
-        return &current_bar_map[timeFrame];
+    Bar *getBarPtr(int timeFrame) {
+        return &barMap[timeFrame];
     }
     bool onMarketData(int time, double lastPrice, int volume);
 
 protected:
     const QString instrument;
+    bool saveBarsToDB;
+    QSqlDatabase sqlDB;
+
     int lastVolume = 0;
-    qint64 baseSecOfDays = 0;
+    qint64 lastNightBase = 0;
+    qint64 morningBase = 0;
+    qint64 tradingDayBase = 0;
 
     QList<int> keys;
-    QMap<int, QList<Bar>> bar_list_map;
-    QMap<int, Bar> current_bar_map;
+    QMap<int, Bar> barMap;
 
 signals:
-    void collectedBar(const QString& instrumentID, int time_frame, const Bar& bar);
+    void collectedBar(const QString &instrumentID, int timeFrame, const Bar &bar);
 public slots:
-    void setTradingDay(const QString &tradingDay);
-    void saveBars();
+    void setTradingDay(const QString &tradingDay, const QString &lastNight);
+    void saveBar(int timeFrame, const Bar &bar);
 };
 
 #endif // BAR_COLLECTOR_H

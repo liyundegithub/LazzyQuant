@@ -1,46 +1,62 @@
-#include <QDataStream>
 #include <QDebug>
 #include <QMetaEnum>
 #include <QDateTime>
 #include <QTimeZone>
-#include <QFile>
-#include <QDir>
+#include <QSqlQuery>
+#include <QSqlError>
 
 #include "bar_collector.h"
 
 extern int timeFrameEnumIdx;
-QString BarCollector::collector_dir;
 
-BarCollector::BarCollector(const QString& instrumentID, const TimeFrames &time_frame_flags, QObject *parent) :
+BarCollector::BarCollector(const QString &instrumentID, const TimeFrames &timeFrameFlags, bool saveBarsToDB, QObject *parent) :
     QObject(parent),
-    instrument(instrumentID)
+    instrument(instrumentID),
+    saveBarsToDB(saveBarsToDB)
 {
     const int timeFrameEnumCount = BarCollector::staticMetaObject.enumerator(timeFrameEnumIdx).keyCount();
     for (int i = 0; i < timeFrameEnumCount; i++) {
-        const auto flag = BarCollector::staticMetaObject.enumerator(timeFrameEnumIdx).value(i);
-        if (time_frame_flags.testFlag(static_cast<TimeFrame>(flag))) {
-            bar_list_map.insert(flag, QList<Bar>());
-            current_bar_map.insert(flag, Bar());
+        auto flag = BarCollector::staticMetaObject.enumerator(timeFrameEnumIdx).value(i);
+        if (timeFrameFlags.testFlag(static_cast<TimeFrame>(flag))) {
+            barMap.insert(flag, Bar());
+            keys << flag;
+        }
+    }
 
-            // Check if the directory is already created for collected bars
-            QString time_frame_str = BarCollector::staticMetaObject.enumerator(timeFrameEnumIdx).valueToKey(flag);
-            QString path_for_this_key = collector_dir + "/" + instrument + "/" + time_frame_str;
-            QDir dir(path_for_this_key);
-            if (!dir.exists()) {
-                bool ret = dir.mkpath(path_for_this_key);
-                if (!ret) {
-                    qCritical() << "Create directory failed!";
+    if (saveBarsToDB) {
+        sqlDB = QSqlDatabase::database();
+        sqlDB.close();
+        sqlDB.setDatabaseName(instrument);
+        sqlDB.open();
+        const QStringList tables = sqlDB.tables();
+        QSqlQuery qry(sqlDB);
+
+        for (auto key : qAsConst(keys)) {
+            // Check if the table is already created for collected bars
+            QString tableName = BarCollector::staticMetaObject.enumerator(timeFrameEnumIdx).valueToKey(key);
+            if (!tables.contains(tableName, Qt::CaseInsensitive)) {
+                bool ok = qry.exec("CREATE TABLE " + tableName + " ("
+                                   "`time` BIGINT NOT NULL,"
+                                   "`open` DOUBLE NULL,"
+                                   "`high` DOUBLE NULL,"
+                                   "`low` DOUBLE NULL,"
+                                   "`close` DOUBLE NULL,"
+                                   "`tick_volume` BIGINT NULL,"
+                                   "`volume` BIGINT NULL,"
+                                   "`type` INT NULL,"
+                                   "PRIMARY KEY (`time`))");
+
+                if (!ok) {
+                    qCritical().noquote() << "Create table" << tableName << "in" << instrumentID << "failed!";
+                    qDebug().noquote() << qry.lastError();
                 }
             }
-
-            keys << flag;
         }
     }
 }
 
 BarCollector::~BarCollector()
 {
-    saveBars();
 }
 
 #define MIN_UNIT    60
@@ -68,17 +84,26 @@ static const QMap<BarCollector::TimeFrame, int> g_time_table = {
 bool BarCollector::onMarketData(int time, double lastPrice, int volume)
 {
     const bool isNewTick = (volume != lastVolume);
-    qint64 currentTime = baseSecOfDays + time;
+    qint64 currentTime = 0;
+    if (time < 8 * 3600) {
+        currentTime = morningBase + time;
+    } else if (time > 17 * 3600) {
+        currentTime = lastNightBase + time;
+    } else {
+        currentTime = tradingDayBase + time;
+    }
 
     for (const auto key : qAsConst(keys)) {
-        Bar & bar = current_bar_map[key];
+        Bar & bar = barMap[key];
         auto time_unit = g_time_table[static_cast<TimeFrame>(key)];  // TODO optimize, use time_unit as key
 
         if ((currentTime / time_unit) != (bar.time / time_unit)) {
             if (bar.tick_volume > 0) {
-                bar_list_map[key].append(bar);
+                if (saveBarsToDB) {
+                    saveBar(key, bar);
+                }
                 emit collectedBar(instrument, key, bar);
-                qDebug().noquote() << instrument << ":" << bar;
+                qInfo().noquote() << instrument << ":" << bar;
                 bar.init();
             }
         }
@@ -108,37 +133,39 @@ bool BarCollector::onMarketData(int time, double lastPrice, int volume)
     return isNewTick;
 }
 
-void BarCollector::setTradingDay(const QString& tradingDay)
+void BarCollector::setTradingDay(const QString &tradingDay, const QString &lastNight)
 {
     auto date = QDateTime::fromString(tradingDay, "yyyyMMdd");
     date.setTimeZone(QTimeZone::utc());
-    auto newSecOfDays = date.toSecsSinceEpoch();
-    if (baseSecOfDays != newSecOfDays) {
-        baseSecOfDays = newSecOfDays;
+    auto newTradingDayBase = date.toSecsSinceEpoch();
+    if (tradingDayBase != newTradingDayBase) {
+        tradingDayBase = newTradingDayBase;
         lastVolume = 0;
     }
+
+    date = QDateTime::fromString(lastNight, "yyyyMMdd");
+    date.setTimeZone(QTimeZone::utc());
+    lastNightBase = date.toSecsSinceEpoch();
+    morningBase = lastNightBase + 24 * 3600;
 }
 
-void BarCollector::saveBars()
+void BarCollector::saveBar(int timeFrame, const Bar &bar)
 {
-    for (const auto key : qAsConst(keys)) {
-        auto & barList = bar_list_map[key];
-        const auto & lastBar = current_bar_map[key];
-
-        if (!lastBar.isNewBar()) {
-            barList.append(lastBar);
-        }
-        if (barList.size() == 0) {
-            continue;
-        }
-        QString time_frame_str = BarCollector::staticMetaObject.enumerator(timeFrameEnumIdx).valueToKey(key);
-        QString file_name = collector_dir + "/" + instrument + "/" + time_frame_str + "/" + QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz") + ".bars";
-        QFile barFile(file_name);
-        barFile.open(QFile::WriteOnly);
-        QDataStream wstream(&barFile);
-        wstream.setFloatingPointPrecision(QDataStream::DoublePrecision);
-        wstream << barList;
-        barFile.close();
-        barList.clear();
+    QSqlQuery qry(sqlDB);
+    QString tableName = BarCollector::staticMetaObject.enumerator(timeFrameEnumIdx).valueToKey(timeFrame);
+    qry.prepare("INSERT INTO " + QString("%1.%2").arg(instrument).arg(tableName) + " (time, open, high, low, close, tick_volume, volume, type) "
+                  "VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    qry.bindValue(0, bar.time);
+    qry.bindValue(1, bar.open);
+    qry.bindValue(2, bar.high);
+    qry.bindValue(3, bar.low);
+    qry.bindValue(4, bar.close);
+    qry.bindValue(5, bar.tick_volume);
+    qry.bindValue(6, bar.volume);
+    qry.bindValue(7, 1);
+    bool ok = qry.exec();
+    if (!ok) {
+        qDebug() << "insert failed!";
+        qDebug() << qry.lastError();
     }
 }
