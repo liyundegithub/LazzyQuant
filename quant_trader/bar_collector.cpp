@@ -93,26 +93,19 @@ bool BarCollector::onMarketData(int time, double lastPrice, int volume)
         currentTime = tradingDayBase + time;
     }
 
-    for (const auto key : qAsConst(keys)) {
+    for (auto key : qAsConst(keys)) {
         Bar & bar = barMap[key];
         auto time_unit = g_time_table[static_cast<TimeFrame>(key)];  // TODO optimize, use time_unit as key
 
         if ((currentTime / time_unit) != (bar.time / time_unit)) {
-            if (bar.tick_volume > 0) {
-                if (saveBarsToDB) {
-                    saveBar(key, bar);
-                }
-                emit collectedBar(instrument, key, bar);
-                qInfo().noquote() << instrument << ":" << bar;
-                bar.init();
-            }
+            saveEmitReset(key, bar);
         }
 
         if (!isNewTick) {
             continue;
         }
 
-        if (bar.isNewBar()) {
+        if (bar.isEmpty()) {
             bar.open = lastPrice;
             bar.time = currentTime / time_unit * time_unit;
         }
@@ -131,6 +124,18 @@ bool BarCollector::onMarketData(int time, double lastPrice, int volume)
     }
     lastVolume = volume;
     return isNewTick;
+}
+
+void BarCollector::saveEmitReset(int timeFrame, Bar &bar)
+{
+    if (!bar.isEmpty()) {
+        if (saveBarsToDB) {
+            saveBar(timeFrame, bar);
+        }
+        emit collectedBar(instrument, timeFrame, bar);
+        qInfo().noquote() << instrument << ":" << bar;
+        bar.reset();
+    }
 }
 
 void BarCollector::setTradingDay(const QString &tradingDay, const QString &lastNight)
@@ -167,5 +172,12 @@ void BarCollector::saveBar(int timeFrame, const Bar &bar)
     if (!ok) {
         qDebug() << "insert failed!";
         qDebug() << qry.lastError();
+    }
+}
+
+void BarCollector::flush()
+{
+    for (auto key : qAsConst(keys)) {
+        saveEmitReset(key, barMap[key]);
     }
 }

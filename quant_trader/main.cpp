@@ -72,7 +72,8 @@ int main(int argc, char *argv[])
 
     com::lazzyquant::trade_executer *pExecuter = nullptr;
     QuantTrader quantTrader(saveBarsToDB);
-    MultipleTimer *multiTimer = nullptr;
+    MultipleTimer *marketOpenTimer = nullptr;
+    MultipleTimer *marketCloseTimer = nullptr;
 
     ConnectionManager *pConnManager = new ConnectionManager({pWatcherOrReplayer}, {&quantTrader});
 
@@ -87,6 +88,8 @@ int main(int argc, char *argv[])
             }
         }
 
+        QObject::connect(pWatcherOrReplayer, SIGNAL(endOfReplay(QString)), &quantTrader, SLOT(onMarketClose()));
+
         QTimer::singleShot(500, [pWatcherOrReplayer, replayDates]() -> void {
                                for (const auto& date : qAsConst(replayDates)) {
                                    pWatcherOrReplayer->metaObject()->invokeMethod(pWatcherOrReplayer, "startReplay", Q_ARG(QString, date));
@@ -97,8 +100,8 @@ int main(int argc, char *argv[])
         quantTrader.cancelAllOrders = std::bind(&com::lazzyquant::trade_executer::cancelAllOrders, pExecuter, _1);
         quantTrader.setPosition = std::bind(&com::lazzyquant::trade_executer::setPosition, pExecuter, _1, _2);
 
-        multiTimer = new MultipleTimer({{8, 50}, {20, 50}});
-        QObject::connect(multiTimer, &MultipleTimer::timesUp, [pWatcher, &quantTrader]() -> void {
+        marketOpenTimer = new MultipleTimer({{8, 50}, {20, 50}});
+        QObject::connect(marketOpenTimer, &MultipleTimer::timesUp, [pWatcher, &quantTrader]() -> void {
                              if (pWatcher->isValid() && pWatcher->getStatus() == "Ready") {
                                  QString tradingDay = pWatcher->getTradingDay();
                                  quantTrader.setTradingDay(tradingDay);
@@ -106,13 +109,20 @@ int main(int argc, char *argv[])
                                  qWarning() << "Market Watcher Not Ready!";
                              }
                          });
+
+        marketCloseTimer = new MultipleTimer({{2, 35}, {11, 35}, {15, 5}});
+        QObject::connect(marketCloseTimer, &MultipleTimer::timesUp, &quantTrader, &QuantTrader::onMarketClose);
     }
 
     int ret = a.exec();
     delete pConnManager;
-    if (multiTimer) {
-        multiTimer->disconnect();
-        delete multiTimer;
+    if (marketOpenTimer) {
+        marketOpenTimer->disconnect();
+        delete marketOpenTimer;
+    }
+    if (marketCloseTimer) {
+        marketCloseTimer->disconnect();
+        delete marketCloseTimer;
     }
     delete pWatcherOrReplayer;
     if (pExecuter) {

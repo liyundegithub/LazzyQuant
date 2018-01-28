@@ -35,8 +35,8 @@ public:
     Bar(const KTExportBar &ktbar);
     ~Bar();
 
-    void init();
-    bool isNewBar() const;
+    void reset();
+    bool isEmpty() const;
 };
 
 Q_DECLARE_METATYPE(Bar)

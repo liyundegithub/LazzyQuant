@@ -4,7 +4,7 @@
 
 Bar::Bar()
 {
-    init();
+    reset();
 }
 
 Bar::Bar(const KTExportBar &ktbar)
@@ -22,7 +22,7 @@ Bar::~Bar()
 {
 }
 
-void Bar::init()
+void Bar::reset()
 {
     time = 0;
     open = -1.5f;
@@ -33,7 +33,7 @@ void Bar::init()
     volume = 0;
 }
 
-bool Bar::isNewBar() const
+bool Bar::isEmpty() const
 {
     return tick_volume == 0;
 }

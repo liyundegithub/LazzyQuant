@@ -40,6 +40,7 @@ public:
         return &barMap[timeFrame];
     }
     bool onMarketData(int time, double lastPrice, int volume);
+    void saveEmitReset(int timeFrame, Bar &bar);
 
 protected:
     const QString instrument;
@@ -59,6 +60,7 @@ signals:
 public slots:
     void setTradingDay(const QString &tradingDay, const QString &lastNight);
     void saveBar(int timeFrame, const Bar &bar);
+    void flush();
 };
 
 #endif // BAR_COLLECTOR_H

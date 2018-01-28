@@ -493,3 +493,14 @@ void QuantTrader::onNewBar(const QString &instrumentID, int timeFrame, const Bar
         strategy->checkIfNewBar(timeFrame);
     }
 }
+
+/*!
+ * \brief QuantTrader::onMarketClose
+ * 休市/收盘
+ */
+void QuantTrader::onMarketClose()
+{
+    for (auto * collector : qAsConst(collector_map)) {
+        collector->flush();
+    }
+}

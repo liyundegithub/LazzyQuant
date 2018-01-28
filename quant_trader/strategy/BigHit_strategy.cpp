@@ -1,23 +1,20 @@
 #include "common_utility.h"
-#include "../bar.h"
-#include "../mql5_compatible.h"
 #include "bighit_strategy.h"
 
-#include <cfloat>
 #include <QVariant>
 #include <QTime>
 
-BigHitStrategy::BigHitStrategy(const QString &id, const QString &instrumentID, const QString &time_frame, QObject *parent) :
-    AbstractStrategy(id, instrumentID, time_frame, parent),
+BigHitStrategy::BigHitStrategy(const QString &id, const QString &instrumentID, int timeFrame, QObject *parent) :
+    SingleTimeFrameStrategy(id, instrumentID, timeFrame, parent),
     biggestVolEver(false),
     bigHit(0)
 {
     //
 }
 
-void BigHitStrategy::setParameter(const QVariant& param1, const QVariant& param2, const QVariant& param3,
-                                  const QVariant& /*4*/ , const QVariant& /*5*/ , const QVariant& /*6*/ ,
-                                  const QVariant& /*7*/ , const QVariant& /*8*/ , const QVariant& /*9*/)
+void BigHitStrategy::setParameter(const QVariant &param1, const QVariant &param2, const QVariant &param3,
+                                  const QVariant &/*4*/ , const QVariant &/*5*/ , const QVariant &/*6*/ ,
+                                  const QVariant &/*7*/ , const QVariant &/*8*/ , const QVariant &/*9*/)
 {
     int deltaTime = param1.toInt();
     double deltaPrice = param2.toDouble();
@@ -64,7 +61,7 @@ void BigHitStrategy::onNewBar()
     }
 }
 
-void BigHitStrategy::onNewTick(uint time, double lastPrice)
+void BigHitStrategy::onNewTick(int time, double lastPrice)
 {
     if (!recentPrices.empty()) {
         while (!recentPrices.empty() && !isTimeCloseEnouogh(recentPrices.head().first, time, dT)) {
@@ -90,16 +87,16 @@ void BigHitStrategy::onNewTick(uint time, double lastPrice)
 
     if (biggestVolEver && (time < expireTime)) {
         if (bigHit > 0) {
-            position = 1;
+            setPosition(1);
         } else if (bigHit < 0) {
-            position = -1;
+            setPosition(-1);
         }
     } else {
         if (position.is_initialized()) {
             if (position.value() > 0 && bigHit < 0) {
-                position = 0;
+                setPosition(0);
             } else if (position.value() < 0 && bigHit > 0){
-                position = 0;
+                setPosition(0);
             }
         }
     }

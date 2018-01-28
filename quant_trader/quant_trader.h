@@ -53,6 +53,7 @@ public slots:
     void onMarketData(const QString &instrumentID, int time, double lastPrice, int volume,
                       double askPrice1, int askVolume1, double bidPrice1, int bidVolume1);
     void onNewBar(const QString &instrumentID, int time_frame, const Bar &bar);
+    void onMarketClose();
 };
 
 #endif // QUANT_TRADER_H
