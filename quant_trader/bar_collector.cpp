@@ -25,17 +25,39 @@ BarCollector::BarCollector(const QString &instrumentID, const TimeFrames &timeFr
 
     if (saveBarsToDB) {
         sqlDB = QSqlDatabase::database();
+        QSqlQuery qry(sqlDB);
+        if (!qry.exec("show databases")) {
+            qCritical().noquote() << "Show databases failed!";
+            qCritical().noquote() << qry.lastError();
+            this->saveBarsToDB = false;
+            return;
+        }
+        bool dbExist = false;
+        while (qry.next()) {
+            QString dbName = qry.value(0).toString();
+            if (dbName == instrument) {
+                dbExist = true;
+            }
+        }
+        if (!dbExist) {
+            if (!qry.exec("create database " + instrument)) {
+                qCritical().noquote() << "Create database" << instrument << "failed!";
+                qCritical().noquote() << qry.lastError();
+                this->saveBarsToDB = false;
+                return;
+            }
+        }
         sqlDB.close();
         sqlDB.setDatabaseName(instrument);
         sqlDB.open();
         const QStringList tables = sqlDB.tables();
-        QSqlQuery qry(sqlDB);
 
         for (auto key : qAsConst(keys)) {
             // Check if the table is already created for collected bars
             QString tableName = BarCollector::staticMetaObject.enumerator(timeFrameEnumIdx).valueToKey(key);
             if (!tables.contains(tableName, Qt::CaseInsensitive)) {
-                bool ok = qry.exec("CREATE TABLE " + tableName + " ("
+                QString tableOfDB = QString("%1.%2").arg(instrument).arg(tableName);
+                bool ok = qry.exec("CREATE TABLE " + tableOfDB + " ("
                                    "`time` BIGINT NOT NULL,"
                                    "`open` DOUBLE NULL,"
                                    "`high` DOUBLE NULL,"
@@ -47,8 +69,9 @@ BarCollector::BarCollector(const QString &instrumentID, const TimeFrames &timeFr
                                    "PRIMARY KEY (`time`))");
 
                 if (!ok) {
-                    qCritical().noquote() << "Create table" << tableName << "in" << instrumentID << "failed!";
-                    qDebug().noquote() << qry.lastError();
+                    qCritical().noquote() << "Create table" << tableOfDB << "failed!";
+                    qCritical().noquote() << qry.lastError();
+                    this->saveBarsToDB = false;
                 }
             }
         }
@@ -158,7 +181,8 @@ void BarCollector::saveBar(int timeFrame, const Bar &bar)
 {
     QSqlQuery qry(sqlDB);
     QString tableName = BarCollector::staticMetaObject.enumerator(timeFrameEnumIdx).valueToKey(timeFrame);
-    qry.prepare("INSERT INTO " + QString("%1.%2").arg(instrument).arg(tableName) + " (time, open, high, low, close, tick_volume, volume, type) "
+    QString tableOfDB = QString("%1.%2").arg(instrument).arg(tableName);
+    qry.prepare("INSERT INTO " + tableOfDB + " (time, open, high, low, close, tick_volume, volume, type) "
                   "VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
     qry.bindValue(0, bar.time);
     qry.bindValue(1, bar.open);
@@ -170,8 +194,8 @@ void BarCollector::saveBar(int timeFrame, const Bar &bar)
     qry.bindValue(7, 1);
     bool ok = qry.exec();
     if (!ok) {
-        qDebug() << "insert failed!";
-        qDebug() << qry.lastError();
+        qCritical().noquote() << "Insert bar into" << tableOfDB << "failed!";
+        qCritical().noquote() << qry.lastError();
     }
 }
 

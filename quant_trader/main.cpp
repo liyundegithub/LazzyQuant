@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationVersion(VERSION_STR);
 
     QCommandLineParser parser;
-    parser.setApplicationDescription("Collect K lines, calculate indicators/strategies and call executer automatically.");
+    parser.setApplicationDescription("Collect K lines, calculate indicators/strategies and call TradeExecuter automatically.");
     parser.addHelpOption();
     parser.addVersionOption();
 
@@ -31,11 +31,13 @@ int main(int argc, char *argv[])
         {{"r", "replay"},
             QCoreApplication::translate("main", "Replay Mode")},
         {{"s", "start"},
-            QCoreApplication::translate("main", "Start Date"), "ReplayStartDate"},
+            QCoreApplication::translate("main", "Replay start date"), "yyyyMMdd"},
         {{"e", "end"},
-            QCoreApplication::translate("main", "End Date"), "ReplayEndDate"},
+            QCoreApplication::translate("main", "Replay end date"), "yyyyMMdd"},
         {{"a", "save"},
-            QCoreApplication::translate("main", "Save Bars to DB")},
+            QCoreApplication::translate("main", "Force saving collected bars to DB even in replay mode.")},
+        {{"x", "executer"},
+            QCoreApplication::translate("main", "Connect to TradeExecuter"), "0 or 1"},
     });
 
     parser.process(a);
@@ -48,6 +50,13 @@ int main(int argc, char *argv[])
     }
     bool explicitSave = parser.isSet("save");
     bool saveBarsToDB = explicitSave || (!replayMode);
+
+    bool useConnectToExecuter = parser.isSet("executer");
+    bool connectToExecuter = false;
+    if (useConnectToExecuter) {
+        QString executerOption = parser.value("executer");
+        connectToExecuter = (executerOption == "1");
+    }
 
     com::lazzyquant::market_watcher *pWatcher = new com::lazzyquant::market_watcher(WATCHER_DBUS_SERVICE, WATCHER_DBUS_OBJECT, QDBusConnection::sessionBus());
 
@@ -70,12 +79,18 @@ int main(int argc, char *argv[])
         pWatcherOrReplayer = pWatcher;
     }
 
-    com::lazzyquant::trade_executer *pExecuter = nullptr;
     QuantTrader quantTrader(saveBarsToDB);
     MultipleTimer *marketOpenTimer = nullptr;
     MultipleTimer *marketCloseTimer = nullptr;
 
     ConnectionManager *pConnManager = new ConnectionManager({pWatcherOrReplayer}, {&quantTrader});
+
+    com::lazzyquant::trade_executer *pExecuter = nullptr;
+    if ((!replayMode && !useConnectToExecuter) || (useConnectToExecuter && connectToExecuter)) {
+        pExecuter = new com::lazzyquant::trade_executer(EXECUTER_DBUS_SERVICE, EXECUTER_DBUS_OBJECT, QDBusConnection::sessionBus());
+        quantTrader.cancelAllOrders = std::bind(&com::lazzyquant::trade_executer::cancelAllOrders, pExecuter, _1);
+        quantTrader.setPosition = std::bind(&com::lazzyquant::trade_executer::setPosition, pExecuter, _1, _2);
+    }
 
     if (replayMode) {
         TradingCalendar tc;
@@ -96,10 +111,6 @@ int main(int argc, char *argv[])
                                }
                            });
     } else {
-        pExecuter = new com::lazzyquant::trade_executer(EXECUTER_DBUS_SERVICE, EXECUTER_DBUS_OBJECT, QDBusConnection::sessionBus());
-        quantTrader.cancelAllOrders = std::bind(&com::lazzyquant::trade_executer::cancelAllOrders, pExecuter, _1);
-        quantTrader.setPosition = std::bind(&com::lazzyquant::trade_executer::setPosition, pExecuter, _1, _2);
-
         marketOpenTimer = new MultipleTimer({{8, 50}, {20, 50}});
         QObject::connect(marketOpenTimer, &MultipleTimer::timesUp, [pWatcher, &quantTrader]() -> void {
                              if (pWatcher->isValid() && pWatcher->getStatus() == "Ready") {

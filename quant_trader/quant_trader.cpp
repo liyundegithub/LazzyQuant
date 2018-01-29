@@ -179,7 +179,7 @@ static inline QString getKTExportName(const QString &instrumentID) {
 
 /*!
  * \brief QuantTrader::getBars
- * 获取历史K线数据, 包括从飞狐交易师导出的数据和quant_trader保存的K线数据
+ * 获取历史K线数据, 包括从飞狐交易师导出的数据和BarCollector保存到数据库的K线数据
  *
  * \param instrumentID 合约代码
  * \param timeFrame 时间框架(枚举)
