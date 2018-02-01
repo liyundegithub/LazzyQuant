@@ -26,21 +26,19 @@ BarCollector::BarCollector(const QString &instrumentID, const TimeFrames &timeFr
     if (saveBarsToDB) {
         sqlDB = QSqlDatabase::database();
         QSqlQuery qry(sqlDB);
-        if (!qry.exec("show databases")) {
+        if (!qry.exec("SHOW DATABASES")) {
             qCritical().noquote() << "Show databases failed!";
             qCritical().noquote() << qry.lastError();
             this->saveBarsToDB = false;
             return;
         }
-        bool dbExist = false;
+        QStringList dbNames;
         while (qry.next()) {
             QString dbName = qry.value(0).toString();
-            if (dbName == instrument) {
-                dbExist = true;
-            }
+            dbNames << dbName;
         }
-        if (!dbExist) {
-            if (!qry.exec("create database " + instrument)) {
+        if (!dbNames.contains(instrument, Qt::CaseInsensitive)) {
+            if (!qry.exec("CREATE DATABASE " + instrument)) {
                 qCritical().noquote() << "Create database" << instrument << "failed!";
                 qCritical().noquote() << qry.lastError();
                 this->saveBarsToDB = false;
@@ -72,6 +70,7 @@ BarCollector::BarCollector(const QString &instrumentID, const TimeFrames &timeFr
                     qCritical().noquote() << "Create table" << tableOfDB << "failed!";
                     qCritical().noquote() << qry.lastError();
                     this->saveBarsToDB = false;
+                    break;
                 }
             }
         }

@@ -54,6 +54,7 @@ public slots:
                       double askPrice1, int askVolume1, double bidPrice1, int bidVolume1);
     void onNewBar(const QString &instrumentID, int time_frame, const Bar &bar);
     void onMarketClose();
+    bool checkDataBaseStatus();
 };
 
 #endif // QUANT_TRADER_H

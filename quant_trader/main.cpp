@@ -119,6 +119,7 @@ int main(int argc, char *argv[])
                              } else {
                                  qWarning() << "Market Watcher Not Ready!";
                              }
+                             quantTrader.checkDataBaseStatus();
                          });
 
         marketCloseTimer = new MultipleTimer({{2, 35}, {11, 35}, {15, 5}});

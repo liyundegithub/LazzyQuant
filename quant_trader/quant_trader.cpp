@@ -504,3 +504,30 @@ void QuantTrader::onMarketClose()
         collector->flush();
     }
 }
+
+/*!
+ * \brief QuantTrader::checkDataBaseStatus
+ * 检查数据库连接状态, 如果连接已经失效, 断开重连
+ */
+bool QuantTrader::checkDataBaseStatus()
+{
+    QSqlQuery qry(sqlDB);
+    bool ret = qry.exec("SHOW PROCESSLIST");
+    if (!ret) {
+        qWarning().noquote() << "Execute query failed! Will re-open database!";
+        qWarning().noquote() << qry.lastError();
+        sqlDB.close();
+        if (sqlDB.open()) {
+            ret = qry.exec("SHOW PROCESSLIST");
+        } else {
+            qCritical().noquote() << "Re-open database failed!";
+            qCritical().noquote() << qry.lastError();
+        }
+    }
+    if (ret) {
+        while (qry.next()) {
+            qInfo() << qry.value(0).toLongLong() << qry.value(1).toString();
+        }
+    }
+    return ret;
+}
