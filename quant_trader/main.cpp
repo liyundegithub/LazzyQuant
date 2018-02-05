@@ -1,3 +1,5 @@
+#include <QList>
+#include <QTime>
 #include <QCoreApplication>
 #include <QCommandLineParser>
 
@@ -122,8 +124,16 @@ int main(int argc, char *argv[])
                              quantTrader.checkDataBaseStatus();
                          });
 
-        marketCloseTimer = new MultipleTimer({{2, 35}, {11, 35}, {15, 5}});
-        QObject::connect(marketCloseTimer, &MultipleTimer::timesUp, &quantTrader, &QuantTrader::onMarketClose);
+        QList<QTime> timePoints({{2, 35}, {11, 35}, {15, 5}});
+        int tradingTimeSegments = timePoints.size();
+        marketCloseTimer = new MultipleTimer(timePoints);
+        QObject::connect(marketCloseTimer, &MultipleTimer::timesUp, [&quantTrader, tradingTimeSegments](int idx) -> void {
+            if (idx == (tradingTimeSegments - 1)) {
+                quantTrader.onMarketClose();
+            } else {
+                quantTrader.onMarketPause();
+            }
+        });
     }
 
     int ret = a.exec();
