@@ -60,7 +60,7 @@ signals:
 public slots:
     void setTradingDay(const QString &tradingDay, const QString &lastNight);
     void saveBar(int timeFrame, const Bar &bar);
-    void flush();
+    void flush(bool endOfDay);
 };
 
 #endif // BAR_COLLECTOR_H

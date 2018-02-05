@@ -495,19 +495,32 @@ void QuantTrader::onNewBar(const QString &instrumentID, int timeFrame, const Bar
 }
 
 /*!
+ * \brief QuantTrader::onMarketPause
+ * 盘中休市
+ */
+void QuantTrader::onMarketPause()
+{
+    for (auto * collector : qAsConst(collector_map)) {
+        collector->flush(false);
+    }
+}
+
+/*!
  * \brief QuantTrader::onMarketClose
- * 休市/收盘
+ * 收盘
  */
 void QuantTrader::onMarketClose()
 {
     for (auto * collector : qAsConst(collector_map)) {
-        collector->flush();
+        collector->flush(true);
     }
 }
 
 /*!
  * \brief QuantTrader::checkDataBaseStatus
  * 检查数据库连接状态, 如果连接已经失效, 断开重连
+ *
+ * \return 数据库连接状态, true正常, false不正常
  */
 bool QuantTrader::checkDataBaseStatus()
 {

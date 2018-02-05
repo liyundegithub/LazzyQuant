@@ -198,9 +198,11 @@ void BarCollector::saveBar(int timeFrame, const Bar &bar)
     }
 }
 
-void BarCollector::flush()
+void BarCollector::flush(bool endOfDay)
 {
     for (auto key : qAsConst(keys)) {
-        saveEmitReset(key, barMap[key]);
+        if ((key != DAY) || ((key == DAY) && endOfDay)) {
+            saveEmitReset(key, barMap[key]);
+        }
     }
 }
