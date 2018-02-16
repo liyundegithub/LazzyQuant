@@ -120,7 +120,9 @@ bool BarCollector::onMarketData(int time, double lastPrice, int volume)
         auto time_unit = g_time_table[static_cast<TimeFrame>(key)];  // TODO optimize, use time_unit as key
 
         if ((currentTime / time_unit) != (bar.time / time_unit)) {
-            saveEmitReset(key, bar);
+            if (key != DAY) {
+                saveEmitReset(key, bar);
+            }
         }
 
         if (!isNewTick) {
@@ -129,7 +131,11 @@ bool BarCollector::onMarketData(int time, double lastPrice, int volume)
 
         if (bar.isEmpty()) {
             bar.open = lastPrice;
-            bar.time = currentTime / time_unit * time_unit;
+            if (key == DAY) {
+                bar.time = tradingDayBase;
+            } else {
+                bar.time = currentTime / time_unit * time_unit;
+            }
         }
 
         if (lastPrice > bar.high) {
