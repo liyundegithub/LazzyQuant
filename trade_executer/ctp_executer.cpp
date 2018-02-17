@@ -161,10 +161,10 @@ void CtpExecuter::customEvent(QEvent *event)
     {
         auto *aevent = static_cast<AuthenticateEvent*>(event);
         if (aevent->errorID == 0) {
-            qInfo() << DATE_TIME << "Authenticate OK!";
+            qInfo() << "Authenticate OK!";
             login();
         } else {
-            qWarning() << DATE_TIME << "Authenticate failed! Error ID =" << aevent->errorID;
+            qWarning() << "Authenticate failed! Error ID =" << aevent->errorID;
         }
     }
         break;
@@ -175,14 +175,14 @@ void CtpExecuter::customEvent(QEvent *event)
             loggedIn = true;
             cacheReady = false;
 
-            qInfo() << DATE_TIME << "UserLogin OK! FrontID =" << uevent->rspUserLogin.FrontID << ", SessionID =" << uevent->rspUserLogin.SessionID;
+            qInfo() << "UserLogin OK! FrontID =" << uevent->rspUserLogin.FrontID << ", SessionID =" << uevent->rspUserLogin.SessionID;
 
             settlementInfoConfirm();
             QTimer::singleShot(1000, this, SLOT(updateOrderMap()));
             QTimer::singleShot(2000, this, SLOT(qryPositionDetail()));
             QTimer::singleShot(5000, this, &CtpExecuter::updateInstrumentDataCache);
         } else {
-            qWarning() << DATE_TIME << "UserLogin failed! Error ID =" << uevent->errorID;
+            qWarning() << "UserLogin failed! Error ID =" << uevent->errorID;
         }
     }
         break;
@@ -216,7 +216,7 @@ void CtpExecuter::customEvent(QEvent *event)
         for (const auto &item : qmevent->instrumentMarginRateList) {
             marginRateCache[item.InstrumentID] = item;
         }
-        qInfo() << DATE_TIME << " Updated" << qmevent->instrumentMarginRateList.size() << "instrument margin rate!";
+        qInfo() << " Updated" << qmevent->instrumentMarginRateList.size() << "instrument margin rate!";
     }
         break;
     case RSP_QRY_INSTRUMENT_COMMISSION_RATE:
@@ -225,7 +225,7 @@ void CtpExecuter::customEvent(QEvent *event)
         for (const auto &item : qcevent->instrumentCommissionRateList) {
             commissionRateCache[item.InstrumentID] = item;
         }
-        qInfo() << DATE_TIME << " Updated" << qcevent->instrumentCommissionRateList.size() << "instrument commission rate!";
+        qInfo() << " Updated" << qcevent->instrumentCommissionRateList.size() << "instrument commission rate!";
     }
         break;
     case RSP_QRY_INSTRUMENT:
@@ -239,7 +239,7 @@ void CtpExecuter::customEvent(QEvent *event)
             }
         }
         combineInstruments = instrumentsWithAnd;
-        qInfo() << DATE_TIME << " Updated" << qievent->instrumentList.size() << "instruments!";
+        qInfo() << " Updated" << qievent->instrumentList.size() << "instruments!";
     }
         break;
     case RSP_DEPTH_MARKET_DATA:
@@ -249,19 +249,19 @@ void CtpExecuter::customEvent(QEvent *event)
             const QString instrument = item.InstrumentID;
             upperLowerLimitCache[instrument] = qMakePair(item.UpperLimitPrice, item.LowerLimitPrice);
         }
-        qInfo() << DATE_TIME << " Updated" << devent->depthMarketDataList.size() << "depth market data!";
+        qInfo() << " Updated" << devent->depthMarketDataList.size() << "depth market data!";
     }
         break;
     case RSP_ORDER_INSERT:
     {
         auto *ievent = static_cast<RspOrderInsertEvent*>(event);
-        qWarning() << DATE_TIME << "Order insert failed! errorID =" << ievent->errorID;
+        qWarning() << "Order insert failed! errorID =" << ievent->errorID;
     }
         break;
     case RSP_ORDER_ACTION:
     {
         auto *aevent = static_cast<RspOrderActionEvent*>(event);
-        qWarning() << DATE_TIME << "Order cancel failed! errorID =" << aevent->errorID;
+        qWarning() << "Order cancel failed! errorID =" << aevent->errorID;
     }
         break;
     case RSP_PARKED_ORDER_INSERT:
@@ -322,13 +322,13 @@ void CtpExecuter::customEvent(QEvent *event)
     case ERR_RTN_ORDER_INSERT:
     {
         auto *eievent = static_cast<ErrRtnOrderInsertEvent*>(event);
-        qWarning() << DATE_TIME << "Order insert failed! errorID =" << eievent->errorID;
+        qWarning() << "Order insert failed! errorID =" << eievent->errorID;
     }
         break;
     case ERR_RTN_ORDER_ACTION:
     {
         auto *eaevent = static_cast<ErrRtnOrderActionEvent*>(event);
-        qWarning() << DATE_TIME << "Order cancel failed! errorID =" << eaevent->errorID;
+        qWarning() << "Order cancel failed! errorID =" << eaevent->errorID;
     }
         break;
     case RTN_ORDER:
@@ -1262,19 +1262,19 @@ bool CtpExecuter::checkLimitOrder(const QString& instrument, double price, bool 
 
             if (direction) {
                 if (price > (minShortPrice - tolerance)) {
-                    qWarning() << DATE_TIME << "This limit order may cause self trade, which is not allowed!";
+                    qWarning() << "This limit order may cause self trade, which is not allowed!";
                     return false;
                 }
             } else {
                 if (price < (maxLongPrice + tolerance)) {
-                    qWarning() << DATE_TIME << "This limit order may cause self trade, which is not allowed!";
+                    qWarning() << "This limit order may cause self trade, which is not allowed!";
                     return false;
                 }
             }
         }
 
         if (orderCancelCountMap[instrument] >= orderCancelLimit) {
-            qWarning() << DATE_TIME << "The cancel order counter exceeds limit on this instrument!";
+            qWarning() << "The cancel order counter exceeds limit on this instrument!";
             return false;
         }
     }
@@ -1357,7 +1357,7 @@ void CtpExecuter::confirmSettlementInfo()
     if (loggedIn) {
         settlementInfoConfirm();
     } else {
-        qWarning() << DATE_TIME << "ConfirmSettleInfo failed! Not logged in!";
+        qWarning() << "ConfirmSettleInfo failed! Not logged in!";
     }
 }
 
@@ -1366,7 +1366,7 @@ void CtpExecuter::updateAccountInfo()
     if (loggedIn) {
         qryTradingAccount();
     } else {
-        qWarning() << DATE_TIME << "UpdateAccountInfo failed! Not logged in!";
+        qWarning() << "UpdateAccountInfo failed! Not logged in!";
     }
 }
 
@@ -1386,7 +1386,7 @@ void CtpExecuter::updateInstrumentDataCache()
         qryDepthMarketData();
         cacheReady = true;  //FIXME
     } else {
-        qWarning() << DATE_TIME << "UpdateInstrumentDataCache failed! Not logged in!";
+        qWarning() << "UpdateInstrumentDataCache failed! Not logged in!";
     }
 }
 
@@ -1542,7 +1542,7 @@ static inline void analyzeOrderType(int orderType, bool &allOrAny, bool &gfdOrIo
  */
 void CtpExecuter::buyLimitAuto(const QString& instrument, int volume, double price, int orderType)
 {
-    qDebug() << DATE_TIME << "buyLimitAuto" << instrument << ": volume =" << volume << ", price =" << price << ", orderType =" << orderType;
+    qDebug() << "buyLimitAuto" << instrument << ": volume =" << volume << ", price =" << price << ", orderType =" << orderType;
 
     if (!checkLimitOrder(instrument, price, true, orderType)) {
         return;
@@ -1588,7 +1588,7 @@ void CtpExecuter::buyLimitAuto(const QString& instrument, int volume, double pri
  */
 void CtpExecuter::sellLimitAuto(const QString& instrument, int volume, double price, int orderType)
 {
-    qDebug() << DATE_TIME << "sellLimitAuto" << instrument << ": volume =" << volume << ", price =" << price << ", orderType =" << orderType;
+    qDebug() << "sellLimitAuto" << instrument << ": volume =" << volume << ", price =" << price << ", orderType =" << orderType;
 
     if (!checkLimitOrder(instrument, price, false, orderType)) {
         return;
@@ -1634,7 +1634,7 @@ void CtpExecuter::sellLimitAuto(const QString& instrument, int volume, double pr
  */
 void CtpExecuter::buyLimit(const QString& instrument, int volume, double price, int orderType)
 {
-    qDebug() << DATE_TIME << "buyLimit" << instrument << ": volume =" << volume << ", price =" << price << ", orderType =" << orderType;
+    qDebug() << "buyLimit" << instrument << ": volume =" << volume << ", price =" << price << ", orderType =" << orderType;
 
     if (!checkLimitOrder(instrument, price, true, orderType)) {
         return;
@@ -1657,7 +1657,7 @@ void CtpExecuter::buyLimit(const QString& instrument, int volume, double price, 
  */
 void CtpExecuter::sellLimit(const QString& instrument, int volume, double price, int orderType)
 {
-    qDebug() << DATE_TIME << "sellLimit" << instrument << ": volume =" << volume << ", price =" << price << ", orderType =" << orderType;
+    qDebug() << "sellLimit" << instrument << ": volume =" << volume << ", price =" << price << ", orderType =" << orderType;
 
     if (!checkLimitOrder(instrument, price, false, orderType)) {
         return;
@@ -1679,7 +1679,7 @@ void CtpExecuter::sellLimit(const QString& instrument, int volume, double price,
  */
 void CtpExecuter::buyMarketAuto(const QString &instrument, int volume, bool useSimulation)
 {
-    qDebug() << DATE_TIME << "buyMarketAuto" << instrument << ": volume =" << volume;
+    qDebug() << "buyMarketAuto" << instrument << ": volume =" << volume;
 
     if (!canUseMarketOrder(instrument) || useSimulation) {
         // Use FAK instead of market order
@@ -1722,7 +1722,7 @@ void CtpExecuter::buyMarketAuto(const QString &instrument, int volume, bool useS
  */
 void CtpExecuter::sellMarketAuto(const QString &instrument, int volume, bool useSimulation)
 {
-    qDebug() << DATE_TIME << "sellMarketAuto" << instrument << ": volume =" << volume;
+    qDebug() << "sellMarketAuto" << instrument << ": volume =" << volume;
 
     if (!canUseMarketOrder(instrument) || useSimulation) {
         // Use FAK instead of market order
@@ -1765,7 +1765,7 @@ void CtpExecuter::sellMarketAuto(const QString &instrument, int volume, bool use
  */
 void CtpExecuter::buyMarket(const QString &instrument, int volume, bool useSimulation)
 {
-    qDebug() << DATE_TIME << "buyMarket" << instrument << ": volume =" << volume;
+    qDebug() << "buyMarket" << instrument << ": volume =" << volume;
 
     if (!canUseMarketOrder(instrument) || useSimulation) {
         // Use FAK instead of market order
@@ -1785,7 +1785,7 @@ void CtpExecuter::buyMarket(const QString &instrument, int volume, bool useSimul
  */
 void CtpExecuter::sellMarket(const QString &instrument, int volume, bool useSimulation)
 {
-    qDebug() << DATE_TIME << "sellMarket" << instrument << ": volume =" << volume;
+    qDebug() << "sellMarket" << instrument << ": volume =" << volume;
 
     if (!canUseMarketOrder(instrument) || useSimulation) {
         // Use FAK instead of market order
@@ -1800,7 +1800,7 @@ void CtpExecuter::buyCombine(const QString &instrument1, const QString &instrume
     // TODO optimize
     for (const auto &combineInstrument : qAsConst(combineInstruments)) {
         if (combineInstrument.contains(instrument1) && combineInstrument.contains(instrument2)) {
-            qDebug() << DATE_TIME << "buyCombine" << combineInstrument << ": volume =" << volume << ", price =" << price << ", orderType =" << orderType;
+            qDebug() << "buyCombine" << combineInstrument << ": volume =" << volume << ", price =" << price << ", orderType =" << orderType;
 
             bool allOrAny, gfdOrIoc;
             analyzeOrderType(orderType, allOrAny, gfdOrIoc);
@@ -1809,7 +1809,7 @@ void CtpExecuter::buyCombine(const QString &instrument1, const QString &instrume
             return;
         }
     }
-    qDebug() << DATE_TIME << "No such combination:" << instrument1 << instrument2;
+    qDebug() << "No such combination:" << instrument1 << instrument2;
 }
 
 void CtpExecuter::sellCombine(const QString &instrument1, const QString &instrument2, int volume, double price, int orderType)
@@ -1817,7 +1817,7 @@ void CtpExecuter::sellCombine(const QString &instrument1, const QString &instrum
     // TODO optimize
     for (const auto &combineInstrument : qAsConst(combineInstruments)) {
         if (combineInstrument.contains(instrument1) && combineInstrument.contains(instrument2)) {
-            qDebug() << DATE_TIME << "sellCombine" << combineInstrument << ": volume =" << volume << ", price =" << price << ", orderType =" << orderType;
+            qDebug() << "sellCombine" << combineInstrument << ": volume =" << volume << ", price =" << price << ", orderType =" << orderType;
 
             bool allOrAny, gfdOrIoc;
             analyzeOrderType(orderType, allOrAny, gfdOrIoc);
@@ -1826,7 +1826,7 @@ void CtpExecuter::sellCombine(const QString &instrument1, const QString &instrum
             return;
         }
     }
-    qDebug() << DATE_TIME << "No such combination:" << instrument1 << instrument2;
+    qDebug() << "No such combination:" << instrument1 << instrument2;
 }
 
 /*!
@@ -1844,9 +1844,9 @@ void CtpExecuter::cancelOrder(int orderRefID, int frontID, int sessionID, const 
         TThostFtdcOrderRefType orderRef;
         sprintf(orderRef, "%12d", orderRefID);
         orderAction(orderRef, frontID, sessionID, instrument);
-        qInfo() << DATE_TIME << "Cancel order count of" << instrument << ":" << orderCancelCountMap[instrument];
+        qInfo() << "Cancel order count of" << instrument << ":" << orderCancelCountMap[instrument];
     } else {
-        qWarning() << DATE_TIME << "Cancel order failed! Not logged in!";
+        qWarning() << "Cancel order failed! Not logged in!";
     }
 }
 
@@ -1866,11 +1866,11 @@ void CtpExecuter::cancelAllOrders(const QString &instrument)
                 sprintf(orderRef, "%12d", item.refId);
                 orderAction(orderRef, item.frontId, item.sessionId, item.instrument);
                 orderCancelCountMap[item.instrument] ++;
-                qInfo() << DATE_TIME << "Cancel order count of" << item.instrument << ":" << orderCancelCountMap[item.instrument];
+                qInfo() << "Cancel order count of" << item.instrument << ":" << orderCancelCountMap[item.instrument];
             }
         }
     } else {
-        qWarning() << DATE_TIME << "Cancel order failed! Not logged in!";
+        qWarning() << "Cancel order failed! Not logged in!";
     }
 }
 
@@ -1885,7 +1885,7 @@ void CtpExecuter::cancelAllOrders(const QString &instrument)
  */
 void CtpExecuter::parkBuyLimit(const QString& instrument, int volume, double price, int orderType)
 {
-    qInfo() << DATE_TIME << "parkBuyLimit" << instrument << ": volume =" << volume << ", price =" << price << ", orderType =" << orderType;
+    qInfo() << "parkBuyLimit" << instrument << ": volume =" << volume << ", price =" << price << ", orderType =" << orderType;
 
     bool allOrAny, gfdOrIoc;
     analyzeOrderType(orderType, allOrAny, gfdOrIoc);
@@ -1904,7 +1904,7 @@ void CtpExecuter::parkBuyLimit(const QString& instrument, int volume, double pri
  */
 void CtpExecuter::parkSellLimit(const QString& instrument, int volume, double price, int orderType)
 {
-    qInfo() << DATE_TIME << "parkSellLimit" << instrument << ": volume =" << volume << ", price =" << price << ", orderType =" << orderType;
+    qInfo() << "parkSellLimit" << instrument << ": volume =" << volume << ", price =" << price << ", orderType =" << orderType;
 
     bool allOrAny, gfdOrIoc;
     analyzeOrderType(orderType, allOrAny, gfdOrIoc);
@@ -1923,7 +1923,7 @@ void CtpExecuter::parkSellLimit(const QString& instrument, int volume, double pr
  */
 void CtpExecuter::parkOrderCancel(int orderRefID, int frontID, int sessionID, const QString &instrument)
 {
-    qInfo() << DATE_TIME << "parkOrderCancel" << instrument << ": orderRefID =" << orderRefID << ", frontID =" << frontID << ", sessionID =" << sessionID;
+    qInfo() << "parkOrderCancel" << instrument << ": orderRefID =" << orderRefID << ", frontID =" << frontID << ", sessionID =" << sessionID;
 
     TThostFtdcOrderRefType orderRef;
     sprintf(orderRef, "%12d", orderRefID);
@@ -1939,7 +1939,7 @@ void CtpExecuter::parkOrderCancel(int orderRefID, int frontID, int sessionID, co
  */
 void CtpExecuter::parkOrderCancelAll(const QString &instrument)
 {
-    qInfo() << DATE_TIME << "parkOrderCancelAll" << instrument;
+    qInfo() << "parkOrderCancelAll" << instrument;
 
     const auto orderList = (instrument == "") ? orderMap.values() : orderMap.values(instrument);
     for (const auto &item : orderList) {
@@ -1959,7 +1959,7 @@ void CtpExecuter::parkOrderCancelAll(const QString &instrument)
  */
 void CtpExecuter::removeParkedOrder(int id)
 {
-    qInfo() << DATE_TIME << "removeParkedOrder" << id;
+    qInfo() << "removeParkedOrder" << id;
 
     TThostFtdcParkedOrderIDType parkedOrderID;
     sprintf(parkedOrderID, "%12d", id);
@@ -1974,7 +1974,7 @@ void CtpExecuter::removeParkedOrder(int id)
  */
 void CtpExecuter::removeParkedOrderAction(int id)
 {
-    qInfo() << DATE_TIME << "removeParkedOrderAction" << id;
+    qInfo() << "removeParkedOrderAction" << id;
 
     TThostFtdcParkedOrderActionIDType parkedOrderActionID;
     sprintf(parkedOrderActionID, "%12d", id);
@@ -2021,7 +2021,7 @@ int CtpExecuter::getPosition(const QString& instrument) const
         qDebug() << "tdShortPositions =" << tdShortPositions.value(instrument);
         return ydLongPositions.value(instrument) + tdLongPositions.value(instrument) - ydShortPositions.value(instrument) - tdShortPositions.value(instrument);
     } else {
-        qWarning() << DATE_TIME << "Cache is not ready!";
+        qWarning() << "Cache is not ready!";
         return -INT_MAX;
     }
 }
@@ -2047,7 +2047,7 @@ void CtpExecuter::execOption(const QString &instrument, int volume)
             qWarning() << instrument << "is not option!";
         }
     } else {
-        qWarning() << DATE_TIME << "Execute" << instrument << "failed! Not logged in!";
+        qWarning() << "Execute" << instrument << "failed! Not logged in!";
     }
 }
 
@@ -2062,7 +2062,7 @@ void CtpExecuter::quote(const QString &instrument)
     if (loggedIn) {
         insertQuote(instrument);
     } else {
-        qWarning() << DATE_TIME << "Quote for" << instrument << "failed! Not logged in!";
+        qWarning() << "Quote for" << instrument << "failed! Not logged in!";
     }
 }
 

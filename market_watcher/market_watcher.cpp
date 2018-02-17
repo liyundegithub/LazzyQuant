@@ -234,12 +234,12 @@ void MarketWatcher::customEvent(QEvent *event)
 {
     switch (int(event->type())) {
     case FRONT_CONNECTED:
-        qInfo() << DATE_TIME << "Front Connected!";
+        qInfo() << "Front Connected!";
         login();
         break;
     case FRONT_DISCONNECTED:
     {
-        qInfo() << DATE_TIME << "Front Disconnected!";
+        qInfo() << "Front Disconnected!";
         loggedIn = false;
         auto *fevent = static_cast<FrontDisconnectedEvent*>(event);
         // TODO
@@ -262,7 +262,7 @@ void MarketWatcher::customEvent(QEvent *event)
     case HEARTBEAT_WARNING:
         break;
     case RSP_USER_LOGIN:
-        qInfo() << DATE_TIME << "Market watcher logged in OK!";
+        qInfo() << "Market watcher logged in OK!";
         loggedIn = true;
         subscribe();
         break;
@@ -275,7 +275,7 @@ void MarketWatcher::customEvent(QEvent *event)
     case DEPTH_MARKET_DATA:
     {
         auto *devent = static_cast<DepthMarketDataEvent*>(event);
-        qDebug() << DATE_TIME << devent->DepthMarketDataField.InstrumentID << name;
+        qDebug() << devent->DepthMarketDataField.InstrumentID << name;
         qDebug() << devent->DepthMarketDataField;
         processDepthMarketData(devent->DepthMarketDataField);
     }
