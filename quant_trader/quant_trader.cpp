@@ -115,6 +115,10 @@ void QuantTrader::loadTradeStrategySettings()
         settings->endGroup();
 
         const QMetaObject* strategy_meta_object = strategyMetaObjects.value(strategy_name);
+        if (strategy_meta_object == nullptr) {
+            qCritical().noquote().nospace() << "Strategy " << group << ": " << strategy_name << " is not supported!";
+            continue;
+        }
         QObject *object = nullptr;
         if (strategy_meta_object->inherits(&SingleTimeFrameStrategy::staticMetaObject)) {
             object = strategy_meta_object->newInstance(Q_ARG(QString, group), Q_ARG(QString, instrument), Q_ARG(int, timeFrames[0]), Q_ARG(QObject*, this));
@@ -122,13 +126,13 @@ void QuantTrader::loadTradeStrategySettings()
             object = strategy_meta_object->newInstance(Q_ARG(QString, group), Q_ARG(QString, instrument), Q_ARG(QList<int>, timeFrames), Q_ARG(QObject*, this));
         }
         if (object == nullptr) {
-            qCritical() << "Instantiating strategy" << group << "failed!";
+            qCritical().noquote().nospace() << "Instantiating strategy " << group << ": " << strategy_name << " failed!";
             continue;
         }
 
         auto *strategy = dynamic_cast<AbstractStrategy*>(object);
         if (strategy == nullptr) {
-            qCritical() << "Cast strategy" << group << "failed!";
+            qCritical().noquote().nospace() << "Cast strategy " << group << ": " << strategy_name << " failed!";
             delete object;
             continue;
         }
