@@ -1,0 +1,92 @@
+#include <stdio.h>
+#include <QByteArray>
+#include <QString>
+#include <QDateTime>
+#include <QCoreApplication>
+
+#include "message_handler.h"
+
+FILE *pLogFile = NULL;
+
+static void messageOut(QtMsgType type, const QMessageLogContext &context, const QByteArray &localMsg, FILE *pFile)
+{
+    switch (type) {
+    case QtDebugMsg:
+        fprintf(pFile, "D: %s\n", localMsg.constData());
+        break;
+    case QtInfoMsg:
+        fprintf(pFile, "I: %s\n", localMsg.constData());
+        break;
+    case QtWarningMsg:
+        fprintf(pFile, "W: %s\n", localMsg.constData());
+        break;
+    case QtCriticalMsg:
+        fprintf(pFile, "Critical: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
+        break;
+    case QtFatalMsg:
+        fprintf(pFile, "Fatal: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
+        break;
+    }
+}
+
+void toStdOut(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+{
+    QByteArray localMsg = (QDateTime::currentDateTime().toString("yy-MM-dd hh:mm:ss.zzz ") + msg).toLocal8Bit();
+    messageOut(type, context, localMsg, stdout);
+    if (type == QtFatalMsg) {
+        abort();
+    }
+}
+
+void toStdOutAndFile(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+{
+    QByteArray localMsg = (QDateTime::currentDateTime().toString("yy-MM-dd hh:mm:ss.zzz ") + msg).toLocal8Bit();
+    messageOut(type, context, localMsg, stdout);
+    messageOut(type, context, localMsg, pLogFile);
+    if (type == QtFatalMsg) {
+        fclose(pLogFile);
+        abort();
+    }
+}
+
+void toFile(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+{
+    QByteArray localMsg = (QDateTime::currentDateTime().toString("yy-MM-dd hh:mm:ss.zzz ") + msg).toLocal8Bit();
+    messageOut(type, context, localMsg, pLogFile);
+    if (type == QtFatalMsg) {
+        fclose(pLogFile);
+        abort();
+    }
+}
+
+void setupMessageHandler(bool logtoStdout, bool logtoFile, const QString &moduleName)
+{
+    if (logtoFile) {
+        QString fullFileName = QCoreApplication::applicationDirPath() + "/" + moduleName;
+        fullFileName += QDateTime::currentDateTime().toString("_yyyyMMdd_hhmmss");
+        fullFileName.append(".txt");
+        pLogFile = fopen(fullFileName.toLatin1().constData(), "a");
+        if (pLogFile) {
+            if (logtoStdout) {
+                qInstallMessageHandler(toStdOutAndFile);
+            } else {
+                qInstallMessageHandler(toFile);
+            }
+        }
+    } else {
+        if (logtoStdout) {
+            qInstallMessageHandler(toStdOut);
+        } else {
+            // Do nothing
+        }
+    }
+}
+
+void restoreMessageHandler()
+{
+    qInstallMessageHandler(0);
+    if (pLogFile) {
+        fclose(pLogFile);
+        pLogFile = NULL;
+    }
+}

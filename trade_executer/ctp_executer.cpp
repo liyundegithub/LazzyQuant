@@ -216,7 +216,7 @@ void CtpExecuter::customEvent(QEvent *event)
         for (const auto &item : qmevent->instrumentMarginRateList) {
             marginRateCache[item.InstrumentID] = item;
         }
-        qInfo() << " Updated" << qmevent->instrumentMarginRateList.size() << "instrument margin rate!";
+        qInfo() << "Updated" << qmevent->instrumentMarginRateList.size() << "instrument margin rate!";
     }
         break;
     case RSP_QRY_INSTRUMENT_COMMISSION_RATE:
@@ -225,7 +225,7 @@ void CtpExecuter::customEvent(QEvent *event)
         for (const auto &item : qcevent->instrumentCommissionRateList) {
             commissionRateCache[item.InstrumentID] = item;
         }
-        qInfo() << " Updated" << qcevent->instrumentCommissionRateList.size() << "instrument commission rate!";
+        qInfo() << "Updated" << qcevent->instrumentCommissionRateList.size() << "instrument commission rate!";
     }
         break;
     case RSP_QRY_INSTRUMENT:
@@ -239,7 +239,7 @@ void CtpExecuter::customEvent(QEvent *event)
             }
         }
         combineInstruments = instrumentsWithAnd;
-        qInfo() << " Updated" << qievent->instrumentList.size() << "instruments!";
+        qInfo() << "Updated" << qievent->instrumentList.size() << "instruments!";
     }
         break;
     case RSP_DEPTH_MARKET_DATA:
@@ -249,7 +249,7 @@ void CtpExecuter::customEvent(QEvent *event)
             const QString instrument = item.InstrumentID;
             upperLowerLimitCache[instrument] = qMakePair(item.UpperLimitPrice, item.LowerLimitPrice);
         }
-        qInfo() << " Updated" << devent->depthMarketDataList.size() << "depth market data!";
+        qInfo() << "Updated" << devent->depthMarketDataList.size() << "depth market data!";
     }
         break;
     case RSP_ORDER_INSERT:
@@ -1990,7 +1990,7 @@ void CtpExecuter::removeParkedOrderAction(int id)
  */
 void CtpExecuter::setPosition(const QString& instrument, int newPosition)
 {
-    qDebug() << instrument << ":" << "new position =" << newPosition;
+    qDebug() << instrument << ": new position =" << newPosition;
 
     const auto limit = upperLowerLimitCache.value(instrument);
     int position = getPosition(instrument);

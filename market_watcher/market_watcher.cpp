@@ -275,8 +275,8 @@ void MarketWatcher::customEvent(QEvent *event)
     case DEPTH_MARKET_DATA:
     {
         auto *devent = static_cast<DepthMarketDataEvent*>(event);
-        qDebug() << devent->DepthMarketDataField.InstrumentID << name;
-        qDebug() << devent->DepthMarketDataField;
+        qDebug().noquote().nospace() << devent->DepthMarketDataField.InstrumentID << "\t" << name << "\n"
+                 << devent->DepthMarketDataField;
         processDepthMarketData(devent->DepthMarketDataField);
     }
         break;

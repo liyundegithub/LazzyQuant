@@ -12,6 +12,7 @@ SOURCES += main.cpp \
     ../common/common_utility.cpp \
     ../common/multiple_timer.cpp \
     ../common/trading_calendar.cpp \
+    ../common/message_handler.cpp \
     market_watcher.cpp \
     tick_receiver.cpp
 
@@ -20,6 +21,7 @@ HEADERS += ../config.h \
     ../common/common_utility.h \
     ../common/multiple_timer.h \
     ../common/trading_calendar.h \
+    ../common/message_handler.h \
     market_watcher.h \
     tick_receiver.h
 

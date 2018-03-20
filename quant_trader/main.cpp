@@ -9,6 +9,7 @@
 #include "connection_manager.h"
 #include "trading_calendar.h"
 #include "multiple_timer.h"
+#include "message_handler.h"
 
 #include "market_watcher_interface.h"
 #include "sinyee_replayer_interface.h"
@@ -29,7 +30,6 @@ int main(int argc, char *argv[])
     parser.addVersionOption();
 
     parser.addOptions({
-        // replay mode (-r, --replay)
         {{"r", "replay"},
             QCoreApplication::translate("main", "Replay Mode")},
         {{"s", "start"},
@@ -39,7 +39,11 @@ int main(int argc, char *argv[])
         {{"a", "save"},
             QCoreApplication::translate("main", "Force saving collected bars to DB even in replay mode.")},
         {{"x", "executer"},
-            QCoreApplication::translate("main", "Connect to TradeExecuter"), "0 or 1"},
+            QCoreApplication::translate("main", "Connect to TradeExecuter, should not be used with -n")},
+        {{"n", "noexecuter"},
+            QCoreApplication::translate("main", "Don't connect to TradeExecuter, should not be used with -x")},
+        {{"f", "logtofile"},
+            QCoreApplication::translate("main", "Save log to a file")},
     });
 
     parser.process(a);
@@ -53,12 +57,11 @@ int main(int argc, char *argv[])
     bool explicitSave = parser.isSet("save");
     bool saveBarsToDB = explicitSave || (!replayMode);
 
-    bool useConnectToExecuter = parser.isSet("executer");
-    bool connectToExecuter = false;
-    if (useConnectToExecuter) {
-        QString executerOption = parser.value("executer");
-        connectToExecuter = (executerOption == "1");
-    }
+    bool explicitConnectToExecuter = parser.isSet("executer");
+    bool explicitNoConnectToExecuter = parser.isSet("noexecuter");
+
+    bool log2File = parser.isSet("logtofile");
+    setupMessageHandler(true, log2File, "quant_trader");
 
     com::lazzyquant::market_watcher *pWatcher = new com::lazzyquant::market_watcher(WATCHER_DBUS_SERVICE, WATCHER_DBUS_OBJECT, QDBusConnection::sessionBus());
 
@@ -88,7 +91,7 @@ int main(int argc, char *argv[])
     ConnectionManager *pConnManager = new ConnectionManager({pWatcherOrReplayer}, {&quantTrader});
 
     com::lazzyquant::trade_executer *pExecuter = nullptr;
-    if ((!replayMode && !useConnectToExecuter) || (useConnectToExecuter && connectToExecuter)) {
+    if ((!replayMode && !explicitNoConnectToExecuter) || explicitConnectToExecuter) {
         pExecuter = new com::lazzyquant::trade_executer(EXECUTER_DBUS_SERVICE, EXECUTER_DBUS_OBJECT, QDBusConnection::sessionBus());
         quantTrader.cancelAllOrders = std::bind(&com::lazzyquant::trade_executer::cancelAllOrders, pExecuter, _1);
         quantTrader.setPosition = std::bind(&com::lazzyquant::trade_executer::setPosition, pExecuter, _1, _2);
@@ -150,5 +153,6 @@ int main(int argc, char *argv[])
     if (pExecuter) {
         delete pExecuter;
     }
+    restoreMessageHandler();
     return ret;
 }

@@ -12,6 +12,7 @@ SOURCES += main.cpp \
     ../common/multiple_timer.cpp \
     ../common/connection_manager.cpp \
     ../common/trading_calendar.cpp \
+    ../common/message_handler.cpp \
     quant_trader.cpp \
     bar_collector.cpp \
     bar.cpp \
@@ -35,6 +36,7 @@ HEADERS += ../config.h \
     ../common/multiple_timer.h \
     ../common/connection_manager.h \
     ../common/trading_calendar.h \
+    ../common/message_handler.h \
     quant_trader.h \
     bar_collector.h \
     bar.h \
