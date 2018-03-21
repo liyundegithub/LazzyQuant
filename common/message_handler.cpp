@@ -65,7 +65,7 @@ void setupMessageHandler(bool logtoStdout, bool logtoFile, const QString &module
         QString fullFileName = QCoreApplication::applicationDirPath() + "/" + moduleName;
         fullFileName += QDateTime::currentDateTime().toString("_yyyyMMdd_hhmmss");
         fullFileName.append(".txt");
-        pLogFile = fopen(fullFileName.toLatin1().constData(), "a");
+        pLogFile = fopen(fullFileName.toLocal8Bit().constData(), "a");
         if (pLogFile) {
             if (logtoStdout) {
                 qInstallMessageHandler(toStdOutAndFile);
