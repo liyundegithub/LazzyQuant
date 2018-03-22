@@ -1,4 +1,5 @@
 #include <cfloat>
+#include <QDebugStateSaver>
 
 #include "bar.h"
 
@@ -80,6 +81,7 @@ QDataStream& operator<<(QDataStream& s, const Bar& bar)
 
 QDebug operator<<(QDebug dbg, const Bar &bar)
 {
+    QDebugStateSaver saver(dbg);
     dbg.nospace() <<   "time = " << bar.time
                   << ", open = " << bar.open
                   << ", high = " << bar.high
@@ -87,5 +89,5 @@ QDebug operator<<(QDebug dbg, const Bar &bar)
                   << ", close = " << bar.close
                   << ", tick_volume = " << bar.tick_volume
                   << ", volume = " << bar.volume;
-    return dbg.space();
+    return dbg;
 }
