@@ -6,8 +6,6 @@
 
 #include <QPair>
 
-class QDate;
-
 //             S          sigma    price
 typedef QMap<double, QMap<double, double>> S_SIGMA_PRICE;
 
@@ -20,7 +18,7 @@ public:
     void setBasicParam(double r, double q = 0, bool american = true);
     void setS0AndSigma(const QList<double> &s0List, const QList<double> &sigmaList);
 
-    void generate(const QString &underlyingID, const QDate &startDate, const QDate &endDate, int daysInOneYear = 365, int steps = 100);
+    void generate(const QString &underlyingID, int tradingDays, int daysInOneYear = 365, int steps = 100);
     void generate(int underlyingIdx, double T, int steps);
 
     double getPrice(const QString &underlyingID, const OPTION_TYPE type, int K, double s, double sigma) const;

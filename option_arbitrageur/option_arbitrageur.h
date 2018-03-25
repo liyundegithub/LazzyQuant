@@ -6,6 +6,7 @@
 #include <QObject>
 #include <QSet>
 
+class OptionHelper;
 class OptionPricing;
 class DepthMarketCollection;
 class BaseStrategy;
@@ -13,36 +14,40 @@ class BaseStrategy;
 class OptionArbitrageur : public QObject
 {
     Q_OBJECT
+
 protected:
-    void updateOptions();
-    void timesUp(int index);
     void loadOptionArbitrageurSettings();
 
     void setupRiskFree(const QStringList &options);
     void setupHighFreq(const QStringList &options);
     void preparePricing(const QMultiMap<QString, int> &underlyingKMap);
 
+    QStringList allInstruments;
+    OptionHelper *pHelper;
+
     QSet<QString> underlyingIDs;
     QStringList underlyingsForRiskFree;
     QStringList underlyingsForHighFreq;
 
-    int updateRetryCounter;
+    QString tradingDay;
     double availableMoney;
     double riskFreeInterestRate;
 
-    OptionPricing *pPricingEngine;
-    DepthMarketCollection *pDepthMarkets;
-    BaseStrategy *pStrategy;
+    OptionPricing *pPricingEngine = nullptr;
+    DepthMarketCollection *pDepthMarkets = nullptr;
+    BaseStrategy *pStrategy = nullptr;
 
 public:
-    explicit OptionArbitrageur(bool replayMode = false, const QString &replayDate = QString(), QObject *parent = 0);
+    explicit OptionArbitrageur(const QStringList &allInstruments, OptionHelper *pHelper, QObject *parent = 0);
     ~OptionArbitrageur();
 
-signals:
+    QSet<QString> getUnderlyingIDs() const { return underlyingIDs; }
 
-private slots:
-    void onMarketData(const QString& instrumentID, uint time, double lastPrice, int volume,
+public slots:
+    void setTradingDay(const QString &tradingDay);
+    void onMarketData(const QString &instrumentID, int time, double lastPrice, int volume,
                       double askPrice1, int askVolume1, double bidPrice1, int bidVolume1);
+    void onMarketClose();
 };
 
 #endif // OPTION_ARBITRAGEUR_H

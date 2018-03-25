@@ -8,7 +8,7 @@
 
 class DepthMarket {
 public:
-    uint   time;
+    int   time;
     double lastPrice;
     double askPrice;
     int    askVolume;
@@ -16,7 +16,7 @@ public:
     int    bidVolume;
 
     DepthMarket();
-    DepthMarket(uint time, double lastPrice, double askPrice, int askVolume, double bidPrice, int bidVolume);
+    DepthMarket(int time, double lastPrice, double askPrice, int askVolume, double bidPrice, int bidVolume);
     bool significantChange(const DepthMarket &other) const;
     bool isUpperLimit() const { return bidVolume == 0; }
     bool isLowerLimit() const { return askVolume == 0; }

@@ -1,12 +1,8 @@
 #include <cmath>
 #include <cfloat>
-#include <QDate>
 #include <QDebug>
 
-#include "trading_calendar.h"
 #include "option_pricing.h"
-
-extern TradingCalendar tradingCalendar;
 
 OptionPricing::OptionPricing(const QMultiMap<QString, int> &underlyingKMap) :
     OptionIndex(underlyingKMap)
@@ -58,10 +54,9 @@ void OptionPricing::setS0AndSigma(const QList<double> &s0List, const QList<doubl
     pLastSigmaPrice = pSigmaPrice + (sigmaNum - 1);
 }
 
-void OptionPricing::generate(const QString &underlyingID, const QDate &startDate, const QDate &endDate, int daysInOneYear, int steps)
+void OptionPricing::generate(const QString &underlyingID, int tradingDays, int daysInOneYear, int steps)
 {
     int underlyingIdx = getIdxByUnderlyingID(underlyingID);
-    const int tradingDays = tradingCalendar.getTradingDays(startDate, endDate);
     generate(underlyingIdx, ((double)tradingDays) / ((double)daysInOneYear), steps);
 }
 

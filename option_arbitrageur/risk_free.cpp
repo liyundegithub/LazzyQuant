@@ -73,9 +73,9 @@ void RiskFree::checkCheapCallOptions(int underlyingIdx, int kIdx)
                 buyOption(underlyingIdx, CALL_OPT, kIdx, vol, premium);
                 sellUnderlying(underlyingIdx, vol, underlying.bidPrice);
 
-                qDebug() << "Found cheap call option";
-                qDebug() << pDepthMarkets->getUnderlyingIDByIdx(underlyingIdx); qDebug() << underlying;
-                qDebug() << pDepthMarkets->makeOptionByIdx(underlyingIdx, CALL_OPT, kIdx); qDebug() << callOption;
+                qDebug().nospace() << "Found cheap call option!\n"
+                    << pDepthMarkets->getUnderlyingIDByIdx(underlyingIdx) << "\n" << underlying << "\n"
+                    << pDepthMarkets->makeOptionByIdx(underlyingIdx, CALL_OPT, kIdx) << "\n" << callOption;
 
                 pDepthMarkets->takeLiquidityByIdx(underlyingIdx, CALL_OPT, kIdx, true);
                 pDepthMarkets->takeLiquidityByIdx(underlyingIdx, false);
@@ -120,9 +120,9 @@ void RiskFree::checkCheapPutOptions(int underlyingIdx, int kIdx)
                 buyOption(underlyingIdx, PUT_OPT, kIdx, vol, premium);
                 buyUnderlying(underlyingIdx, vol, underlying.askPrice);
 
-                qDebug() << "Found cheap put option";
-                qDebug() << pDepthMarkets->getUnderlyingIDByIdx(underlyingIdx); qDebug() << underlying;
-                qDebug() << pDepthMarkets->makeOptionByIdx(underlyingIdx, PUT_OPT, kIdx); qDebug() << putOption;
+                qDebug().nospace() << "Found cheap put option!\n"
+                    << pDepthMarkets->getUnderlyingIDByIdx(underlyingIdx) << "\n" << underlying << "\n"
+                    << pDepthMarkets->makeOptionByIdx(underlyingIdx, PUT_OPT, kIdx) << "\n" << putOption;
 
                 pDepthMarkets->takeLiquidityByIdx(underlyingIdx, PUT_OPT, kIdx, true);
                 pDepthMarkets->takeLiquidityByIdx(underlyingIdx, true);
@@ -178,9 +178,9 @@ void RiskFree::checkReversedCallOptions(int underlyingIdx, int lowKIdx, int high
             buyOption(underlyingIdx, CALL_OPT, lowKIdx, vol, lowPremium);
             sellOption(underlyingIdx, CALL_OPT, highKIdx, vol, highPremium);
 
-            qDebug() << "Found reversed call options";
-            qDebug() << pDepthMarkets->makeOptionByIdx(underlyingIdx, CALL_OPT, lowKIdx); qDebug() << lowKOption;
-            qDebug() << pDepthMarkets->makeOptionByIdx(underlyingIdx, CALL_OPT, highKIdx); qDebug() << highKOption;
+            qDebug().nospace() << "Found reversed call options!\n"
+                << pDepthMarkets->makeOptionByIdx(underlyingIdx, CALL_OPT, lowKIdx) << "\n" << lowKOption << "\n"
+                << pDepthMarkets->makeOptionByIdx(underlyingIdx, CALL_OPT, highKIdx) << "\n" << highKOption;
 
             pDepthMarkets->takeLiquidityByIdx(underlyingIdx, CALL_OPT, lowKIdx, true);
             pDepthMarkets->takeLiquidityByIdx(underlyingIdx, CALL_OPT, highKIdx, false);
@@ -235,9 +235,9 @@ void RiskFree::checkReversedPutOptions(int underlyingIdx, int lowKIdx, int highK
             buyOption(underlyingIdx, PUT_OPT, highKIdx, vol, highPremium);
             sellOption(underlyingIdx, PUT_OPT, lowKIdx, vol, lowPremium);
 
-            qDebug() << "Found reversed put options";
-            qDebug() << pDepthMarkets->makeOptionByIdx(underlyingIdx, PUT_OPT, highKIdx); qDebug() << highKOption;
-            qDebug() << pDepthMarkets->makeOptionByIdx(underlyingIdx, PUT_OPT, lowKIdx); qDebug() << lowKOption;
+            qDebug().nospace() << "Found reversed put options!\n"
+                << pDepthMarkets->makeOptionByIdx(underlyingIdx, PUT_OPT, highKIdx) << "\n" << highKOption << "\n"
+                << pDepthMarkets->makeOptionByIdx(underlyingIdx, PUT_OPT, lowKIdx) << "\n" << lowKOption;
 
             pDepthMarkets->takeLiquidityByIdx(underlyingIdx, PUT_OPT, lowKIdx, false);
             pDepthMarkets->takeLiquidityByIdx(underlyingIdx, PUT_OPT, highKIdx, true);

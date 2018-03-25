@@ -1,6 +1,7 @@
 #include "depth_market.h"
 
 #include <QTime>
+#include <QDebugStateSaver>
 
 #define TOLERANCE   0.000001
 
@@ -15,7 +16,7 @@ DepthMarket::DepthMarket() :
     // default ctor
 }
 
-DepthMarket::DepthMarket(uint time, double lastPrice, double askPrice, int askVolume, double bidPrice, int bidVolume) :
+DepthMarket::DepthMarket(int time, double lastPrice, double askPrice, int askVolume, double bidPrice, int bidVolume) :
     time(time),
     lastPrice(lastPrice),
     askPrice(askPrice),
@@ -35,10 +36,11 @@ bool DepthMarket::significantChange(const DepthMarket &other) const
 
 QDebug operator<<(QDebug dbg, const DepthMarket &depthMarket)
 {
+    QDebugStateSaver saver(dbg);
     dbg.nospace() << "Ask 1:\t" << depthMarket.askPrice << '\t' << depthMarket.askVolume << '\n'
                   << " ------ " << QTime(0, 0).addSecs(depthMarket.time).toString() <<  " lastPrice:" << depthMarket.lastPrice << " ------ " << '\n'
                   << "Bid 1:\t" << depthMarket.bidPrice << '\t' << depthMarket.bidVolume;
-    return dbg.space();
+    return dbg;
 }
 
 DepthMarketCollection::DepthMarketCollection(const QMultiMap<QString, int> &underlyingKMap) :

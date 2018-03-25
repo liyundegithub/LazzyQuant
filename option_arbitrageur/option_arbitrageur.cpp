@@ -4,63 +4,32 @@
 #include <QStringList>
 
 #include "config.h"
-#include "multiple_timer.h"
-#include "trading_calendar.h"
-#include "option_pricing.h"
 #include "option_helper.h"
+#include "option_pricing.h"
 #include "depth_market.h"
 #include "risk_free.h"
 #include "high_frequency.h"
 #include "option_arbitrageur.h"
 
-#include "market_watcher_interface.h"
-#include "trade_executer_interface.h"
-
-com::lazzyquant::market_watcher *pWatcher = nullptr;
-com::lazzyquant::trade_executer *pExecuter = nullptr;
-
-TradingCalendar tradingCalendar;
-
-OptionArbitrageur::OptionArbitrageur(bool replayMode, const QString &replayDate, QObject *parent) :
-    QObject(parent)
+OptionArbitrageur::OptionArbitrageur(const QStringList &allInstruments, OptionHelper *pHelper, QObject *parent) :
+    QObject(parent),
+    allInstruments(allInstruments),
+    pHelper(pHelper)
 {
-    pPricingEngine = nullptr;
-    pDepthMarkets = nullptr;
-    pStrategy = nullptr;
-
     loadOptionArbitrageurSettings();
 
-    pExecuter = new com::lazzyquant::trade_executer(EXECUTER_DBUS_SERVICE, EXECUTER_DBUS_OBJECT, QDBusConnection::sessionBus(), this);
-    pWatcher = new com::lazzyquant::market_watcher(WATCHER_DBUS_SERVICE, WATCHER_DBUS_OBJECT, QDBusConnection::sessionBus(), this);
-
-// 复盘模式和实盘模式共用的部分到此为止 ---------------------------------------
-    if (replayMode) {
-        QStringList options;
-        const QStringList subscribeList = pWatcher->getSubscribeList();
-        for (const auto &item : subscribeList) {
-            if (isOption(item)) {
-                options << item;
-            }
+    QStringList options;
+    for (const auto &item : allInstruments) {
+        if (isOption(item)) {
+            options << item;
         }
-        pWatcher->setReplayDate(replayDate);
-        if (!underlyingsForRiskFree.empty()) {
-            setupRiskFree(options);
-        } else {
-            setupHighFreq(options);
-        }
-        connect(pWatcher, SIGNAL(newMarketData(QString, uint, double, int, double, int, double, int)), this, SLOT(onMarketData(QString, uint, double, int, double, int, double, int)));
-        qInfo() << "Relay mode is ready!";
-        pWatcher->startReplay(replayDate);
-        return;
     }
-// 以下设置仅用于实盘模式 --------------------------------------------------
 
-    updateRetryCounter = 0;
-    updateOptions();
-
-    QList<QTime> timePoints = { QTime(8, 30), QTime(17, 1), QTime(20, 30) };
-    auto multiTimer = new MultipleTimer(timePoints, this);
-    connect(multiTimer, &MultipleTimer::timesUp, this, &OptionArbitrageur::timesUp);
+    if (!underlyingsForRiskFree.empty()) {
+        setupRiskFree(options);
+    } else {
+        setupHighFreq(options);
+    }
 }
 
 OptionArbitrageur::~OptionArbitrageur()
@@ -73,80 +42,6 @@ OptionArbitrageur::~OptionArbitrageur()
         delete pDepthMarkets;
     if (pStrategy != nullptr)
         delete pStrategy;
-}
-
-void OptionArbitrageur::updateOptions()
-{
-    if (pWatcher->getStatus() != "Ready" || pExecuter->getStatus() != "Ready") {
-        if (updateRetryCounter < 3) {
-            qWarning() << "Either Watcher or Executer is not ready! Will try update options later!";
-            QTimer::singleShot(10000, this, &OptionArbitrageur::updateOptions);
-            updateRetryCounter ++;
-            return;
-        } else {
-            qWarning() << "Update options failed!";
-            updateRetryCounter = 0;
-            return;
-        }
-    }
-
-    QTimer::singleShot(1000, [=]() -> void {
-        pExecuter->updateInstrumentDataCache();
-    });
-
-    QTimer::singleShot(5000, [=]() -> void {
-        const QStringList subscribedInstruments = pWatcher->getSubscribeList();
-        const QStringList cachedInstruments = pExecuter->getCachedInstruments();
-
-        QStringList instrumentsToSubscribe;
-        for (const auto &item : cachedInstruments) {
-            if (!subscribedInstruments.contains(item)) {
-                for (const auto &underlyingID : qAsConst(underlyingIDs)) {
-                    if (item.startsWith(underlyingID)) {
-                        instrumentsToSubscribe << item;
-                        break;
-                    }
-                }
-            }
-        }
-        if (!instrumentsToSubscribe.empty()) {
-            pWatcher->subscribeInstruments(instrumentsToSubscribe);
-        }
-
-        QStringList options;
-        for (const auto &item : cachedInstruments) {
-            if (isOption(item)) {
-                options << item;
-            }
-        }
-        if (!underlyingsForRiskFree.empty()) {
-            setupRiskFree(options);
-        } else {
-            setupHighFreq(options);
-        }
-        connect(pWatcher, SIGNAL(newMarketData(QString, uint, double, int, double, int, double, int)), this, SLOT(onMarketData(QString, uint, double, int, double, int, double, int)));
-    });
-
-    updateRetryCounter = 0;
-}
-
-void OptionArbitrageur::timesUp(int index)
-{
-    switch (index) {
-    case 0:
-        updateOptions();
-        break;
-    case 1:
-        // Clear market data after maket closed
-        pDepthMarkets->clearAll();
-        break;
-    case 2:
-        updateOptions();
-        break;
-    default:
-        qWarning() << "Should never see this! Something is wrong! index =" << index;
-        break;
-    }
 }
 
 void OptionArbitrageur::loadOptionArbitrageurSettings()
@@ -184,17 +79,6 @@ void OptionArbitrageur::loadOptionArbitrageurSettings()
     }
     settings.endGroup();
     qInfo() << "UnderlyingsForHighFreq:" << underlyingsForHighFreq;
-}
-
-static inline QDate getEndDate(const QString &underlying)
-{
-    if (pExecuter->getStatus() == "Ready") {
-        const QString dateStr = pExecuter->getExpireDate(underlying);
-        if (dateStr != INVALID_DATE_STRING) {
-            return QDate::fromString(dateStr, "yyyyMMdd");
-        }
-    }
-    return getExpireDate(underlying);
 }
 
 static inline QMultiMap<QString, int> getUnderlyingKMap(const QStringList &underlyings, const QStringList &options)
@@ -261,22 +145,7 @@ void OptionArbitrageur::preparePricing(const QMultiMap<QString, int> &underlying
 
     double maxPrice = 3400.0;   // FIXME
     double minPrice = 2300.0;   // FIXME
-
     const auto keys = underlyingKMap.uniqueKeys();
-    if (pExecuter->getStatus() == "Ready") {
-        maxPrice = -DBL_MAX;
-        minPrice = DBL_MAX;
-        for (const auto key : keys) {
-            const double upperLimit = pExecuter->getUpperLimit(key);
-            const double lowerLimit = pExecuter->getLowerLimit(key);
-            if (upperLimit > maxPrice) {
-                maxPrice = upperLimit;
-            }
-            if (lowerLimit < minPrice) {
-                minPrice = lowerLimit;
-            }
-        }
-    }
 
     QList<double> s0List;
     for (double s0 = minPrice; s0 < maxPrice; s0 += 4.0) {
@@ -284,26 +153,33 @@ void OptionArbitrageur::preparePricing(const QMultiMap<QString, int> &underlying
     }
     qInfo() << "Use s0:" << s0List;
 
-    QDate startDate;
-    if (pWatcher->getStatus() == "Ready") {
-        startDate = QDate::fromString(pWatcher->getTradingDay(), "yyyyMMdd");
-    } else {
-        startDate = QDate::currentDate();
-    }
+    QDate startDate = QDate::fromString(tradingDay, "yyyyMMdd");
 
     if (pPricingEngine != nullptr) {
         delete pPricingEngine;
         pPricingEngine = nullptr;
     }
-
     pPricingEngine = new OptionPricing(underlyingKMap);
     pPricingEngine->setBasicParam(riskFreeInterestRate, riskFreeInterestRate);
     pPricingEngine->setS0AndSigma(s0List, sigmaList);
+
     for (const auto &key : keys) {
-        const auto endDate = getEndDate(key);
+        const auto endDate = pHelper->getEndDate(key);
         qInfo() << "Calculating:" << key << ", startDate =" << startDate << ", endDate =" << endDate;
-        pPricingEngine->generate(key, startDate, endDate);
+        pPricingEngine->generate(key, pHelper->getOptionTradingDays(key, startDate));
     }
+}
+
+/*!
+ * \brief OptionArbitrageur::setTradingDay
+ * 设定交易日
+ *
+ * \param tradingDay 交易日(yyyyMMdd)
+ */
+void OptionArbitrageur::setTradingDay(const QString &tradingDay)
+{
+    qDebug() << "Set Trading Day to" << tradingDay;
+    this->tradingDay = tradingDay;
 }
 
 /*!
@@ -319,7 +195,7 @@ void OptionArbitrageur::preparePricing(const QMultiMap<QString, int> &underlying
  * \param bidPrice1  买一价
  * \param bidVolume1 买一量
  */
-void OptionArbitrageur::onMarketData(const QString& instrumentID, uint time, double lastPrice, int volume,
+void OptionArbitrageur::onMarketData(const QString &instrumentID, int time, double lastPrice, int volume,
                                      double askPrice1, int askVolume1, double bidPrice1, int bidVolume1)
 {
     Q_UNUSED(volume)
@@ -372,4 +248,14 @@ void OptionArbitrageur::onMarketData(const QString& instrumentID, uint time, dou
     } else {
         // Market does not change much, do nothing
     }
+}
+
+/*!
+ * \brief OptionArbitrageur::onMarketClose
+ * 收盘
+ */
+void OptionArbitrageur::onMarketClose()
+{
+    // Clear market data after maket closed
+    pDepthMarkets->clearAll();
 }

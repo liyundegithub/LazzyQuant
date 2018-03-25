@@ -1,19 +1,37 @@
 #include "option_helper.h"
-#include "trading_calendar.h"
 #include "depth_market.h"
 
 #include <QDebug>
 
-extern TradingCalendar tradingCalendar;
+OptionHelper::OptionHelper(QObject *pExecuter) :
+    pExecuter(pExecuter)
+{
+}
+
+QDate OptionHelper::getEndDate(const QString &underlying)
+{
+    if (pExecuter) {
+        QString executerStatus;
+        pExecuter->metaObject()->invokeMethod(pExecuter, "getStatus", Q_RETURN_ARG(QString, executerStatus));
+        if (executerStatus == "Ready") {
+            QString dateStr;
+            pExecuter->metaObject()->invokeMethod(pExecuter, "getExpireDate", Q_RETURN_ARG(QString, dateStr), Q_ARG(QString, underlying));
+            if (dateStr != INVALID_DATE_STRING) {
+                return QDate::fromString(dateStr, "yyyyMMdd");
+            }
+        }
+    }
+    return getExpireDate(underlying);
+}
 
 /*!
- * \brief getExpireDate
+ * \brief OptionHelper::getExpireDate
  * 按照合约规则计算期权到期日
  *
  * \param instrumentID 期权合约代码或标的合约代码
  * \return 到期日
  */
-QDate getExpireDate(const QString &instrumentID)
+QDate OptionHelper::getExpireDate(const QString &instrumentID)
 {
     if (instrumentID.startsWith("SR")) {
         const auto y_s = instrumentID.mid(2, 1);
@@ -55,12 +73,13 @@ QDate getExpireDate(const QString &instrumentID)
         }
     }
 
-    qDebug() << "Should never see this!";
+    qCritical() << "Should never see this!";
     return QDate();
 }
 
-int getOptionTradingDays(const QString &instrumentID, const QDate &startDate)
+int OptionHelper::getOptionTradingDays(const QString &instrumentID, const QDate &startDate)
 {
+    // FIXME 应该获取期权而非期货的ExpireDate
     const auto endDate = getExpireDate(instrumentID);
     return tradingCalendar.getTradingDays(startDate, endDate);
 }
