@@ -46,38 +46,38 @@ OptionArbitrageur::~OptionArbitrageur()
 
 void OptionArbitrageur::loadOptionArbitrageurSettings()
 {
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, ORGANIZATION, "option_arbitrageur");
-    riskFreeInterestRate = settings.value("RiskFreeInterestRate", 0.05).toDouble();
+    auto settings = getSettingsSmart(ORGANIZATION, "option_arbitrageur");
+    riskFreeInterestRate = settings->value("RiskFreeInterestRate", 0.05).toDouble();
     qInfo() << "Risk-free interest rate =" << riskFreeInterestRate;
 
-    settings.beginGroup("Underlyings");
-    const auto underlyingList = settings.childKeys();
+    settings->beginGroup("Underlyings");
+    const auto underlyingList = settings->childKeys();
     for (const auto &key : underlyingList) {
-        if (settings.value(key).toBool()) {
+        if (settings->value(key).toBool()) {
             underlyingIDs.insert(key);
         }
     }
-    settings.endGroup();
+    settings->endGroup();
     qInfo() << "Underlyings:" << underlyingIDs;
 
-    settings.beginGroup("RiskFree");
-    const auto riskFreeList = settings.childKeys();
+    settings->beginGroup("RiskFree");
+    const auto riskFreeList = settings->childKeys();
     for (const auto &key : riskFreeList) {
-        if (settings.value(key).toBool()) {
+        if (settings->value(key).toBool()) {
             underlyingsForRiskFree << key;
         }
     }
-    settings.endGroup();
+    settings->endGroup();
     qInfo() << "UnderlyingsForRiskFree:" << underlyingsForRiskFree;
 
-    settings.beginGroup("HighFreq");
-    const auto highFreqList = settings.childKeys();
+    settings->beginGroup("HighFreq");
+    const auto highFreqList = settings->childKeys();
     for (const auto &key : highFreqList) {
-        if (settings.value(key).toBool()) {
+        if (settings->value(key).toBool()) {
             underlyingsForHighFreq << key;
         }
     }
-    settings.endGroup();
+    settings->endGroup();
     qInfo() << "UnderlyingsForHighFreq:" << underlyingsForHighFreq;
 }
 

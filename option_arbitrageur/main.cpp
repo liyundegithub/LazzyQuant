@@ -54,24 +54,13 @@ int main(int argc, char *argv[])
         return -1;
     }
     bool log2File = parser.isSet("logtofile");
+    setupMessageHandler(true, log2File, "option_arbitrageur");
 
     com::lazzyquant::market_watcher *pWatcher = new com::lazzyquant::market_watcher(WATCHER_DBUS_SERVICE, WATCHER_DBUS_OBJECT, QDBusConnection::sessionBus());
-    if (pWatcher->getStatus() != "Ready") {
-        qCritical().noquote() << "Market watcher is not ready!";
-        delete pWatcher;
-        return -2;
-    }
     com::lazzyquant::trade_executer *pExecuter = nullptr;
     if (!replayMode) {
         pExecuter = new com::lazzyquant::trade_executer(EXECUTER_DBUS_SERVICE, EXECUTER_DBUS_OBJECT, QDBusConnection::sessionBus());
-        if (pExecuter->getStatus() != "Ready") {
-            qCritical().noquote() << "Trade executer is not ready!";
-            delete pExecuter;
-            delete pWatcher;
-            return -3;
-        }
     }
-    setupMessageHandler(true, log2File, "option_arbitrageur");
     QStringList instruments;
     if (replayMode) {
         instruments = pWatcher->getSubscribeList();
