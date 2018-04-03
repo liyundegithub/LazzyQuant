@@ -9,16 +9,13 @@ TEMPLATE = app
 
 SOURCES += main.cpp \
     ../common/common_utility.cpp \
-    ../common/multiple_timer.cpp \
     ../common/message_handler.cpp \
     ctp_executer.cpp \
     trade_handler.cpp \
     order.cpp
 
 HEADERS += ../config.h \
-    ../common/expires.h \
     ../common/common_utility.h \
-    ../common/multiple_timer.h \
     ../common/message_handler.h \
     ctp_executer.h \
     trade_handler.h \

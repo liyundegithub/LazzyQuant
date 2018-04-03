@@ -5,6 +5,12 @@
       <arg name="instrument" type="s" direction="out"/>
       <arg name="volume" type="i" direction="out"/>
     </signal>
+    <method name="setLogin">
+    </method>
+    <method name="setLogout">
+    </method>
+    <method name="onMarketClose">
+    </method>
     <method name="getStatus">
       <arg type="s" direction="out"/>
     </method>

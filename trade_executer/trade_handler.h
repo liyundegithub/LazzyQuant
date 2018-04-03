@@ -90,6 +90,23 @@ public:
         rspUserLogin(*pRspUserLogin) {}
 };
 
+class UserLogoutEvent : public QEvent, public RspInfo {
+public:
+    const CThostFtdcUserLogoutField userLogout;
+
+    UserLogoutEvent(CThostFtdcUserLogoutField *pUserLogout, int err, int id) :
+        QEvent(QEvent::Type(RSP_USER_LOGOUT)),
+        RspInfo(err, id),
+        userLogout(*pUserLogout) {}
+};
+
+class RspErrorEvent : public QEvent, public RspInfo {
+public:
+    RspErrorEvent(int err, int id) :
+        QEvent(QEvent::Type(RSP_ERROR)),
+        RspInfo(err, id) {}
+};
+
 class SettlementInfoEvent : public QEvent, public RspInfo {
 public:
     const QList<CThostFtdcSettlementInfoField> settlementInfoList;
@@ -430,6 +447,7 @@ public:
 
     void OnRspAuthenticate(CThostFtdcRspAuthenticateField *pRspAuthenticateField, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
     void OnRspUserLogin(CThostFtdcRspUserLoginField *pRspUserLogin, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
+    void OnRspUserLogout(CThostFtdcUserLogoutField *pUserLogout, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
 
     void OnRspQrySettlementInfo(CThostFtdcSettlementInfoField *pSettlementInfo, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
     void OnRspSettlementInfoConfirm(CThostFtdcSettlementInfoConfirmField *pSettlementInfoConfirm, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);

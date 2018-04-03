@@ -1,5 +1,4 @@
 #include <QCoreApplication>
-#include <QDebug>
 
 #include "trade_handler.h"
 
@@ -11,7 +10,6 @@ CTradeHandler::CTradeHandler(QObject *obj) :
 
 CTradeHandler::~CTradeHandler()
 {
-    qDebug() << "~CTradeHandler()";
 }
 
 inline void CTradeHandler::postToReceiver(QEvent *event)
@@ -78,6 +76,12 @@ void CTradeHandler::OnRspUserLogin(CThostFtdcRspUserLoginField *pRspUserLogin, C
 {
     Q_UNUSED(bIsLast);
     handleSingleRsp<UserLoginEvent>(pRspUserLogin, pRspInfo, nRequestID);
+}
+
+void CTradeHandler::OnRspUserLogout(CThostFtdcUserLogoutField *pUserLogout, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
+{
+    Q_UNUSED(bIsLast);
+    handleSingleRsp<UserLogoutEvent>(pUserLogout, pRspInfo, nRequestID);
 }
 
 void CTradeHandler::OnRspQrySettlementInfo(CThostFtdcSettlementInfoField *pSettlementInfo, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
@@ -171,20 +175,23 @@ void CTradeHandler::OnErrRtnOrderAction(CThostFtdcOrderActionField *pOrderAction
 
 void CTradeHandler::OnRspError(CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
-    qDebug() << __FUNCTION__;
-    if (pRspInfo != NULL)
-        qDebug() << "ErrorCode =" << pRspInfo->ErrorID << ",ErrorMsg =" << pRspInfo->ErrorMsg;
-    qDebug() << "RequestID =" << nRequestID << ",Chain =" << bIsLast;
+    if (pRspInfo != NULL) {
+        postToReceiver(new RspErrorEvent(pRspInfo->ErrorID, nRequestID));
+    }
 }
 
 void CTradeHandler::OnRtnOrder(CThostFtdcOrderField *pOrder)
 {
-    postToReceiver(new RtnOrderEvent(pOrder));
+    if (pOrder != NULL) {
+        postToReceiver(new RtnOrderEvent(pOrder));
+    }
 }
 
 void CTradeHandler::OnRtnTrade(CThostFtdcTradeField *pTrade)
 {
-    postToReceiver(new RtnTradeEvent(pTrade));
+    if (pTrade != NULL) {
+        postToReceiver(new RtnTradeEvent(pTrade));
+    }
 }
 
 void CTradeHandler::OnRspQryOrder(CThostFtdcOrderField *pOrder, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
