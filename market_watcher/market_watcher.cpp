@@ -405,7 +405,7 @@ void MarketWatcher::emitNewMarketData(const CThostFtdcDepthMarketDataField& dept
 }
 
 /*!
- * \brief CtpExecuter::getStatus
+ * \brief MarketWatcher::getStatus
  * 获取状态字符串
  *
  * \return 状态

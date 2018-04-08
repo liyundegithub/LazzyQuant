@@ -1461,6 +1461,7 @@ void CtpExecuter::onMarketClose()
 QString CtpExecuter::getStatus() const
 {
     qInfo() << __FUNCTION__;
+    qDebug() << "loginState =" << loginState;
     CHECK_LOGIN_STATE_RET("NotReady")
     CHECK_USER_CACHE_READY_RET("NotReady")
     CHECK_MARKET_CACHE_READY_RET("NotReady")
@@ -2240,5 +2241,7 @@ void CtpExecuter::quote(const QString &instrument)
 void CtpExecuter::quit()
 {
     qInfo() << __FUNCTION__;
-    QCoreApplication::quit();
+
+    setLogout();
+    QTimer::singleShot(500, qApp, &QCoreApplication::quit);
 }

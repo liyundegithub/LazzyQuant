@@ -1,5 +1,4 @@
 ﻿#include <cfloat>
-#include <QTimer>
 #include <QSettings>
 #include <QStringList>
 
