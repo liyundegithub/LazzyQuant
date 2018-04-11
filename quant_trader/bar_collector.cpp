@@ -7,16 +7,14 @@
 
 #include "bar_collector.h"
 
-extern int timeFrameEnumIdx;
-
-BarCollector::BarCollector(const QString &instrumentID, const TimeFrames &timeFrameFlags, bool saveBarsToDB, QObject *parent) :
+BarCollector::BarCollector(const QString &instrumentID, TimeFrames timeFrameFlags, bool saveBarsToDB, QObject *parent) :
     QObject(parent),
     instrument(instrumentID),
     saveBarsToDB(saveBarsToDB)
 {
-    const int timeFrameEnumCount = BarCollector::staticMetaObject.enumerator(timeFrameEnumIdx).keyCount();
+    int timeFrameEnumCount = QMetaEnum::fromType<TimeFrames>().keyCount();
     for (int i = 0; i < timeFrameEnumCount; i++) {
-        auto flag = BarCollector::staticMetaObject.enumerator(timeFrameEnumIdx).value(i);
+        auto flag = QMetaEnum::fromType<TimeFrames>().value(i);
         if (timeFrameFlags.testFlag(static_cast<TimeFrame>(flag))) {
             barMap.insert(flag, Bar());
             keys << flag;
@@ -52,7 +50,7 @@ BarCollector::BarCollector(const QString &instrumentID, const TimeFrames &timeFr
 
         for (auto key : qAsConst(keys)) {
             // Check if the table is already created for collected bars
-            QString tableName = BarCollector::staticMetaObject.enumerator(timeFrameEnumIdx).valueToKey(key);
+            QString tableName = QMetaEnum::fromType<TimeFrames>().valueToKey(key);
             if (!tables.contains(tableName, Qt::CaseInsensitive)) {
                 QString tableOfDB = QString("%1.%2").arg(instrument).arg(tableName);
                 bool ok = qry.exec("CREATE TABLE " + tableOfDB + " ("
@@ -185,7 +183,7 @@ void BarCollector::setTradingDay(const QString &tradingDay, const QString &lastN
 void BarCollector::saveBar(int timeFrame, const Bar &bar)
 {
     QSqlQuery qry(sqlDB);
-    QString tableName = BarCollector::staticMetaObject.enumerator(timeFrameEnumIdx).valueToKey(timeFrame);
+    QString tableName = QMetaEnum::fromType<TimeFrames>().valueToKey(timeFrame);
     QString tableOfDB = QString("%1.%2").arg(instrument).arg(tableName);
     qry.prepare("INSERT INTO " + tableOfDB + " (time, open, high, low, close, tick_volume, volume, type) "
                   "VALUES (?, ?, ?, ?, ?, ?, ?, ?)");

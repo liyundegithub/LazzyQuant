@@ -5,9 +5,6 @@
 #include "../indicator/mql5_indicator.h"
 #include "DblMaPsar_strategy.h"
 
-extern int MA_METHOD_enumIdx;
-extern int APPLIED_PRICE_enumIdx;
-
 DblMaPsarStrategy::DblMaPsarStrategy(const QString &id, const QString &instrumentID, int timeFrame, QObject *parent) :
     SingleTimeFrameStrategy(id, instrumentID, timeFrame, parent)
 {
@@ -21,19 +18,20 @@ void DblMaPsarStrategy::setParameter(const QVariant& param1, const QVariant& par
     int fastPeriod = param1.toInt();
     int slowPeriod = param2.toInt();
 
-    int ma_method_value = IndicatorFunctions::staticMetaObject.enumerator(MA_METHOD_enumIdx).keyToValue(param3.toString().trimmed().toLatin1().constData());
-    if (ma_method_value < 0) {
+    bool ok;
+    int maMethod = QMetaEnum::fromType<ENUM_MA_METHOD>().keyToValue(param3.toString().trimmed().toLatin1().constData(), &ok);
+    if (!ok || maMethod == -1) {
         qCritical() << "Parameter3 ma_method error!";
     }
-    int applied_price_value = IndicatorFunctions::staticMetaObject.enumerator(APPLIED_PRICE_enumIdx).keyToValue(param4.toString().trimmed().toLatin1().constData());
-    if (applied_price_value < 0) {
+    int appliedPrice = QMetaEnum::fromType<ENUM_APPLIED_PRICE>().keyToValue(param4.toString().trimmed().toLatin1().constData(), &ok);
+    if (!ok || appliedPrice == -1) {
         qCritical() << "Parameter4 applied_price error!";
     }
 
     double SARStep = param5.toDouble();
     double SARMaximum = param6.toDouble();
 
-    setParameter(fastPeriod, slowPeriod, static_cast<ENUM_MA_METHOD>(ma_method_value), static_cast<ENUM_APPLIED_PRICE>(applied_price_value), SARStep, SARMaximum);
+    setParameter(fastPeriod, slowPeriod, static_cast<ENUM_MA_METHOD>(maMethod), static_cast<ENUM_APPLIED_PRICE>(appliedPrice), SARStep, SARMaximum);
 }
 
 void DblMaPsarStrategy::setParameter(int fastPeriod, int slowPeriod, ENUM_MA_METHOD ma_method, ENUM_APPLIED_PRICE applied_price, double SARStep, double SARMaximum)

@@ -12,8 +12,6 @@ class MQL5Indicator;
 class IndicatorFunctions : public QObject
 {
     Q_OBJECT
-    Q_ENUMS(ENUM_MA_METHOD)
-    Q_ENUMS(ENUM_APPLIED_PRICE)
 
 public:
     explicit IndicatorFunctions(QObject *parent = nullptr);
@@ -24,6 +22,7 @@ public:
         MODE_SMMA,  // Smoothed averaging
         MODE_LWMA,  // Linear-weighted averaging
     };
+    Q_ENUM(ENUM_MA_METHOD)
 
     enum ENUM_APPLIED_PRICE {
         PRICE_CLOSE,    // Close price
@@ -34,6 +33,7 @@ public:
         PRICE_TYPICAL,  // Typical price, (high + low + close)/3
         PRICE_WEIGHTED, // Average price, (high + low + close + close)/4
     };
+    Q_ENUM(ENUM_APPLIED_PRICE)
 
 protected:
     QuantTrader* pTrader;

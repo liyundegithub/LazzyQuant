@@ -10,7 +10,6 @@
 class BarCollector : public QObject
 {
     Q_OBJECT
-    Q_ENUMS(TimeFrame)
 
 public:
     enum TimeFrame {
@@ -32,8 +31,9 @@ public:
         DAY   = 0x8000,
     };
     Q_DECLARE_FLAGS(TimeFrames, TimeFrame)
+    Q_FLAG(TimeFrames)
 
-    explicit BarCollector(const QString &instrumentID, const TimeFrames &timeFrameFlags, bool saveBarsToDB, QObject *parent = 0);
+    explicit BarCollector(const QString &instrumentID, TimeFrames timeFrameFlags, bool saveBarsToDB, QObject *parent = 0);
     ~BarCollector();
 
     Bar *getBarPtr(int timeFrame) {

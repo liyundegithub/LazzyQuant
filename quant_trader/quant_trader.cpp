@@ -13,20 +13,12 @@
 
 #include "trade_executer_interface.h"
 
-int timeFrameEnumIdx;
-int MA_METHOD_enumIdx;
-int APPLIED_PRICE_enumIdx;
-
 QuantTrader::QuantTrader(bool saveBarsToDB, QObject *parent) :
     QObject(parent),
     saveBarsToDB(saveBarsToDB)
 {
     qRegisterMetaType<int>("ENUM_MA_METHOD");
     qRegisterMetaType<int>("ENUM_APPLIED_PRICE");
-
-    timeFrameEnumIdx = BarCollector::staticMetaObject.indexOfEnumerator("TimeFrame");
-    MA_METHOD_enumIdx = IndicatorFunctions::staticMetaObject.indexOfEnumerator("ENUM_MA_METHOD");
-    APPLIED_PRICE_enumIdx = IndicatorFunctions::staticMetaObject.indexOfEnumerator("ENUM_APPLIED_PRICE");
 
     loadQuantTraderSettings();
     loadTradeStrategySettings();
@@ -67,19 +59,16 @@ void QuantTrader::loadQuantTraderSettings()
     const auto instrumentIDs = settings->childKeys();
 
     for (const auto &instrumentID : instrumentIDs) {
-        QString combined_time_frame_string = settings->value(instrumentID).toString();
-        const QStringList time_frame_stringlist = combined_time_frame_string.split('|');
-        BarCollector::TimeFrames time_frame_flags;
-        for (const QString &tf : time_frame_stringlist) {
-            int time_frame_value = BarCollector::staticMetaObject.enumerator(timeFrameEnumIdx).keyToValue(tf.trimmed().toLatin1().constData());
-            BarCollector::TimeFrame time_frame = static_cast<BarCollector::TimeFrame>(time_frame_value);
-            time_frame_flags |= time_frame;
+        QString combinedTimeFrameString = settings->value(instrumentID).toString();
+        int timeFrameFlags = QMetaEnum::fromType<BarCollector::TimeFrames>().keysToValue(combinedTimeFrameString.toLatin1().constData(), &ok);
+        if (!ok || timeFrameFlags == -1) {
+            qWarning() << "Timeframe setting of" << instrumentID << "is NOT OK!";
+            continue;
         }
-
-        BarCollector *collector = new BarCollector(instrumentID, time_frame_flags, saveBarsToDB, this);
+        BarCollector *collector = new BarCollector(instrumentID, static_cast<BarCollector::TimeFrames>(timeFrameFlags), saveBarsToDB, this);
         connect(collector, SIGNAL(collectedBar(QString,int,Bar)), this, SLOT(onNewBar(QString,int,Bar)), Qt::DirectConnection);
         collector_map[instrumentID] = collector;
-        qDebug() << instrumentID << ":\t" << time_frame_flags << "\t" << time_frame_stringlist;
+        qInfo() << instrumentID << ":" << static_cast<BarCollector::TimeFrames>(timeFrameFlags);
     }
     settings->endGroup();
 }
@@ -98,7 +87,7 @@ void QuantTrader::loadTradeStrategySettings()
         const QStringList time_frame_stringlist = combined_time_frame_string.split('|');
         QList<int> timeFrames;
         for (const QString &tf : time_frame_stringlist) {
-            int timeFrame = BarCollector::staticMetaObject.enumerator(timeFrameEnumIdx).keyToValue(tf.trimmed().toLatin1().constData());
+            int timeFrame = QMetaEnum::fromType<BarCollector::TimeFrames>().keyToValue(tf.trimmed().toLatin1().constData());
             timeFrames << timeFrame;
         }
 
@@ -199,7 +188,7 @@ QList<Bar>* QuantTrader::getBars(const QString &instrumentID, int timeFrame)
 
     // Insert a new Bar List item in bars_map
     auto &barList = bars_map[instrumentID][timeFrame];
-    QString time_frame_str = BarCollector::staticMetaObject.enumerator(timeFrameEnumIdx).valueToKey(timeFrame);
+    QString time_frame_str = QMetaEnum::fromType<BarCollector::TimeFrames>().valueToKey(timeFrame);
 
     // Load KT Export Data
     // Deprecated
