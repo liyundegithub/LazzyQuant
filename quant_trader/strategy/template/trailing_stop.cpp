@@ -1,4 +1,5 @@
 #include <QDataStream>
+#include <QDebugStateSaver>
 
 #include "trailing_stop.h"
 
@@ -65,6 +66,7 @@ void TrailingStop::update(double highPrice, double lowPrice) {
 
 QDebug operator<<(QDebug dbg, const TrailingStop &stop)
 {
+    QDebugStateSaver saver(dbg);
     dbg.nospace() <<   "direction="   << stop.direction
                   << ", stopLoss="    << stop.stopLoss
                   << ", AFstep="      << stop.AFstep
@@ -74,7 +76,7 @@ QDebug operator<<(QDebug dbg, const TrailingStop &stop)
                   << ", AF="          << stop.AF
                   << (stop.direction ? ", highestEver=" : ", lowestEver=")
                   << (stop.direction ? stop.highestEver : stop.lowestEver);
-    return dbg.space();
+    return dbg;
 }
 
 QDataStream &operator<<(QDataStream &s, const TrailingStop &stop)

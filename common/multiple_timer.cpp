@@ -16,6 +16,10 @@ MultipleTimer::MultipleTimer(QObject *parent)
 MultipleTimer::MultipleTimer(const QList<QTime> &timeList, QObject *parent)
     :  QObject(parent), timePoints(timeList)
 {
+    std::sort(timePoints.begin(), timePoints.end());
+    auto end_unique = std::unique(timePoints.begin(), timePoints.end());
+    timePoints.erase(end_unique, timePoints.end());
+
     timeIndex = -1;
     busyTimer = new QTimer(this);
     busyTimer->setSingleShot(true);
