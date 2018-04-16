@@ -3,7 +3,7 @@
 
 #include <boost/optional.hpp>
 #include <QMap>
-#include <QStringList>
+#include <QString>
 
 #include "../../bar.h"
 
@@ -12,15 +12,15 @@ class QVariant;
 class AbstractStrategy
 {
 protected:
-    const QString strategyID;
-    const QString instrument;
-    const QList<int> timeFrames;
+    QString strategyID;
+    QString instrumentID;
+    int timeFrames;
 
     boost::optional<int> position;
 
 public:
-    AbstractStrategy(const QString &id, const QString &instrumentID, const QList<int> &timeFrames) :
-        strategyID(id), instrument(instrumentID), timeFrames(timeFrames) {}
+    AbstractStrategy(const QString &id, const QString &instrumentID, int timeFrames) :
+        strategyID(id), instrumentID(instrumentID), timeFrames(timeFrames) {}
     virtual ~AbstractStrategy() {}
 
     virtual void setBarList(const QMap<int, QPair<QList<Bar>*, Bar*>>&) {}

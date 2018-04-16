@@ -41,14 +41,28 @@ void Print(...) {}
 #include "bar_collector.h"
 
 typedef int ENUM_TIMEFRAMES;
-#define PERIOD_M1   BarCollector::MIN1
-#define PERIOD_M3   BarCollector::MIN3
-#define PERIOD_M5   BarCollector::MIN5
-#define PERIOD_M10  BarCollector::MIN10
-#define PERIOD_M15  BarCollector::MIN15
-#define PERIOD_M30  BarCollector::MIN30
-#define PERIOD_M60  BarCollector::MIN60
-#define PERIOD_D1   BarCollector::DAY
+#define PERIOD_CURRENT  BarCollector::CURRENT
+#define PERIOD_M1       BarCollector::MIN1
+#define PERIOD_M2       BarCollector::MIN2
+#define PERIOD_M3       BarCollector::MIN3
+#define PERIOD_M4       BarCollector::MIN4
+#define PERIOD_M5       BarCollector::MIN5
+#define PERIOD_M6       BarCollector::MIN6
+#define PERIOD_M10      BarCollector::MIN10
+#define PERIOD_M12      BarCollector::MIN12
+#define PERIOD_M15      BarCollector::MIN15
+#define PERIOD_M20      BarCollector::MIN20
+#define PERIOD_M30      BarCollector::MIN30
+#define PERIOD_H1       BarCollector::HOUR1
+#define PERIOD_H2       BarCollector::HOUR2
+#define PERIOD_H3       BarCollector::HOUR3
+#define PERIOD_H4       BarCollector::HOUR4
+#define PERIOD_H6       BarCollector::HOUR6
+#define PERIOD_H8       BarCollector::HOUR8
+#define PERIOD_H12      BarCollector::HOUR12
+#define PERIOD_D1       BarCollector::DAY
+#define PERIOD_W1       BarCollector::WEEK
+#define PERIOD_MN1      BarCollector::MONTH
 
 inline
 double MathMin(double x, double y)

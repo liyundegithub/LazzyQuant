@@ -9,10 +9,10 @@ typedef unsigned short      WORD;
 
 struct KTExportBar {
     int     m_time;         //时间,UTC
-    float   m_fOpen;        //开盘
-    float   m_fHigh;        //最高
-    float   m_fLow;         //最低
-    float   m_fClose;       //收盘
+    float   m_fOpen;        //开盘.
+    float   m_fHigh;        //最高.
+    float   m_fLow;         //最低.
+    float   m_fClose;       //收盘.
     float   m_fVolume;      //成交量(手)
     float   m_fAmount;      //成交额(元)/持仓(未平仓合约，仅期货有效)
     WORD    m_wAdvance;     //上涨家数(仅大盘有效)

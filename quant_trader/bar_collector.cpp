@@ -5,20 +5,17 @@
 #include <QSqlQuery>
 #include <QSqlError>
 
+#include "common_utility.h"
 #include "bar_collector.h"
 
-BarCollector::BarCollector(const QString &instrumentID, TimeFrames timeFrameFlags, bool saveBarsToDB, QObject *parent) :
+BarCollector::BarCollector(const QString &instrumentID, int timeFrameFlags, bool saveBarsToDB, QObject *parent) :
     QObject(parent),
     instrument(instrumentID),
     saveBarsToDB(saveBarsToDB)
 {
-    int timeFrameEnumCount = QMetaEnum::fromType<TimeFrames>().keyCount();
-    for (int i = 0; i < timeFrameEnumCount; i++) {
-        auto flag = QMetaEnum::fromType<TimeFrames>().value(i);
-        if (timeFrameFlags.testFlag(static_cast<TimeFrame>(flag))) {
-            barMap.insert(flag, Bar());
-            keys << flag;
-        }
+    keys = enumValueToList<TimeFrames>(timeFrameFlags);
+    for (auto key : qAsConst(keys)) {
+        barMap.insert(key, Bar());
     }
 
     if (saveBarsToDB) {
@@ -92,14 +89,40 @@ static const QMap<BarCollector::TimeFrame, int> g_time_table = {
     {BarCollector::SEC20, 20},
     {BarCollector::SEC30, 30},
     {BarCollector::MIN1,   1 * MIN_UNIT},
+    {BarCollector::MIN2,   2 * MIN_UNIT},
     {BarCollector::MIN3,   3 * MIN_UNIT},
+    {BarCollector::MIN4,   4 * MIN_UNIT},
     {BarCollector::MIN5,   5 * MIN_UNIT},
+    {BarCollector::MIN6,   6 * MIN_UNIT},
     {BarCollector::MIN10, 10 * MIN_UNIT},
+    {BarCollector::MIN12, 12 * MIN_UNIT},
     {BarCollector::MIN15, 15 * MIN_UNIT},
     {BarCollector::MIN30, 30 * MIN_UNIT},
-    {BarCollector::MIN60,  1 * HOUR_UNIT},
+    {BarCollector::HOUR1,  1 * HOUR_UNIT},
+    {BarCollector::HOUR2,  2 * HOUR_UNIT},
+    {BarCollector::HOUR3,  3 * HOUR_UNIT},
+    {BarCollector::HOUR4,  4 * HOUR_UNIT},
+    {BarCollector::HOUR6,  6 * HOUR_UNIT},
+    {BarCollector::HOUR8,  1 * HOUR_UNIT},
+    {BarCollector::HOUR12,  1 * HOUR_UNIT},
     {BarCollector::DAY,   24 * HOUR_UNIT},
 };
+
+void BarCollector::setTradingDay(const QString &tradingDay, const QString &lastNight)
+{
+    auto date = QDateTime::fromString(tradingDay, "yyyyMMdd");
+    date.setTimeZone(QTimeZone::utc());
+    auto newTradingDayBase = date.toSecsSinceEpoch();
+    if (tradingDayBase != newTradingDayBase) {
+        tradingDayBase = newTradingDayBase;
+        lastVolume = 0;
+    }
+
+    date = QDateTime::fromString(lastNight, "yyyyMMdd");
+    date.setTimeZone(QTimeZone::utc());
+    lastNightBase = date.toSecsSinceEpoch();
+    morningBase = lastNightBase + 24 * 3600;
+}
 
 bool BarCollector::onMarketData(int time, double lastPrice, int volume)
 {
@@ -162,22 +185,6 @@ void BarCollector::saveEmitReset(int timeFrame, Bar &bar)
         qInfo().noquote() << instrument << ":" << bar;
         bar.reset();
     }
-}
-
-void BarCollector::setTradingDay(const QString &tradingDay, const QString &lastNight)
-{
-    auto date = QDateTime::fromString(tradingDay, "yyyyMMdd");
-    date.setTimeZone(QTimeZone::utc());
-    auto newTradingDayBase = date.toSecsSinceEpoch();
-    if (tradingDayBase != newTradingDayBase) {
-        tradingDayBase = newTradingDayBase;
-        lastVolume = 0;
-    }
-
-    date = QDateTime::fromString(lastNight, "yyyyMMdd");
-    date.setTimeZone(QTimeZone::utc());
-    lastNightBase = date.toSecsSinceEpoch();
-    morningBase = lastNightBase + 24 * 3600;
 }
 
 void BarCollector::saveBar(int timeFrame, const Bar &bar)

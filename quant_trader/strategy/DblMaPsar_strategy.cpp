@@ -38,9 +38,9 @@ void DblMaPsarStrategy::setParameter(int fastPeriod, int slowPeriod, ENUM_MA_MET
 {
     qDebug() << "fastPeriod = " << fastPeriod << ", slowPeriod = " << slowPeriod << ", ma_method = " << ma_method << ", applied_price = " << applied_price << ", SARStep = " << SARStep << ", SARMaximum = " << SARMaximum;
 
-    fast_ma = iMA(instrument, timeFrame, fastPeriod, 0, ma_method, applied_price);
-    slow_ma = iMA(instrument, timeFrame, slowPeriod, 0, ma_method, applied_price);
-    psar = iSAR(instrument, timeFrame, SARStep, SARMaximum);
+    fast_ma = iMA(instrumentID, timeFrames, fastPeriod, 0, ma_method, applied_price);
+    slow_ma = iMA(instrumentID, timeFrames, slowPeriod, 0, ma_method, applied_price);
+    psar = iSAR(instrumentID, timeFrames, SARStep, SARMaximum);
 }
 
 void DblMaPsarStrategy::onNewBar()

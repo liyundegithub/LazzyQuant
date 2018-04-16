@@ -3,6 +3,7 @@
 
 #include <memory>
 
+#include <QMetaEnum>
 #include <QString>
 #include <QDateTime>
 
@@ -43,6 +44,21 @@ class QSettings;
 class QObject;
 std::unique_ptr<QSettings> getSettingsSmart(const QString &organization, const QString &name, QObject *parent = nullptr);
 
+template<typename EnumType>
+QList<int> enumValueToList(int value)
+{
+    QList<int> valueList;
+    auto mobj = QMetaEnum::fromType<EnumType>();
+    int count = mobj.keyCount();
+    for (int i = 0; i < count; i++) {
+        int k = mobj.value(i);
+        if ((k != 0) && ((value & k) == k)) {
+            valueList.append(k);
+        }
+    }
+    return valueList;
+}
+
 template<class T>
 static inline bool isWithinRange(const T &t, const T &rangeStart, const T &rangeEnd)
 {
@@ -69,19 +85,19 @@ static inline bool isWithinRangeExcludeEnd(const T &t, const T &rangeStart, cons
 #define FOK_ORDER     2
 
 
-// 上海期货交易所                                   燃油, 线材
+// 上海期货交易所                                   燃油, 线材.
 const QString SQ[] = {"fu", "wr"};
-// 上海期货交易所 (夜盘)              铜,   铝,   锌,   铅,   镍,   锡,   金,   银,螺纹钢,热轧卷板,沥青,天然橡胶
+// 上海期货交易所 (夜盘)              铜,   铝,   锌,   铅,   镍,   锡,   金,   银,螺纹钢,热轧卷板,沥青,天然橡胶.
 const QString SY[] = {"cu", "al", "zn", "pb", "ni", "sn", "au", "ag", "rb", "hc", "bu", "ru"};
-// 大连商品交易所                                  玉米, 玉米淀粉, 纤维板,  胶合板, 鸡蛋, 线型低密度聚乙烯, 聚氯乙烯, 聚丙烯
+// 大连商品交易所                                  玉米, 玉米淀粉, 纤维板,  胶合板, 鸡蛋, 线型低密度聚乙烯, 聚氯乙烯, 聚丙烯.
 const QString DL[] = {"c",  "cs", "fb", "bb", "jd", "l",  "v",  "pp"};
-// 大连商品交易所  (夜盘)          黄大豆1号, 黄大豆2号, 豆粕, 大豆原油, 棕榈油, 冶金焦炭, 焦煤, 铁矿石
+// 大连商品交易所  (夜盘)          黄大豆1号, 黄大豆2号, 豆粕, 大豆原油, 棕榈油, 冶金焦炭, 焦煤, 铁矿石.
 const QString DY[] = {"a",  "b",  "m",  "y",  "p",  "j",  "jm", "i"};
-// 郑州商品交易所
+// 郑州商品交易所.
 const QString ZZ[] = {"jr", "lr", "pm", "ri", "rs", "sf", "sm", "wh"};
 // 郑州商品交易所 (夜盘)
 const QString ZY[] = {"cf", "cy", "fg", "ma", "oi", "rm", "sr", "ta", "zc", "tc"};	// zc原来为tc
-// 中金所
+// 中金所.
 const QString ZJ[] = {"ic", "if", "ih", "t",  "tf"};
 
 QString getSuffix(const QString &instrumentID);

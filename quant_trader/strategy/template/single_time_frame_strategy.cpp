@@ -7,16 +7,15 @@
 
 SingleTimeFrameStrategy::SingleTimeFrameStrategy(const QString &id, const QString &instrumentID, int timeFrame, QObject *parent) :
     IndicatorFunctions(parent),
-    AbstractStrategy(id, instrumentID, {timeFrame}),
-    timeFrame(timeFrame),
+    AbstractStrategy(id, instrumentID, timeFrame),
     bars(nullptr, nullptr)
 {
-    qInfo() << "SingleTimeFrameStrategy ctor, id =" << strategyID << ", instrument =" << instrument << ", timeFrame =" << timeFrame;
+    qInfo() << "SingleTimeFrameStrategy ctor, id =" << strategyID << ", instrument =" << instrumentID << ", timeFrame =" << timeFrames;
 }
 
 SingleTimeFrameStrategy::~SingleTimeFrameStrategy()
 {
-    qInfo() << "~SingleTimeFrameStrategy dtor, id =" << strategyID << ", instrument =" << instrument << ", timeFrame =" << timeFrame;
+    qInfo() << "~SingleTimeFrameStrategy dtor, id =" << strategyID << ", instrument =" << instrumentID << ", timeFrame =" << timeFrames;
 }
 
 void SingleTimeFrameStrategy::loadStatus()
@@ -63,15 +62,15 @@ void SingleTimeFrameStrategy::checkTPSL(double price)
 
 void SingleTimeFrameStrategy::setBarList(const QMap<int, QPair<QList<Bar>*, Bar*>> &listAndLast)
 {
-    this->barList = listAndLast[timeFrame].first;
-    this->lastBar = listAndLast[timeFrame].second;
+    this->barList = listAndLast[timeFrames].first;
+    this->lastBar = listAndLast[timeFrames].second;
     bars = _ListProxy<Bar>(this->barList, this->lastBar);
     bars.setAsSeries(true);
 }
 
 void SingleTimeFrameStrategy::checkIfNewBar(int newBarTimeFrame)
 {
-    if (this->timeFrame == newBarTimeFrame) {
+    if (this->timeFrames == newBarTimeFrame) {
         for (auto* indicator : qAsConst(dependIndicators)) {
             indicator->update();
         }

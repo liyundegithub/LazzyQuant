@@ -10,8 +10,6 @@ class SingleTimeFrameStrategy : public IndicatorFunctions, public AbstractStrate
     Q_OBJECT
 
 protected:
-    int timeFrame;
-
     QList<Bar>* barList;
     Bar* lastBar;
     _ListProxy<Bar> bars;

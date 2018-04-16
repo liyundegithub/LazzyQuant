@@ -83,12 +83,12 @@ void QuantTrader::loadTradeStrategySettings()
         settings->beginGroup(group);
         QString strategy_name = settings->value("strategy").toString();
         QString instrument = settings->value("instrument").toString();
-        QString combined_time_frame_string = settings->value("timeframe").toString();
-        const QStringList time_frame_stringlist = combined_time_frame_string.split('|');
-        QList<int> timeFrames;
-        for (const QString &tf : time_frame_stringlist) {
-            int timeFrame = QMetaEnum::fromType<BarCollector::TimeFrames>().keyToValue(tf.trimmed().toLatin1().constData());
-            timeFrames << timeFrame;
+        QString combinedTimeFrameString = settings->value("timeframe").toString();
+        bool ok;
+        int timeFrameFlags = QMetaEnum::fromType<BarCollector::TimeFrames>().keysToValue(combinedTimeFrameString.toLatin1().constData(), &ok);
+        if (!ok || timeFrameFlags == -1) {
+            qWarning() << "Timeframe setting of" << instrument << "is NOT OK!";
+            continue;
         }
 
         QVariant param1 = settings->value("param1");
@@ -109,11 +109,8 @@ void QuantTrader::loadTradeStrategySettings()
             continue;
         }
         QObject *object = nullptr;
-        if (strategy_meta_object->inherits(&SingleTimeFrameStrategy::staticMetaObject)) {
-            object = strategy_meta_object->newInstance(Q_ARG(QString, group), Q_ARG(QString, instrument), Q_ARG(int, timeFrames[0]), Q_ARG(QObject*, this));
-        } else {
-            object = strategy_meta_object->newInstance(Q_ARG(QString, group), Q_ARG(QString, instrument), Q_ARG(QList<int>, timeFrames), Q_ARG(QObject*, this));
-        }
+        object = strategy_meta_object->newInstance(Q_ARG(QString, group), Q_ARG(QString, instrument), Q_ARG(int, timeFrameFlags), Q_ARG(QObject*, this));
+
         if (object == nullptr) {
             qCritical().noquote().nospace() << "Instantiating strategy " << group << ": " << strategy_name << " failed!";
             continue;
@@ -128,7 +125,7 @@ void QuantTrader::loadTradeStrategySettings()
 
         strategy->setParameter(param1, param2, param3, param4, param5, param6, param7, param8, param9);
         QMap<int, QPair<QList<Bar>*, Bar*>> multiTimeFrameBars;
-        for (int timeFrame : qAsConst(timeFrames)) {
+        for (int timeFrame : enumValueToList<BarCollector::TimeFrames>(timeFrameFlags)) {
             multiTimeFrameBars.insert(timeFrame, qMakePair(getBars(instrument, timeFrame), collector_map[instrument]->getBarPtr(timeFrame)));
         }
         strategy->setBarList(multiTimeFrameBars);
