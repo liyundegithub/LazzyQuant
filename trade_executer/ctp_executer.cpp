@@ -167,23 +167,10 @@ void CtpExecuter::customEvent(QEvent *event)
         break;
     case FRONT_DISCONNECTED:
     {
+        auto *fevent = static_cast<FrontDisconnectedEvent*>(event);
+        qInfo() << "Front Disconnected! reason =" << fevent->getReason();
         loginState = LOGGED_OUT;
         userCacheReady = false;
-        auto *fevent = static_cast<FrontDisconnectedEvent*>(event);
-        switch (fevent->getReason()) {
-        case 0x1001: // 网络读失败
-            break;
-        case 0x1002: // 网络写失败
-            break;
-        case 0x2001: // 接收心跳超时
-            break;
-        case 0x2002: // 发送心跳失败
-            break;
-        case 0x2003: // 收到错误报文
-            break;
-        default:
-            break;
-        }
     }
         break;
     case RSP_AUTHENTICATE:
@@ -415,16 +402,16 @@ void CtpExecuter::customEvent(QEvent *event)
         const bool direction = (tevent->tradeField.Direction == THOST_FTDC_D_Buy);
 
         switch(tevent->tradeField.OffsetFlag) {
-        case THOST_FTDC_OF_Open:            //开仓
+        case THOST_FTDC_OF_Open:            //开仓.
             if (direction) {
                 tdLongPositions[tevent->tradeField.InstrumentID] += volume;
             } else {
                 tdShortPositions[tevent->tradeField.InstrumentID] += volume;
             }
             break;
-        case THOST_FTDC_OF_Close:           //平仓
-            // 默认先平昨仓, 再平今仓
-            // TODO 在考虑平今手续费减免的情况下, 应当先平今仓, 再平昨仓
+        case THOST_FTDC_OF_Close:           //平仓.
+            // 默认先平昨仓, 再平今仓.
+            // TODO 在考虑平今手续费减免的情况下, 应当先平今仓, 再平昨仓.
             if (direction) {
                 int ydPosition = ydShortPositions[tevent->tradeField.InstrumentID];
                 int closeYd = qMin(ydPosition, volume);
@@ -443,14 +430,14 @@ void CtpExecuter::customEvent(QEvent *event)
                 tdLongPositions[tevent->tradeField.InstrumentID] -= volume;
             }
             break;
-        case THOST_FTDC_OF_CloseToday:      //平今
+        case THOST_FTDC_OF_CloseToday:      //平今.
             if (direction) {
                 tdShortPositions[tevent->tradeField.InstrumentID] -= volume;
             } else {
                 tdLongPositions[tevent->tradeField.InstrumentID] -= volume;
             }
             break;
-        case THOST_FTDC_OF_CloseYesterday:  //平昨
+        case THOST_FTDC_OF_CloseYesterday:  //平昨.
             if (direction) {
                 ydShortPositions[tevent->tradeField.InstrumentID] -= volume;
             } else {
@@ -458,7 +445,7 @@ void CtpExecuter::customEvent(QEvent *event)
             }
             break;
         default:
-            // FIXME 默认当平今处理
+            // FIXME 默认当平今处理.
             if (direction) {
                 tdShortPositions[tevent->tradeField.InstrumentID] -= volume;
             } else {
@@ -594,10 +581,10 @@ void CtpExecuter::customEvent(QEvent *event)
 /*!
  * \brief CtpExecuter::callTraderApi
  * 尝试调用pTraderApi, 如果失败(返回值不是0),
- * 就在一个新线程里反复调用pTraderApi, 直至成功
+ * 就在一个新线程里反复调用pTraderApi, 直至成功.
  *
- * \param pTraderApi CThostFtdcTraderApi类的成员函数指针
- * \param pField pTraderApi函数的第一个参数，成功调用pTraderApi或超时之后释放
+ * \param pTraderApi CThostFtdcTraderApi类的成员函数指针.
+ * \param pField pTraderApi函数的第一个参数，成功调用pTraderApi或超时之后释放.
  */
 template<typename T>
 int CtpExecuter::callTraderApi(int (CThostFtdcTraderApi::* pTraderApi)(T *,int), T * pField)
@@ -616,7 +603,7 @@ int CtpExecuter::callTraderApi(int (CThostFtdcTraderApi::* pTraderApi)(T *,int),
     QtConcurrent::run([=]() -> void {
         int count_down = 100;
         while (count_down-- > 0) {
-            _sleep(400 - count_down * 2);   // TODO 改进退避算法
+            _sleep(400 - count_down * 2);   // TODO 改进退避算法.
             traderApiMutex.lock();
             int ret = (pUserApi->*pTraderApi)(pField, id);
             traderApiMutex.unlock();
@@ -666,7 +653,7 @@ void CtpExecuter::loginStateMachine()
 
 /*!
  * \brief CtpExecuter::authenticate
- * 发送认证请求
+ * 发送认证请求.
  *
  * \return nRequestID
  */
@@ -689,7 +676,7 @@ int CtpExecuter::authenticate()
 
 /*!
  * \brief CtpExecuter::userLogin
- * 用配置文件中的账号信息发送登陆交易端请求
+ * 用配置文件中的账号信息发送登陆交易端请求.
  *
  * \return nRequestID
  */
@@ -712,7 +699,7 @@ int CtpExecuter::userLogin()
 
 /*!
  * \brief CtpExecuter::userLogout
- * 发送登出交易端请求
+ * 发送登出交易端请求.
  *
  * \return nRequestID
  */
@@ -733,7 +720,7 @@ int CtpExecuter::userLogout()
 
 /*!
  * \brief CtpExecuter::qrySettlementInfo
- * 发送投资者结算结果查询请求
+ * 发送投资者结算结果查询请求.
  *
  * \return nRequestID
  */
@@ -749,7 +736,7 @@ int CtpExecuter::qrySettlementInfo()
 
 /*!
  * \brief CtpExecuter::settlementInfoConfirm
- * 发送投资者结算结果确认请求
+ * 发送投资者结算结果确认请求.
  *
  * \return nRequestID
  */
@@ -770,7 +757,7 @@ int CtpExecuter::settlementInfoConfirm()
 
 /*!
  * \brief CtpExecuter::qrySettlementInfoConfirm
- * 发送投资者结算结果确认查询请求
+ * 发送投资者结算结果确认查询请求.
  *
  * \return nRequestID
  */
@@ -786,7 +773,7 @@ int CtpExecuter::qrySettlementInfoConfirm()
 
 /*!
  * \brief CtpExecuter::qryTradingAccount
- * 发送查询资金账户请求
+ * 发送查询资金账户请求.
  *
  * \return nRequestID
  */
@@ -821,7 +808,7 @@ int CtpExecuter::qryInstrumentMarginRate(const QString &instrument)
 
 /*!
  * \brief CtpExecuter::qryInstrumentCommissionRate
- * 发送查询手续费率请求
+ * 发送查询手续费率请求.
  *
  * \param instrument 合约代码(为空代表所有持仓合约)
  * \return nRequestID
@@ -839,7 +826,7 @@ int CtpExecuter::qryInstrumentCommissionRate(const QString &instrument)
 
 /*!
  * \brief CtpExecuter::qryInstrument
- * 发送查询合约请求
+ * 发送查询合约请求.
  *
  * \param instrument 合约代码(为空代表所有合约)
  * \param exchangeID 交易所代码(为空代表所有交易所)
@@ -857,9 +844,9 @@ int CtpExecuter::qryInstrument(const QString &instrument, const QString &exchang
 
 /*!
  * \brief CtpExecuter::qryDepthMarketData
- * 发送查询合约行情请求
+ * 发送查询合约行情请求.
  *
- * \param instrument 合约代码
+ * \param instrument 合约代码.
  * \return nRequestID
  */
 int CtpExecuter::qryDepthMarketData(const QString &instrument)
@@ -874,7 +861,7 @@ int CtpExecuter::qryDepthMarketData(const QString &instrument)
  * \brief CtpExecuter::insertLimitOrder
  * 下限价单 (包括FOK, FAK)
  *
- * \param instrument 合约代码
+ * \param instrument 合约代码.
  * \param openClose 开平标志(通用宏定义)
  * \param volume 手数(非零整数, 正数代表开多/平空, 负数代表开空/平多)
  * \param price 价格(限价, 不得超出涨跌停范围)
@@ -919,9 +906,9 @@ int CtpExecuter::insertLimitOrder(const QString &instrument, int openClose, int 
 
 /*!
  * \brief CtpExecuter::insertMarketOrder
- * 下市价单
+ * 下市价单.
  *
- * \param instrument 合约代码
+ * \param instrument 合约代码.
  * \param openClose 开平标志(通用宏定义)
  * \param volume 手数(非零整数, 正数代表开多/平空, 负数代表开空/平多)
  * \return nRequestID
@@ -963,10 +950,11 @@ int CtpExecuter::insertMarketOrder(const QString &instrument, int openClose, int
 
 /*!
  * \brief CtpExecuter::insertCombineOrder
- * 下组合单
+ * 下组合单.
  *
- * \param instrument 组合合约代码
- * \param openClose 开平标志(通用宏定义)
+ * \param instrument 组合合约代码.
+ * \param openClose1 第一腿合约开平标志(通用宏定义)
+ * \param openClose2 第二腿合约开平标志(通用宏定义)
  * \param volume 手数(非零整数, 正数代表开多/平空, 负数代表开空/平多)
  * \param price 价格(限价, 不得超出涨跌停范围)
  * \param allOrAny 全部成交或撤单(true)/任意数量成交剩余撤单(false)
@@ -1015,9 +1003,9 @@ int CtpExecuter::insertCombineOrder(const QString &instrument, int openClose1, i
  * 报单操作(仅支持撤单)
  *
  * \param orderRef 报单引用(TThostFtdcOrderRefType)
- * \param frontID 前置编号
- * \param sessionID 会话编号
- * \param instrument 合约代码
+ * \param frontID 前置编号.
+ * \param sessionID 会话编号.
+ * \param instrument 合约代码.
  * \return nRequestID
  */
 int CtpExecuter::orderAction(char *orderRef, int frontID, int sessionID, const QString &instrument)
@@ -1044,7 +1032,7 @@ int CtpExecuter::orderAction(char *orderRef, int frontID, int sessionID, const Q
  * \brief CtpExecuter::insertParkedLimitOrder
  * 预埋限价单 (包括FOK, FAK)
  *
- * \param instrument 合约代码
+ * \param instrument 合约代码.
  * \param openClose 开平标志(通用宏定义)
  * \param volume 手数(非零整数, 正数代表开多/平空, 负数代表开空/平多)
  * \param price 价格(限价, 不得超出涨跌停范围)
@@ -1089,12 +1077,12 @@ int CtpExecuter::insertParkedLimitOrder(const QString &instrument, int openClose
 
 /*!
  * \brief CtpExecuter::insertParkedOrderAction
- * 预埋撤单操作
+ * 预埋撤单操作.
  *
  * \param orderRef 报单引用(TThostFtdcOrderRefType)
- * \param frontID 前置编号
- * \param sessionID 会话编号
- * \param instrument 合约代码
+ * \param frontID 前置编号.
+ * \param sessionID 会话编号.
+ * \param instrument 合约代码.
  * \return nRequestID
  */
 int CtpExecuter::insertParkedOrderAction(char *orderRef, int frontID, int sessionID, const QString &instrument)
@@ -1119,9 +1107,9 @@ int CtpExecuter::insertParkedOrderAction(char *orderRef, int frontID, int sessio
 
 /*!
  * \brief CtpExecuter::removeParkedOrder
- * 删除预埋报单
+ * 删除预埋报单.
  *
- * \param parkedOrderID 预埋报单编号
+ * \param parkedOrderID 预埋报单编号.
  * \return nRequestID
  */
 int CtpExecuter::removeParkedOrder(char *parkedOrderID)
@@ -1142,9 +1130,9 @@ int CtpExecuter::removeParkedOrder(char *parkedOrderID)
 
 /*!
  * \brief CtpExecuter::removeParkedOrderAction
- * 删除预埋撤单
+ * 删除预埋撤单.
  *
- * \param parkedOrderActionID 预埋撤单编号
+ * \param parkedOrderActionID 预埋撤单编号.
  * \return nRequestID
  */
 int CtpExecuter::removeParkedOrderAction(char *parkedOrderActionID)
@@ -1165,9 +1153,9 @@ int CtpExecuter::removeParkedOrderAction(char *parkedOrderActionID)
 
 /*!
  * \brief CtpExecuter::qryMaxOrderVolume
- * 发送查询最大报单数量请求
+ * 发送查询最大报单数量请求.
  *
- * \param instrument 合约代码
+ * \param instrument 合约代码.
  * \param direction 多空方向 (true: 多, false: 空)
  * \param openClose 开平标志(通用宏定义)
  * \return nRequestID
@@ -1188,9 +1176,9 @@ int CtpExecuter::qryMaxOrderVolume(const QString &instrument, bool direction, in
 
 /*!
  * \brief CtpExecuter::qryOrder
- * 发送查询报单请求
+ * 发送查询报单请求.
  *
- * \param instrument 合约代码
+ * \param instrument 合约代码.
  * \return nRequestID
  */
 int CtpExecuter::qryOrder(const QString &instrument)
@@ -1206,9 +1194,9 @@ int CtpExecuter::qryOrder(const QString &instrument)
 
 /*!
  * \brief CtpExecuter::qryTrade
- * 发送查询成交请求
+ * 发送查询成交请求.
  *
- * \param instrument 合约代码
+ * \param instrument 合约代码.
  * \return nRequestID
  */
 int CtpExecuter::qryTrade(const QString &instrument)
@@ -1224,9 +1212,9 @@ int CtpExecuter::qryTrade(const QString &instrument)
 
 /*!
  * \brief CtpExecuter::qryPosition
- * 发送查询持仓请求
+ * 发送查询持仓请求.
  *
- * \param instrument 合约代码
+ * \param instrument 合约代码.
  * \return nRequestID
  */
 int CtpExecuter::qryPosition(const QString &instrument)
@@ -1242,9 +1230,9 @@ int CtpExecuter::qryPosition(const QString &instrument)
 
 /*!
  * \brief CtpExecuter::qryPositionDetail
- * 发送查询持仓明细请求
+ * 发送查询持仓明细请求.
  *
- * \param instrument 合约代码
+ * \param instrument 合约代码.
  * \return nRequestID
  */
 int CtpExecuter::qryPositionDetail(const QString &instrument)
@@ -1260,11 +1248,11 @@ int CtpExecuter::qryPositionDetail(const QString &instrument)
 
 /*!
  * \brief CtpExecuter::insertExecOrder
- * 发送期权行权指令
+ * 发送期权行权指令.
  *
- * \param instrument 期权合约代码
+ * \param instrument 期权合约代码.
  * \param type 期权类型(看涨/看跌)
- * \param volume 行权手数
+ * \param volume 行权手数.
  * \return nRequestID
  */
 int CtpExecuter::insertExecOrder(const QString &instrument, OPTION_TYPE type, int volume)
@@ -1297,9 +1285,9 @@ int CtpExecuter::insertExecOrder(const QString &instrument, OPTION_TYPE type, in
 
 /*!
  * \brief CtpExecuter::insertQuote
- * 发送询价指令
+ * 发送询价指令.
  *
- * \param instrument 合约代码
+ * \param instrument 合约代码.
  * \return nRequestID
  */
 int CtpExecuter::insertQuote(const QString &instrument)
@@ -1321,14 +1309,14 @@ int CtpExecuter::insertQuote(const QString &instrument)
 
 /*!
  * \brief CtpExecuter::checkLimitOrder
- * 1. 检查限价单价格是否合理, 即是否可能造成自成交
- * 2. 检查该合约撤单次数是否已超标
+ * 1. 检查限价单价格是否合理, 即是否可能造成自成交.
+ * 2. 检查该合约撤单次数是否已超标.
  *
- * \param instrument 合约代码
- * \param price 限价单价格
+ * \param instrument 合约代码.
+ * \param price 限价单价格.
  * \param direction 多空方向(true: 多, false: 空)
  * \param orderType 订单类型 (0:普通限价单, 1:FAK, 2:FOK)
- * \return true: 检查通过, false: 未通过检查
+ * \return true: 检查通过, false: 未通过检查.
  */
 bool CtpExecuter::checkLimitOrder(const QString &instrument, double price, bool direction, int orderType)
 {
@@ -1377,15 +1365,15 @@ bool CtpExecuter::checkLimitOrder(const QString &instrument, double price, bool 
 
 /*!
  * \brief CtpExecuter::distinguishYdTd
- * 判断平仓时是否需要使用"平昨"或"平今"标志
+ * 判断平仓时是否需要使用"平昨"或"平今"标志.
  *
- * \param instrument 合约代码
+ * \param instrument 合约代码.
  * \return true表示使用"平昨"或"平今"标志, false表示使用"平仓"标志(即不区分昨仓和今仓)
  */
 bool CtpExecuter::distinguishYdTd(const QString &instrument)
 {
     if (instrumentDataCache.contains(instrument)) {
-        // 上期所平仓时需要使用"平昨"或"平今"标志
+        // 上期所平仓时需要使用"平昨"或"平今"标志.
         if (strcmp(instrumentDataCache.value(instrument).ExchangeID, "SHFE") == 0) {
             return true;
         }
@@ -1395,30 +1383,30 @@ bool CtpExecuter::distinguishYdTd(const QString &instrument)
 
 /*!
  * \brief CtpExecuter::canUseMarketOrder
- * 判断该合约是否支持市价单
+ * 判断该合约是否支持市价单.
  *
- * \param instrument 合约代码
- * \return true表示支持市价单, false表示不支持市价单
+ * \param instrument 合约代码.
+ * \return true表示支持市价单, false表示不支持市价单.
  */
 bool CtpExecuter::canUseMarketOrder(const QString &instrument)
 {
     if (instrumentDataCache.contains(instrument)) {
-        // 上期所不支持市价单
+        // 上期所不支持市价单.
         if (strcmp(instrumentDataCache.value(instrument).ExchangeID, "SHFE") == 0) {
             return false;
         }
-        // 大商所期权合约不支持市价单
+        // 大商所期权合约不支持市价单.
         if (strcmp(instrumentDataCache.value(instrument).ExchangeID, "DCE") == 0 && isOption(instrument)) {
             return false;
         }
-        // TODO 中金所后两个季月合约不支持市价单
+        // TODO 中金所后两个季月合约不支持市价单.
     }
     return true;
 }
 
 /*!
  * \brief CtpExecuter::setLogin
- * 设置期望目标为登陆状态
+ * 设置期望目标为登陆状态.
  */
 void CtpExecuter::setLogin()
 {
@@ -1429,7 +1417,7 @@ void CtpExecuter::setLogin()
 
 /*!
  * \brief CtpExecuter::setLogout
- * 设置期望目标为登出状态
+ * 设置期望目标为登出状态.
  */
 void CtpExecuter::setLogout()
 {
@@ -1440,7 +1428,7 @@ void CtpExecuter::setLogout()
 
 /*!
  * \brief CtpExecuter::onMarketClose
- * 收盘, 退出登录, 并做一些清理工作
+ * 收盘, 退出登录, 并做一些清理工作.
  */
 void CtpExecuter::onMarketClose()
 {
@@ -1454,9 +1442,9 @@ void CtpExecuter::onMarketClose()
 
 /*!
  * \brief CtpExecuter::getStatus
- * 获取状态字符串
+ * 获取状态字符串.
  *
- * \return 状态
+ * \return 状态.
  */
 QString CtpExecuter::getStatus() const
 {
@@ -1501,8 +1489,8 @@ void CtpExecuter::updateAccountInfo()
 
 /*!
  * \brief CtpExecuter::updateInstrumentDataCache
- * 请求查询合约基本信息和当前市价信息
- * 返回结果将被存入缓存, 供盘中快速查询
+ * 请求查询合约基本信息和当前市价信息.
+ * 返回结果将被存入缓存, 供盘中快速查询.
  *
  * \param instruments 合约代码列表
  */
@@ -1520,7 +1508,7 @@ void CtpExecuter::updateInstrumentDataCache()
 
 /*!
  * \brief CtpExecuter::getCachedInstruments
- * 返回缓存中所有以idPrefix开头的合约代码列表
+ * 返回缓存中所有以idPrefix开头的合约代码列表.
  *
  * \param idPrefix 合约代码或其部分前缀 (默认值为空, 表示所有合约)
  */
@@ -1541,10 +1529,10 @@ QStringList CtpExecuter::getCachedInstruments(const QString &idPrefix) const
 
 /*!
  * \brief CtpExecuter::getExchangeID
- * 从缓存中查询合约的交易所代码并返回
+ * 从缓存中查询合约的交易所代码并返回.
  *
- * \param instrument 合约代码
- * \return 交易所代码
+ * \param instrument 合约代码.
+ * \return 交易所代码.
  */
 QString CtpExecuter::getExchangeID(const QString &instrument)
 {
@@ -1560,10 +1548,10 @@ QString CtpExecuter::getExchangeID(const QString &instrument)
 
 /*!
  * \brief CtpExecuter::getExpireDate
- * 从缓存中查询合约的到期日并返回
+ * 从缓存中查询合约的到期日并返回.
  *
- * \param instrument 合约代码
- * \return 合约到期日
+ * \param instrument 合约代码.
+ * \return 合约到期日.
  */
 QString CtpExecuter::getExpireDate(const QString &instrument)
 {
@@ -1579,9 +1567,9 @@ QString CtpExecuter::getExpireDate(const QString &instrument)
 
 /*!
  * \brief CtpExecuter::getUpperLimit
- * 从缓存中查询合约的涨停价并返回
+ * 从缓存中查询合约的涨停价并返回.
  *
- * \param instrument 合约代码
+ * \param instrument 合约代码.
  * \return 涨停价 (如果缓存中查不到返回-DBL_MAX)
  */
 double CtpExecuter::getUpperLimit(const QString &instrument)
@@ -1598,9 +1586,9 @@ double CtpExecuter::getUpperLimit(const QString &instrument)
 
 /*!
  * \brief CtpExecuter::getLowerLimit
- * 从缓存中查询合约的跌停价并返回
+ * 从缓存中查询合约的跌停价并返回.
  *
- * \param instrument 合约代码
+ * \param instrument 合约代码.
  * \return 跌停价 (如果缓存中查不到返回DBL_MAX)
  */
 double CtpExecuter::getLowerLimit(const QString &instrument)
@@ -1658,7 +1646,7 @@ int CtpExecuter::qryParkedOrderAction(const QString &instrument, const QString &
 
 /*!
  * \brief analyzeOrderType
- * 分析报单类型
+ * 分析报单类型.
  * 普通限价单: allOrAny = false, gfdOrIoc = true
  * FAK:      allOrAny = false, gfdOrIoc = false
  * FOK:      allOrAny = true,  gfdOrIoc = false
@@ -1669,15 +1657,15 @@ int CtpExecuter::qryParkedOrderAction(const QString &instrument, const QString &
  */
 static inline void analyzeOrderType(int orderType, bool &allOrAny, bool &gfdOrIoc)
 {
-    allOrAny = (orderType == 2);
-    gfdOrIoc = (orderType == 0);
+    allOrAny = (orderType == FOK_ORDER);
+    gfdOrIoc = (orderType == LIMIT_ORDER);
 }
 
 /*!
  * \brief CtpExecuter::buyLimitAuto
  * 限价买进合约 (开多或平空, 如有空头持仓先平仓)
  *
- * \param instrument 合约代码
+ * \param instrument 合约代码.
  * \param volume 买进数量 (大于零)
  * \param price 买进价格 (必须在涨跌停范围内)
  * \param orderType 订单类型 (0:普通限价单, 1:FAK, 2:FOK)
@@ -1725,7 +1713,7 @@ void CtpExecuter::buyLimitAuto(const QString &instrument, int volume, double pri
  * \brief CtpExecuter::sellLimitAuto
  * 限价卖出合约 (开空或平多, 如有多头持仓先平仓)
  *
- * \param instrument 合约代码
+ * \param instrument 合约代码.
  * \param volume 卖出数量 (大于零)
  * \param price 卖出价格 (必须在涨跌停范围内)
  * \param orderType 订单类型 (0:普通限价单, 1:FAK, 2:FOK)
@@ -1773,7 +1761,7 @@ void CtpExecuter::sellLimitAuto(const QString &instrument, int volume, double pr
  * \brief CtpExecuter::buyLimit
  * 限价买进合约 (开多)
  *
- * \param instrument 合约代码
+ * \param instrument 合约代码.
  * \param volume 买进数量 (大于零)
  * \param price 买进价格 (必须在涨跌停范围内)
  * \param orderType 订单类型 (0:普通限价单, 1:FAK, 2:FOK)
@@ -1797,7 +1785,7 @@ void CtpExecuter::buyLimit(const QString &instrument, int volume, double price, 
  * \brief CtpExecuter::sellLimit
  * 限价卖出合约 (开空)
  *
- * \param instrument 合约代码
+ * \param instrument 合约代码.
  * \param volume 卖出数量 (大于零)
  * \param price 卖出价格 (必须在涨跌停范围内)
  * \param orderType 订单类型 (0:普通限价单, 1:FAK, 2:FOK)
@@ -1821,9 +1809,9 @@ void CtpExecuter::sellLimit(const QString &instrument, int volume, double price,
  * \brief CtpExecuter::buyMarketAuto
  * 市价买进合约 (开多或平空, 如有空头持仓先平仓)
  *
- * \param instrument 合约代码
+ * \param instrument 合约代码.
  * \param volume 买进数量 (大于零)
- * \param useSimulation 使用涨停板限价单模拟市价单
+ * \param useSimulation 使用涨停板限价单模拟市价单.
  */
 void CtpExecuter::buyMarketAuto(const QString &instrument, int volume, bool useSimulation)
 {
@@ -1867,9 +1855,9 @@ void CtpExecuter::buyMarketAuto(const QString &instrument, int volume, bool useS
  * \brief CtpExecuter::sellMarketAuto
  * 市价卖出合约 (开空或平多, 如有多头持仓先平仓)
  *
- * \param instrument 合约代码
+ * \param instrument 合约代码.
  * \param volume 卖出数量 (大于零)
- * \param useSimulation 使用跌停板限价单模拟市价单
+ * \param useSimulation 使用跌停板限价单模拟市价单.
  */
 void CtpExecuter::sellMarketAuto(const QString &instrument, int volume, bool useSimulation)
 {
@@ -1913,9 +1901,9 @@ void CtpExecuter::sellMarketAuto(const QString &instrument, int volume, bool use
  * \brief CtpExecuter::buyMarket
  * 市价买进合约 (开多)
  *
- * \param instrument 合约代码
+ * \param instrument 合约代码.
  * \param volume 买进数量 (大于零)
- * \param useSimulation 使用涨停板限价单模拟市价单
+ * \param useSimulation 使用涨停板限价单模拟市价单.
  */
 void CtpExecuter::buyMarket(const QString &instrument, int volume, bool useSimulation)
 {
@@ -1935,9 +1923,9 @@ void CtpExecuter::buyMarket(const QString &instrument, int volume, bool useSimul
  * \brief CtpExecuter::sellMarket
  * 市价卖出合约 (开空)
  *
- * \param instrument 合约代码
+ * \param instrument 合约代码.
  * \param volume 卖出数量 (大于零)
- * \param useSimulation 使用跌停板限价单模拟市价单
+ * \param useSimulation 使用跌停板限价单模拟市价单.
  */
 void CtpExecuter::sellMarket(const QString &instrument, int volume, bool useSimulation)
 {
@@ -1997,12 +1985,12 @@ void CtpExecuter::sellCombine(const QString &instrument1, const QString &instrum
 
 /*!
  * \brief CtpExecuter::cancelOrder
- * 取消未成交的订单
+ * 取消未成交的订单.
  *
- * \param orderRefID 订单引用号
- * \param frontID 前置编号
- * \param sessionID 会话编号
- * \param instrument 合约代码
+ * \param orderRefID 订单引用号.
+ * \param frontID 前置编号.
+ * \param sessionID 会话编号.
+ * \param instrument 合约代码.
  */
 void CtpExecuter::cancelOrder(int orderRefID, int frontID, int sessionID, const QString &instrument)
 {
@@ -2018,9 +2006,9 @@ void CtpExecuter::cancelOrder(int orderRefID, int frontID, int sessionID, const 
 
 /*!
  * \brief CtpExecuter::cancelAllOrders
- * 取消该合约未成交的订单
+ * 取消该合约未成交的订单.
  *
- * \param instrument 合约代码, 如果为空代表取消所有合约上未成交的订单
+ * \param instrument 合约代码, 如果为空代表取消所有合约上未成交的订单.
  */
 void CtpExecuter::cancelAllOrders(const QString &instrument)
 {
@@ -2038,9 +2026,9 @@ void CtpExecuter::cancelAllOrders(const QString &instrument)
 
 /*!
  * \brief CtpExecuter::parkBuyLimit
- * 预埋限价开多单, 不管已有持仓与否
+ * 预埋限价开多单, 不管已有持仓与否.
  *
- * \param instrument 合约代码
+ * \param instrument 合约代码.
  * \param volume 买进数量 (大于零)
  * \param price 买进价格 (必须在涨跌停范围内)
  * \param orderType 订单类型 (0:普通限价单, 1:FAK, 2:FOK)
@@ -2058,9 +2046,9 @@ void CtpExecuter::parkBuyLimit(const QString& instrument, int volume, double pri
 
 /*!
  * \brief CtpExecuter::parkSellLimit
- * 预埋限价开空单, 不管已有持仓与否
+ * 预埋限价开空单, 不管已有持仓与否.
  *
- * \param instrument 合约代码
+ * \param instrument 合约代码.
  * \param volume 卖出数量 (大于零)
  * \param price 卖出价格 (必须在涨跌停范围内)
  * \param orderType 订单类型 (0:普通限价单, 1:FAK, 2:FOK)
@@ -2078,12 +2066,12 @@ void CtpExecuter::parkSellLimit(const QString &instrument, int volume, double pr
 
 /*!
  * \brief CtpExecuter::parkOrderCancel
- * 预埋撤单
+ * 预埋撤单.
  *
- * \param orderRefID 订单引用号
- * \param frontID 前置编号
- * \param sessionID 会话编号
- * \param instrument 合约代码
+ * \param orderRefID 订单引用号.
+ * \param frontID 前置编号.
+ * \param sessionID 会话编号.
+ * \param instrument 合约代码.
  */
 void CtpExecuter::parkOrderCancel(int orderRefID, int frontID, int sessionID, const QString &instrument)
 {
@@ -2098,9 +2086,9 @@ void CtpExecuter::parkOrderCancel(int orderRefID, int frontID, int sessionID, co
 
 /*!
  * \brief CtpExecuter::parkOrderCancelAll
- * 预埋撤销此品种所有报单
+ * 预埋撤销此品种所有报单.
  *
- * \param instrument 合约代码
+ * \param instrument 合约代码.
  */
 void CtpExecuter::parkOrderCancelAll(const QString &instrument)
 {
@@ -2120,9 +2108,9 @@ void CtpExecuter::parkOrderCancelAll(const QString &instrument)
 
 /*!
  * \brief CtpExecuter::removeParkedOrder
- * 删除预埋报单
+ * 删除预埋报单.
  *
- * \param parkedOrderID 预埋报单编号
+ * \param id 预埋报单编号.
  */
 void CtpExecuter::removeParkedOrder(int id)
 {
@@ -2136,9 +2124,9 @@ void CtpExecuter::removeParkedOrder(int id)
 
 /*!
  * \brief CtpExecuter::removeParkedOrderAction
- * 删除预埋撤单
+ * 删除预埋撤单.
  *
- * \param parkedOrderActionID 预埋撤单编号
+ * \param id 预埋撤单编号.
  */
 void CtpExecuter::removeParkedOrderAction(int id)
 {
@@ -2152,10 +2140,10 @@ void CtpExecuter::removeParkedOrderAction(int id)
 
 /*!
  * \brief CtpExecuter::setPosition
- * 为该合约设置一个新的目标仓位, 如果与当前仓位不同, 则执行相应操作以达成目标
+ * 为该合约设置一个新的目标仓位, 如果与当前仓位不同, 则执行相应操作以达成目标.
  *
- * \param instrument 合约代码
- * \param newPosition 新目标仓位
+ * \param instrument 合约代码.
+ * \param newPosition 新目标仓位.
  */
 void CtpExecuter::setPosition(const QString &instrument, int newPosition)
 {
@@ -2179,9 +2167,9 @@ void CtpExecuter::setPosition(const QString &instrument, int newPosition)
 
 /*!
  * \brief CtpExecuter::getPosition
- * 获取该合约的仓位, 如同时持有多仓和空仓则合并计算
+ * 获取该合约的仓位, 如同时持有多仓和空仓则合并计算.
  *
- * \param instrument 合约代码
+ * \param instrument 合约代码.
  * \return 该合约的仓位, 正数表示净多头, 负数表示净空头, 如果缓存未同步返回-INT_MAX
  */
 int CtpExecuter::getPosition(const QString &instrument) const
@@ -2198,10 +2186,10 @@ int CtpExecuter::getPosition(const QString &instrument) const
 
 /*!
  * \brief CtpExecuter::execOption
- * 期权行权
+ * 期权行权.
  *
- * \param instrument 期权合约代码
- * \param volume 行权手数
+ * \param instrument 期权合约代码.
+ * \param volume 行权手数.
  */
 void CtpExecuter::execOption(const QString &instrument, int volume)
 {
@@ -2222,9 +2210,9 @@ void CtpExecuter::execOption(const QString &instrument, int volume)
 
 /*!
  * \brief CtpExecuter::quote
- * 询价
+ * 询价.
  *
- * \param instrument 合约代码
+ * \param instrument 合约代码.
  */
 void CtpExecuter::quote(const QString &instrument)
 {
@@ -2236,7 +2224,7 @@ void CtpExecuter::quote(const QString &instrument)
 
 /*!
  * \brief CtpExecuter::quit
- * 退出
+ * 退出.
  */
 void CtpExecuter::quit()
 {

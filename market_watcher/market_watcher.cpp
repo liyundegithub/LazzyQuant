@@ -1,4 +1,4 @@
-﻿#include <QSettings>
+#include <QSettings>
 #include <QDebug>
 #include <QDir>
 #include <QDataStream>
@@ -236,29 +236,13 @@ void MarketWatcher::customEvent(QEvent *event)
 {
     switch (int(event->type())) {
     case FRONT_CONNECTED:
-        qInfo() << "Front Connected!";
         login();
         break;
     case FRONT_DISCONNECTED:
     {
-        qInfo() << "Front Disconnected!";
-        loggedIn = false;
         auto *fevent = static_cast<FrontDisconnectedEvent*>(event);
-        // TODO
-        switch (fevent->getReason()) {
-        case 0x1001: // 网络读失败
-            break;
-        case 0x1002: // 网络写失败
-            break;
-        case 0x2001: // 接收心跳超时
-            break;
-        case 0x2002: // 发送心跳失败
-            break;
-        case 0x2003: // 收到错误报文
-            break;
-        default:
-            break;
-        }
+        qInfo() << "Front Disconnected! reason =" << fevent->getReason();
+        loggedIn = false;
     }
         break;
     case HEARTBEAT_WARNING:
@@ -290,7 +274,7 @@ void MarketWatcher::customEvent(QEvent *event)
 
 /*!
  * \brief MarketWatcher::login
- * 用配置文件中的账号信息登陆行情端
+ * 用配置文件中的账号信息登陆行情端.
  */
 void MarketWatcher::login()
 {
@@ -305,7 +289,7 @@ void MarketWatcher::login()
 
 /*!
  * \brief MarketWatcher::subscribe
- * 订阅subscribeSet里的合约
+ * 订阅subscribeSet里的合约.
  */
 void MarketWatcher::subscribe()
 {
@@ -324,10 +308,10 @@ void MarketWatcher::subscribe()
 
 /*!
  * \brief MarketWatcher::checkTradingTimes
- * 查找各个交易市场, 找到相应合约的交易时间并事先储存到map里
+ * 查找各个交易市场, 找到相应合约的交易时间并事先储存到map里.
  *
- * \param instrumentID 合约代码
- * \return 是否找到了该合约的交易时间
+ * \param instrumentID 合约代码.
+ * \return 是否找到了该合约的交易时间.
  */
 bool MarketWatcher::checkTradingTimes(const QString &instrumentID)
 {
@@ -343,7 +327,7 @@ bool MarketWatcher::checkTradingTimes(const QString &instrumentID)
                         return true;
                     }
                 }
-                return false;   // instrumentID未能匹配任何正则表达式
+                return false;   // instrumentID未能匹配任何正则表达式.
             }
         }
     }
@@ -353,11 +337,11 @@ bool MarketWatcher::checkTradingTimes(const QString &instrumentID)
 /*!
  * \brief MarketWatcher::processDepthMarketData
  * 处理深度市场数据:
- * 1. 过滤无效的(如在交易时间外的, 或数据有错误的)行情消息
- * 2. 发送新行情数据(newMarketData signal)
- * 3. 如果需要, 将行情数据保存到文件
+ * 1. 过滤无效的(如在交易时间外的, 或数据有错误的)行情消息.
+ * 2. 发送新行情数据(newMarketData signal).
+ * 3. 如果需要, 将行情数据保存到文件.
  *
- * \param depthMarketDataField 深度市场数据
+ * \param depthMarketDataField 深度市场数据.
  */
 void MarketWatcher::processDepthMarketData(const CThostFtdcDepthMarketDataField& depthMarketDataField)
 {
@@ -388,7 +372,7 @@ void MarketWatcher::processDepthMarketData(const CThostFtdcDepthMarketDataField&
  * \brief MarketWatcher::emitNewMarketData
  * 发送newMarketData信号 (仅用于reply mode)
  *
- * \param depthMarketDataField 深度市场数据
+ * \param depthMarketDataField 深度市场数据.
  */
 void MarketWatcher::emitNewMarketData(const CThostFtdcDepthMarketDataField& depthMarketDataField)
 {
@@ -406,9 +390,9 @@ void MarketWatcher::emitNewMarketData(const CThostFtdcDepthMarketDataField& dept
 
 /*!
  * \brief MarketWatcher::getStatus
- * 获取状态字符串
+ * 获取状态字符串.
  *
- * \return 状态
+ * \return 状态.
  */
 QString MarketWatcher::getStatus() const
 {
@@ -421,7 +405,7 @@ QString MarketWatcher::getStatus() const
 
 /*!
  * \brief MarketWatcher::getTradingDay
- * 获取交易日
+ * 获取交易日.
  *
  * \return 交易日(格式YYYYMMDD)
  */
@@ -436,10 +420,10 @@ QString MarketWatcher::getTradingDay() const
 
 /*!
  * \brief MarketWatcher::subscribeInstruments
- * 订阅合约
+ * 订阅合约.
  *
- * \param instruments 合约列表
- * \param updateIni 是否将订阅的合约列表更新到配置文件
+ * \param instruments 合约列表.
+ * \param updateIni 是否将订阅的合约列表更新到配置文件.
  */
 void MarketWatcher::subscribeInstruments(const QStringList &instruments, bool updateIni)
 {
@@ -453,7 +437,7 @@ void MarketWatcher::subscribeInstruments(const QStringList &instruments, bool up
     char** ppInstrumentID = new char*[num];
 
     for (int i = 0; i < num; i++) {
-        subscribeSet.insert(instruments[i]);    // 更新订阅列表
+        subscribeSet.insert(instruments[i]);    // 更新订阅列表.
         ppInstrumentID[i] = strcpy(subscribe_array + 32 * i, instruments[i].toLatin1().constData());
     }
 
@@ -499,9 +483,9 @@ void MarketWatcher::subscribeInstruments(const QStringList &instruments, bool up
 
 /*!
  * \brief MarketWatcher::getSubscribeList
- * 获取订阅合约列表
+ * 获取订阅合约列表.
  *
- * \return 订阅合约列表
+ * \return 订阅合约列表.
  */
 QStringList MarketWatcher::getSubscribeList() const
 {
@@ -510,7 +494,7 @@ QStringList MarketWatcher::getSubscribeList() const
 
 /*!
  * \brief MarketWatcher::startReplay
- * 复盘某一天的行情
+ * 复盘某一天的行情.
  *
  * \param date 希望复盘的日期 (格式YYYYMMDD)
  */
@@ -548,7 +532,7 @@ void MarketWatcher::startReplay(const QString &date)
         int ret = QString::compare(item1.UpdateTime, item2.UpdateTime);
         if (ret == 0) {
             if (item1.UpdateMillisec == item2.UpdateMillisec) {
-                return *((int*)item1.ActionDay) < *((int*)item2.ActionDay); // 比较本地时间戳
+                return *((int*)item1.ActionDay) < *((int*)item2.ActionDay); // 比较本地时间戳.
             } else {
                 return item1.UpdateMillisec < item2.UpdateMillisec;
             }
@@ -569,7 +553,7 @@ void MarketWatcher::startReplay(const QString &date)
 
 /*!
  * \brief MarketWatcher::quit
- * 退出
+ * 退出.
  */
 void MarketWatcher::quit()
 {
