@@ -47,7 +47,7 @@ Market loadMkt(const QString &file_name)
         if (!e.isNull()) {
             QString mask = e.attribute("mask");
             if (mask.endsWith("*") && !mask.endsWith(".*")) {
-                // 修正正则表达式
+                // 修正正则表达式.
                 mask.chop(1);
                 market.regexs << (mask + ".*");
             } else {
@@ -95,9 +95,9 @@ Market loadMkt(const QString &file_name)
 
 /*!
  * \brief getEndPoints
- * 查询并获取此合约的每个交易时段的结束时间点列表
+ * 查询并获取此合约的每个交易时段的结束时间点列表.
  *
- * \param instrumentID 合约代码
+ * \param instrumentID 合约代码.
  * \return 每个交易时段的结束时间点列表(未排序)
  */
 QList<QTime> getEndPoints(const QString &instrumentID) {

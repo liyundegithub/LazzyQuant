@@ -1,7 +1,6 @@
-﻿#ifndef HIGH_FREQUENCY_H
+#ifndef HIGH_FREQUENCY_H
 #define HIGH_FREQUENCY_H
 
-#include "common_utility.h"
 #include "base_strategy.h"
 
 class OptionPricing;

@@ -1,5 +1,5 @@
 #include "common_utility.h"
-#include "bighit_strategy.h"
+#include "BigHit_strategy.h"
 
 #include <QVariant>
 #include <QTime>

@@ -6,7 +6,7 @@
 #include "indicator/bollinger_band.h"
 #include "indicator/awesome_oscillator.h"
 #include "strategy/DblMaPsar_strategy.h"
-#include "strategy/bighit_strategy.h"
+#include "strategy/BigHit_strategy.h"
 
 const QMap<QString, const QMetaObject*> indicatorMetaObjects = {
     {"MA", &MA::staticMetaObject},

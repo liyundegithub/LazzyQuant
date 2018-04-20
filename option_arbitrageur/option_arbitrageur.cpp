@@ -1,4 +1,4 @@
-﻿#include <cfloat>
+#include <cfloat>
 #include <QSettings>
 #include <QStringList>
 
@@ -171,7 +171,7 @@ void OptionArbitrageur::preparePricing(const QMultiMap<QString, int> &underlying
 
 /*!
  * \brief OptionArbitrageur::setTradingDay
- * 设定交易日
+ * 设定交易日.
  *
  * \param tradingDay 交易日(yyyyMMdd)
  */
@@ -183,16 +183,16 @@ void OptionArbitrageur::setTradingDay(const QString &tradingDay)
 
 /*!
  * \brief OptionArbitrageur::onMarketData
- * 处理市场数据, 寻找套利机会
+ * 处理市场数据, 寻找套利机会.
  *
- * \param instrumentID 合约代码
- * \param time       时间
- * \param lastPrice  最新成交价
- * \param volume     成交量
- * \param askPrice1  卖一价
- * \param askVolume1 卖一量
- * \param bidPrice1  买一价
- * \param bidVolume1 买一量
+ * \param instrumentID 合约代码.
+ * \param time       时间.
+ * \param lastPrice  最新成交价.
+ * \param volume     成交量.
+ * \param askPrice1  卖一价.
+ * \param askVolume1 卖一量.
+ * \param bidPrice1  买一价.
+ * \param bidVolume1 买一量.
  */
 void OptionArbitrageur::onMarketData(const QString &instrumentID, int time, double lastPrice, int volume,
                                      double askPrice1, int askVolume1, double bidPrice1, int bidVolume1)
@@ -251,7 +251,7 @@ void OptionArbitrageur::onMarketData(const QString &instrumentID, int time, doub
 
 /*!
  * \brief OptionArbitrageur::onMarketClose
- * 收盘
+ * 收盘.
  */
 void OptionArbitrageur::onMarketClose()
 {

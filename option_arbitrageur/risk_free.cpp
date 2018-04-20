@@ -39,9 +39,9 @@ void RiskFree::onOptionChanged(int underlyingIdx, OPTION_TYPE type, int kIdx)
 
 /*!
  * \brief RiskFree::findCheapCallOptions
- * 寻找所有权利金小于实值额的看涨期权
+ * 寻找所有权利金小于实值额的看涨期权.
  *
- * \param underlyingIdx 标的索引
+ * \param underlyingIdx 标的索引.
  */
 void RiskFree::findCheapCallOptions(int underlyingIdx)
 {
@@ -53,10 +53,10 @@ void RiskFree::findCheapCallOptions(int underlyingIdx)
 
 /*!
  * \brief RiskFree::checkCheapCallOptions
- * 检查看涨期权定价是否合理
+ * 检查看涨期权定价是否合理.
  *
- * \param underlyingIdx 标的索引
- * \param kIdx 行权价索引
+ * \param underlyingIdx 标的索引.
+ * \param kIdx 行权价索引.
  */
 void RiskFree::checkCheapCallOptions(int underlyingIdx, int kIdx)
 {
@@ -86,9 +86,9 @@ void RiskFree::checkCheapCallOptions(int underlyingIdx, int kIdx)
 
 /*!
  * \brief RiskFree::findCheapPutOptions
- * 寻找权利金小于实值额的看跌期权
+ * 寻找权利金小于实值额的看跌期权.
  *
- * \param underlyingIdx 标的索引
+ * \param underlyingIdx 标的索引.
  */
 void RiskFree::findCheapPutOptions(int underlyingIdx)
 {
@@ -100,10 +100,10 @@ void RiskFree::findCheapPutOptions(int underlyingIdx)
 
 /*!
  * \brief RiskFree::checkCheapPutOptions
- * 检查看跌期权定价是否合理
+ * 检查看跌期权定价是否合理.
  *
- * \param underlyingIdx 标的索引
- * \param kIdx 行权价索引
+ * \param underlyingIdx 标的索引.
+ * \param kIdx 行权价索引.
  */
 void RiskFree::checkCheapPutOptions(int underlyingIdx, int kIdx)
 {
@@ -114,7 +114,7 @@ void RiskFree::checkCheapPutOptions(int underlyingIdx, int kIdx)
     auto vol = getVol(liquidity);
     if (vol > 0) {
         auto diff = pDepthMarkets->getKByIdx(kIdx) - underlying.askPrice;
-        if (diff > 0.000001 && isTimeCloseEnouogh(underlying.time, putOption.time, TIME_DIFF)) {    // 实值期权
+        if (diff > 0.000001 && isTimeCloseEnouogh(underlying.time, putOption.time, TIME_DIFF)) {    // 实值期权.
             auto premium = putOption.askPrice;
             if ((premium + threshold) < diff) {
                 buyOption(underlyingIdx, PUT_OPT, kIdx, vol, premium);
@@ -133,11 +133,11 @@ void RiskFree::checkCheapPutOptions(int underlyingIdx, int kIdx)
 
 /*!
  * \brief RiskFree::findReversedCallOptions
- * 无风险套利七：当到期日相同，行权价较高的看涨期权的权利金价格大于行权价较低的看涨期权权利金价格，买入行权价较低的看涨期权，卖出相同数量行权价较高的看涨期权。
- * 最小无风险收益=行权价较高的看涨期权权利金价格-行权价较低的看涨期权权利金价格。
- * 最大无风险收益=（行权价较高的看涨期权权利金价格-行权价较低的看涨期权权利金价格）+（高行权价-低行权价）。
+ * 无风险套利七：当到期日相同，行权价较高的看涨期权的权利金价格大于行权价较低的看涨期权权利金价格，买入行权价较低的看涨期权，卖出相同数量行权价较高的看涨期权.
+ * 最小无风险收益=行权价较高的看涨期权权利金价格-行权价较低的看涨期权权利金价格.
+ * 最大无风险收益=（行权价较高的看涨期权权利金价格-行权价较低的看涨期权权利金价格）+（高行权价-低行权价）.
  *
- * \param underlyingIdx 标的索引
+ * \param underlyingIdx 标的索引.
  * \param kIdxToCheck 行权价索引(最新价格有变动的那个期权)
  */
 void RiskFree::findReversedCallOptions(int underlyingIdx, int kIdxToCheck)
@@ -157,11 +157,11 @@ void RiskFree::findReversedCallOptions(int underlyingIdx, int kIdxToCheck)
 
 /*!
  * \brief RiskFree::checkReversedCallOptions
- * 检查是否高行权价的看涨期权权利金价格大于相同到期日低行权价看涨期权权利金价格
+ * 检查是否高行权价的看涨期权权利金价格大于相同到期日低行权价看涨期权权利金价格.
  *
- * \param underlyingIdx 标的索引
- * \param lowKIdx 低行权价索引
- * \param highKIdx 高行权价索引
+ * \param underlyingIdx 标的索引.
+ * \param lowKIdx 低行权价索引.
+ * \param highKIdx 高行权价索引.
  */
 void RiskFree::checkReversedCallOptions(int underlyingIdx, int lowKIdx, int highKIdx)
 {
@@ -190,11 +190,11 @@ void RiskFree::checkReversedCallOptions(int underlyingIdx, int lowKIdx, int high
 
 /*!
  * \brief RiskFree::findReversedPutOptions
- * 无风险套利八：当到期日相同，行权价较低的看跌期权的权利金价格大于行权价较高的看跌期权权利金价格，买入行权价较高的看涨期权，卖出相同数量行权价较低的看涨期权。
- * 最小无风险收益=行权价较低的看跌期权权利金价格-行权价较高的看跌期权权利金价格。
- * 最大无风险收益=（行权价较低的看跌期权权利金价格-行权价较高的看跌期权权利金价格）+（高行权价-低行权价）。
+ * 无风险套利八：当到期日相同，行权价较低的看跌期权的权利金价格大于行权价较高的看跌期权权利金价格，买入行权价较高的看涨期权，卖出相同数量行权价较低的看涨期权.
+ * 最小无风险收益=行权价较低的看跌期权权利金价格-行权价较高的看跌期权权利金价格.
+ * 最大无风险收益=（行权价较低的看跌期权权利金价格-行权价较高的看跌期权权利金价格）+（高行权价-低行权价）.
  *
- * \param underlyingIdx 标的索引
+ * \param underlyingIdx 标的索引.
  * \param kIdxToCheck 行权价索引(最新价格有变动的那个期权)
  */
 void RiskFree::findReversedPutOptions(int underlyingIdx, int kIdxToCheck)
@@ -214,11 +214,11 @@ void RiskFree::findReversedPutOptions(int underlyingIdx, int kIdxToCheck)
 
 /*!
  * \brief RiskFree::checkReversedPutOptions
- * 检查是否低行权价的看跌期权权利金价格大于相同到期日高行权价看跌期权权利金价格
+ * 检查是否低行权价的看跌期权权利金价格大于相同到期日高行权价看跌期权权利金价格.
  *
- * \param underlyingIdx 标的索引
- * \param lowKIdx 低行权价索引
- * \param highKIdx 高行权价索引
+ * \param underlyingIdx 标的索引.
+ * \param lowKIdx 低行权价索引.
+ * \param highKIdx 高行权价索引.
  */
 void RiskFree::checkReversedPutOptions(int underlyingIdx, int lowKIdx, int highKIdx)
 {
