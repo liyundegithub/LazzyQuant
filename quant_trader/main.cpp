@@ -21,6 +21,7 @@ using std::placeholders::_2;
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
+    QCoreApplication::setOrganizationName(ORGANIZATION);
     QCoreApplication::setApplicationName("quant_trader");
     QCoreApplication::setApplicationVersion(VERSION_STR);
 

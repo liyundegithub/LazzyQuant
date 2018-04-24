@@ -22,7 +22,7 @@ class MarketWatcher : public QObject {
     Q_CLASSINFO("D-Bus Interface", "com.lazzyquant.market_watcher")
 
 public:
-    explicit MarketWatcher(const CONFIG_ITEM &config, const bool replayMode = false, QObject *parent = 0);
+    explicit MarketWatcher(const CONFIG_ITEM &config, bool replayMode = false, QObject *parent = 0);
     ~MarketWatcher();
 
 protected:
@@ -38,12 +38,12 @@ protected:
 
     bool loggedIn;
     QSet<QString> subscribeSet;
-    QMap<QString, QList<QPair<QTime, QTime>>> tradingTimeMap;   // 交易时间段总表
-    QMap<QString, QPair<QTime, QTime>> currentTradingTimeMap;   // 当前, 或下一交易时段表
+    QMap<QString, QList<QPair<QTime, QTime>>> tradingTimeMap;   // 交易时间段总表.
+    QMap<QString, QPair<QTime, QTime>> currentTradingTimeMap;   // 当前, 或下一交易时段表.
 
     bool saveDepthMarketData;
     QString saveDepthMarketDataPath;
-    QTime localTime;    // 用来在保存行情数据时生成一个本地的时间戳, 以记录行情到达的先后顺序
+    QTime localTime;    // 用来在保存行情数据时生成一个本地的时间戳, 以记录行情到达的先后顺序.
     QMap<QString, QList<CThostFtdcDepthMarketDataField>> depthMarketDataListMap;
 
     MultipleTimer *multiTimer;

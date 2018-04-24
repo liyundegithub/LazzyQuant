@@ -9,6 +9,7 @@
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
+    QCoreApplication::setOrganizationName(ORGANIZATION);
     QCoreApplication::setApplicationName("market_watcher");
     QCoreApplication::setApplicationVersion(VERSION_STR);
 

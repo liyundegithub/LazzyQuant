@@ -15,7 +15,7 @@
 
 extern QList<Market> markets;
 
-MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, const bool replayMode, QObject *parent) :
+MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, bool replayMode, QObject *parent) :
     QObject(parent),
     name(config.name),
     replayMode(replayMode)

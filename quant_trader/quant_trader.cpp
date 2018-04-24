@@ -27,7 +27,6 @@ QuantTrader::QuantTrader(bool saveBarsToDB, QObject *parent) :
 QuantTrader::~QuantTrader()
 {
     qDebug() << "~QuantTrader";
-    sqlDB.close();
 }
 
 void QuantTrader::loadQuantTraderSettings()

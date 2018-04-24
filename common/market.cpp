@@ -116,7 +116,7 @@ QList<QTime> getEndPoints(const QString &instrumentID) {
                         return endPoints;
                     }
                 }
-                return endPoints;   // instrumentID未能匹配任何正则表达式
+                return endPoints;   // instrumentID未能匹配任何正则表达式.
             }
         }
     }

@@ -8,6 +8,7 @@
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
+    QCoreApplication::setOrganizationName(ORGANIZATION);
     QCoreApplication::setApplicationName("trade_executer");
     QCoreApplication::setApplicationVersion(VERSION_STR);
 

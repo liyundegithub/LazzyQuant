@@ -25,6 +25,7 @@ std::function<void(const QString&, int, double, int)> sellLimit = [](auto, auto,
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
+    QCoreApplication::setOrganizationName(ORGANIZATION);
     QCoreApplication::setApplicationName("option_arbitrageur");
     QCoreApplication::setApplicationVersion(VERSION_STR);
 

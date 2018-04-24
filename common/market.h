@@ -5,7 +5,6 @@
 #include <QStringList>
 
 class QTime;
-class QDomDocument;
 
 struct Market {
     QString label;
