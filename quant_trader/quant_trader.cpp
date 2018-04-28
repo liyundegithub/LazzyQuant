@@ -1,5 +1,5 @@
+#include <QFile>
 #include <QSettings>
-#include <QString>
 #include <QSqlQuery>
 #include <QSqlError>
 
@@ -10,8 +10,6 @@
 #include "bar.h"
 #include "bar_collector.h"
 #include "quant_global.h"
-
-#include "trade_executer_interface.h"
 
 QuantTrader::QuantTrader(bool saveBarsToDB, QObject *parent) :
     QObject(parent),
@@ -29,6 +27,10 @@ QuantTrader::~QuantTrader()
     qDebug() << "~QuantTrader";
 }
 
+/*!
+ * \brief QuantTrader::loadQuantTraderSettings
+ * 载入量化交易系统配置.
+ */
 void QuantTrader::loadQuantTraderSettings()
 {
     auto settings = getSettingsSmart(ORGANIZATION, "quant_trader");
@@ -142,12 +144,12 @@ void QuantTrader::loadTradeStrategySettings()
 
 /*!
  * \brief getKTExportName
- * 从合约代码中提取飞狐交易师导出数据的文件名
+ * 从合约代码中提取飞狐交易师导出数据的文件名.
  * 比如 cu1703 --> cu03, i1705 --> i05, CF705 --> CF05
  *      SR709 --> SR109, SR809 --> SR009
  *
- * \param instrumentID 合约代码
- * \return 从飞狐交易师导出的此合约数据的文件名
+ * \param instrumentID 合约代码.
+ * \return 从飞狐交易师导出的此合约数据的文件名.
  */
 static inline QString getKTExportName(const QString &instrumentID) {
     const QString code = getCode(instrumentID);
@@ -168,11 +170,11 @@ static inline QString getKTExportName(const QString &instrumentID) {
 
 /*!
  * \brief QuantTrader::getBars
- * 获取历史K线数据, 包括从飞狐交易师导出的数据和BarCollector保存到数据库的K线数据
+ * 获取历史K线数据, 包括从飞狐交易师导出的数据和BarCollector保存到数据库的K线数据.
  *
- * \param instrumentID 合约代码
+ * \param instrumentID 合约代码.
  * \param timeFrame 时间框架(枚举)
- * \return 指向包含此合约历史K线数据的QList<Bar>指针
+ * \return 指向包含此合约历史K线数据的QList<Bar>指针.
  */
 QList<Bar>* QuantTrader::getBars(const QString &instrumentID, int timeFrame)
 {
@@ -385,7 +387,7 @@ AbstractIndicator* QuantTrader::registerIndicator(const QString &instrumentID, i
 
 /*!
  * \brief QuantTrader::setTradingDay
- * 设定交易日期
+ * 设定交易日期.
  *
  * \param tradingDay 交易日(yyyyMMdd)
  */
@@ -407,17 +409,17 @@ void QuantTrader::setTradingDay(const QString &tradingDay)
 
 /*!
  * \brief QuantTrader::onMarketData
- * 处理市场数据, 如果有新的成交则计算相关策略
- * 统计相关策略给出的仓位, 如果与旧数值不同则发送给执行模块
+ * 处理市场数据, 如果有新的成交则计算相关策略.
+ * 统计相关策略给出的仓位, 如果与旧数值不同则发送给执行模块.
  *
- * \param instrumentID 合约代码
- * \param time 时间
- * \param lastPrice 最新成交价
- * \param volume 成交量
- * \param askPrice1  卖一价
- * \param askVolume1 卖一量
- * \param bidPrice1  买一价
- * \param bidVolume1 买一量
+ * \param instrumentID 合约代码.
+ * \param time 时间.
+ * \param lastPrice 最新成交价.
+ * \param volume 成交量.
+ * \param askPrice1  卖一价.
+ * \param askVolume1 卖一量.
+ * \param bidPrice1  买一价.
+ * \param bidVolume1 买一量.
  */
 void QuantTrader::onMarketData(const QString &instrumentID, int time, double lastPrice, int volume,
                                double askPrice1, int askVolume1, double bidPrice1, int bidVolume1)
@@ -436,7 +438,7 @@ void QuantTrader::onMarketData(const QString &instrumentID, int time, double las
     const auto strategyList = strategy_map.values(instrumentID);
     boost::optional<int> new_position_sum;
     for (auto *strategy : strategyList) {
-        if (isNewTick) {    // 有新的成交
+        if (isNewTick) {    // 有新的成交.
             strategy->onNewTick(time, lastPrice);
         }
         auto position = strategy->getPosition();
@@ -468,11 +470,11 @@ void QuantTrader::onMarketData(const QString &instrumentID, int time, double las
 
 /*!
  * \brief QuantTrader::onNewBar
- * 储存新收集的K线数据并计算相关策略
+ * 储存新收集的K线数据并计算相关策略.
  *
- * \param instrumentID 合约代码
+ * \param instrumentID 合约代码.
  * \param timeFrame 时间框架(枚举)
- * \param bar 新的K线数据
+ * \param bar 新的K线数据.
  */
 void QuantTrader::onNewBar(const QString &instrumentID, int timeFrame, const Bar &bar)
 {
@@ -485,7 +487,7 @@ void QuantTrader::onNewBar(const QString &instrumentID, int timeFrame, const Bar
 
 /*!
  * \brief QuantTrader::onMarketPause
- * 盘中休市
+ * 盘中休市.
  */
 void QuantTrader::onMarketPause()
 {
@@ -496,7 +498,7 @@ void QuantTrader::onMarketPause()
 
 /*!
  * \brief QuantTrader::onMarketClose
- * 收盘
+ * 收盘.
  */
 void QuantTrader::onMarketClose()
 {
@@ -507,9 +509,9 @@ void QuantTrader::onMarketClose()
 
 /*!
  * \brief QuantTrader::checkDataBaseStatus
- * 检查数据库连接状态, 如果连接已经失效, 断开重连
+ * 检查数据库连接状态, 如果连接已经失效, 断开重连.
  *
- * \return 数据库连接状态, true正常, false不正常
+ * \return 数据库连接状态, true正常, false不正常.
  */
 bool QuantTrader::checkDataBaseStatus()
 {
