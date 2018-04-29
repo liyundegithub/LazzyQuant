@@ -7,8 +7,8 @@
 #include <QString>
 #include <QDateTime>
 
-#define DATE_TIME (QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz"))
-#define INVALID_DATE_STRING "00000000"
+#define DATE_TIME (QDateTime::currentDateTime().toString(QStringLiteral("yyyy-MM-dd hh:mm:ss.zzz")))
+#define INVALID_DATE_STRING QStringLiteral("00000000")
 
 #define TM1 \
     QTime t1 = QTime::currentTime();

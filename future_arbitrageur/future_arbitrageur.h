@@ -21,7 +21,7 @@ public:
 signals:
 
 public slots:
-    void onMarketData(const QString& instrumentID, uint time, double lastPrice, int volume,
+    void onMarketData(const QString &instrumentID, int time, double lastPrice, int volume,
                       double askPrice1, int askVolume1, double bidPrice1, int bidVolume1);
 };
 

@@ -3,14 +3,16 @@
 #include "common_utility.h"
 
 #include <QSettings>
+#include <QDebugStateSaver>
 
 QDebug operator<<(QDebug dbg, const StrategyStatus &status)
 {
+    QDebugStateSaver saver(dbg);
     dbg.nospace() <<   "position = " << (status.position.is_initialized() ? QString::number(status.position.get()) : QString("uninitialized"))
                   << ", take profit = " << (status.takeProfit.is_initialized() ? QString::number(status.takeProfit.get()) : QString("uninitialized"))
                   << ", stop loss = " << (status.stopLoss.is_initialized() ? QString::number(status.stopLoss.get()) : QString("uninitialized"));
 
-    return dbg.space();
+    return dbg;
 }
 
 StrategyStatusManager::StrategyStatusManager()

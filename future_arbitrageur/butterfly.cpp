@@ -35,11 +35,11 @@ void Butterfly::onInstrumentChanged(int idx)
 
 /*!
  * \brief Butterfly::check010
- * 中间月份合约价格的两倍大于相邻近月合约价格与相邻远月合约价格之和
+ * 中间月份合约价格的两倍大于相邻近月合约价格与相邻远月合约价格之和.
  *
- * \param firstIdx  近月合约索引
- * \param secondIdx 中间月份合约索引
- * \param thirdIdx  远月合约索引
+ * \param firstIdx  近月合约索引.
+ * \param secondIdx 中间月份合约索引.
+ * \param thirdIdx  远月合约索引.
  */
 void Butterfly::check010()
 {
@@ -57,10 +57,10 @@ void Butterfly::check010()
             position += vol;
             savePosition();
 
-            qDebug() << (openClose ? "Open" : "Close") << "010 butterfly! diff =" << diff;
-            qDebug() << pDepthMarkets->getInstrumentByIdx(firstIdx);  qDebug() << *first;
-            qDebug() << pDepthMarkets->getInstrumentByIdx(secondIdx); qDebug() << *second;
-            qDebug() << pDepthMarkets->getInstrumentByIdx(thirdIdx);  qDebug() << *third;
+            qDebug().nospace() << (openClose ? "Open" : "Close") << "010 butterfly! diff =" << diff << "\n"
+                << pDepthMarkets->getInstrumentByIdx(firstIdx) << "\n" << *first << "\n"
+                << pDepthMarkets->getInstrumentByIdx(secondIdx) << "\n" << *second << "\n"
+                << pDepthMarkets->getInstrumentByIdx(thirdIdx) << "\n" << *third;
 
             pDepthMarkets->takeLiquidityByIdx(firstIdx, true);
             pDepthMarkets->takeLiquidityByIdx(secondIdx, false);
@@ -71,11 +71,11 @@ void Butterfly::check010()
 
 /*!
  * \brief Butterfly::check101
- * 中间月份合约价格的两倍小于相邻近月合约价格与相邻远月合约价格之和
+ * 中间月份合约价格的两倍小于相邻近月合约价格与相邻远月合约价格之和.
  *
- * \param firstIdx  近月合约索引
- * \param secondIdx 中间月份合约索引
- * \param thirdIdx  远月合约索引
+ * \param firstIdx  近月合约索引.
+ * \param secondIdx 中间月份合约索引.
+ * \param thirdIdx  远月合约索引.
  */
 void Butterfly::check101()
 {
@@ -93,10 +93,10 @@ void Butterfly::check101()
             position -= vol;
             savePosition();
 
-            qDebug() << (openClose ? "Open" : "Close") << "101 butterfly! diff =" << diff;
-            qDebug() << pDepthMarkets->getInstrumentByIdx(firstIdx);  qDebug() << *first;
-            qDebug() << pDepthMarkets->getInstrumentByIdx(secondIdx); qDebug() << *second;
-            qDebug() << pDepthMarkets->getInstrumentByIdx(thirdIdx);  qDebug() << *third;
+            qDebug().nospace() << (openClose ? "Open" : "Close") << "101 butterfly! diff =" << diff << "\n"
+                << pDepthMarkets->getInstrumentByIdx(firstIdx) << "\n" << *first << "\n"
+                << pDepthMarkets->getInstrumentByIdx(secondIdx) << "\n" << *second << "\n"
+                << pDepthMarkets->getInstrumentByIdx(thirdIdx) << "\n" << *third;
 
             pDepthMarkets->takeLiquidityByIdx(firstIdx, false);
             pDepthMarkets->takeLiquidityByIdx(secondIdx, true);

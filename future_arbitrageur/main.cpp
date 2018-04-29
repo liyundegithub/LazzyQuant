@@ -2,13 +2,14 @@
 #include <QCommandLineParser>
 
 #include "config.h"
+#include "message_handler.h"
+#include "strategy_status.h"
 #include "future_arbitrageur.h"
 #include "connection_manager.h"
 
 #include "sinyee_replayer_interface.h"
 #include "market_watcher_interface.h"
 #include "trade_executer_interface.h"
-#include "strategy_status.h"
 
 com::lazzyquant::sinyee_replayer *pReplayer = nullptr;
 com::lazzyquant::market_watcher *pWatcher = nullptr;
@@ -18,6 +19,7 @@ StrategyStatusManager *pStatusManager = nullptr;
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
+    QCoreApplication::setOrganizationName(ORGANIZATION);
     QCoreApplication::setApplicationName("future_arbitrageur");
     QCoreApplication::setApplicationVersion(VERSION_STR);
 
@@ -27,9 +29,10 @@ int main(int argc, char *argv[])
     parser.addVersionOption();
 
     parser.addOptions({
-        // replay mode (-r, --replay)
         {{"r", "replay"},
             QCoreApplication::translate("main", "Replay Mode"), "ReplayDate"},
+        {{"f", "logtofile"},
+            QCoreApplication::translate("main", "Save log to a file")},
     });
 
     parser.process(a);
@@ -38,6 +41,8 @@ int main(int argc, char *argv[])
     if (replayMode) {
         replayDate = parser.value("replay");
     }
+    bool log2File = parser.isSet("logtofile");
+    setupMessageHandler(true, log2File, "future_arbitrageur");
 
     if (replayMode) {
         pReplayer = new com::lazzyquant::sinyee_replayer(REPLAYER_DBUS_SERVICE, REPLAYER_DBUS_OBJECT, QDBusConnection::sessionBus());
@@ -51,7 +56,9 @@ int main(int argc, char *argv[])
     if (replayMode) {
         pReplayer->startReplay(replayDate);
     }
+
     int ret = a.exec();
+
     delete pStatusManager;
     delete pExecuter;
     if (pReplayer) {
@@ -60,5 +67,6 @@ int main(int argc, char *argv[])
     if (pWatcher) {
         delete pWatcher;
     }
+    restoreMessageHandler();
     return ret;
 }
