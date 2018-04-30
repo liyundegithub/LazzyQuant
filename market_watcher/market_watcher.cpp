@@ -190,7 +190,7 @@ void MarketWatcher::timesUp(int index)
             if (saveDepthMarketData) {
                 auto &depthMarketDataList = depthMarketDataListMap[instrumentID];
                 if (depthMarketDataList.length() > 0) {
-                    QString fileName = saveDepthMarketDataPath + "/" + instrumentID + "/" + QDateTime::currentDateTime().toString("yyyyMMdd_hhmmss_zzz") + ".data";
+                    QString fileName = saveDepthMarketDataPath + "/" + instrumentID + "/" + QDateTime::currentDateTime().toString(QStringLiteral("yyyyMMdd_hhmmss_zzz")) + ".data";
                     QFile depthMarketDataFile(fileName);
                     depthMarketDataFile.open(QFile::WriteOnly);
                     QDataStream wstream(&depthMarketDataFile);
@@ -346,7 +346,7 @@ bool MarketWatcher::checkTradingTimes(const QString &instrumentID)
 void MarketWatcher::processDepthMarketData(const CThostFtdcDepthMarketDataField& depthMarketDataField)
 {
     const QString instrumentID(depthMarketDataField.InstrumentID);
-    QTime time = QTime::fromString(depthMarketDataField.UpdateTime, "hh:mm:ss");
+    QTime time = QTime::fromString(depthMarketDataField.UpdateTime, QStringLiteral("hh:mm:ss"));
 
     const auto &tradetime = currentTradingTimeMap[instrumentID];
     if (isWithinRange(time, tradetime.first, tradetime.second)) {
@@ -377,7 +377,7 @@ void MarketWatcher::processDepthMarketData(const CThostFtdcDepthMarketDataField&
 void MarketWatcher::emitNewMarketData(const CThostFtdcDepthMarketDataField& depthMarketDataField)
 {
     const QString instrumentID(depthMarketDataField.InstrumentID);
-    const QTime time = QTime::fromString(depthMarketDataField.UpdateTime, "hh:mm:ss");
+    const QTime time = QTime::fromString(depthMarketDataField.UpdateTime, QStringLiteral("hh:mm:ss"));
     emit newMarketData(instrumentID,
                        QTime(0, 0).secsTo(time),
                        depthMarketDataField.LastPrice,

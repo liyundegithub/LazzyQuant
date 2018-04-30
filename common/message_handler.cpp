@@ -31,7 +31,7 @@ static void messageOut(QtMsgType type, const QMessageLogContext &context, const 
 
 void toStdOut(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
-    QByteArray localMsg = (QDateTime::currentDateTime().toString("yy-MM-dd hh:mm:ss.zzz ") + msg).toLocal8Bit();
+    QByteArray localMsg = (QDateTime::currentDateTime().toString(QStringLiteral("yy-MM-dd hh:mm:ss.zzz ")) + msg).toLocal8Bit();
     messageOut(type, context, localMsg, stdout);
     if (type == QtFatalMsg) {
         abort();
@@ -40,7 +40,7 @@ void toStdOut(QtMsgType type, const QMessageLogContext &context, const QString &
 
 void toStdOutAndFile(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
-    QByteArray localMsg = (QDateTime::currentDateTime().toString("yy-MM-dd hh:mm:ss.zzz ") + msg).toLocal8Bit();
+    QByteArray localMsg = (QDateTime::currentDateTime().toString(QStringLiteral("yy-MM-dd hh:mm:ss.zzz ")) + msg).toLocal8Bit();
     messageOut(type, context, localMsg, stdout);
     messageOut(type, context, localMsg, pLogFile);
     if (type == QtFatalMsg) {
@@ -51,7 +51,7 @@ void toStdOutAndFile(QtMsgType type, const QMessageLogContext &context, const QS
 
 void toFile(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
-    QByteArray localMsg = (QDateTime::currentDateTime().toString("yy-MM-dd hh:mm:ss.zzz ") + msg).toLocal8Bit();
+    QByteArray localMsg = (QDateTime::currentDateTime().toString(QStringLiteral("yy-MM-dd hh:mm:ss.zzz ")) + msg).toLocal8Bit();
     messageOut(type, context, localMsg, pLogFile);
     if (type == QtFatalMsg) {
         fclose(pLogFile);
@@ -63,8 +63,8 @@ void setupMessageHandler(bool logtoStdout, bool logtoFile, const QString &module
 {
     if (logtoFile) {
         QString fullFileName = QCoreApplication::applicationDirPath() + "/" + moduleName;
-        fullFileName += QDateTime::currentDateTime().toString("_yyyyMMdd_hhmmss");
-        fullFileName.append(".txt");
+        fullFileName += QDateTime::currentDateTime().toString(QStringLiteral("_yyyyMMdd_hhmmss"));
+        fullFileName.append(QStringLiteral(".txt"));
         pLogFile = fopen(fullFileName.toLocal8Bit().constData(), "a");
         if (pLogFile) {
             if (logtoStdout) {

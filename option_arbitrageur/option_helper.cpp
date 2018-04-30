@@ -17,7 +17,7 @@ QDate OptionHelper::getEndDate(const QString &underlying)
             QString dateStr;
             pExecuter->metaObject()->invokeMethod(pExecuter, "getExpireDate", Q_RETURN_ARG(QString, dateStr), Q_ARG(QString, underlying));
             if (dateStr != INVALID_DATE_STRING) {
-                return QDate::fromString(dateStr, "yyyyMMdd");
+                return QDate::fromString(dateStr, QStringLiteral("yyyyMMdd"));
             }
         }
     }

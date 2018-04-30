@@ -11,7 +11,7 @@ TradingCalendar::TradingCalendar()
     const auto nonTradingDaysStrs = settings->childKeys();
     for (const auto &nonTradingDaysStr : nonTradingDaysStrs) {
         // TODO use bit definition to seperate different market
-        nonTradingDays.append(QDate::fromString(nonTradingDaysStr, "yyyyMMdd"));
+        nonTradingDays.append(QDate::fromString(nonTradingDaysStr, QStringLiteral("yyyyMMdd")));
     }
     settings->endGroup();
 }

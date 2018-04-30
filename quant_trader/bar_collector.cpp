@@ -80,37 +80,40 @@ BarCollector::~BarCollector()
 #define HOUR_UNIT   3600
 
 static const QMap<BarCollector::TimeFrame, int> g_time_table = {
-    {BarCollector::SEC3,   3},
-    {BarCollector::SEC5,   5},
-    {BarCollector::SEC6,   6},
-    {BarCollector::SEC10, 10},
-    {BarCollector::SEC12, 12},
-    {BarCollector::SEC15, 15},
-    {BarCollector::SEC20, 20},
-    {BarCollector::SEC30, 30},
-    {BarCollector::MIN1,   1 * MIN_UNIT},
-    {BarCollector::MIN2,   2 * MIN_UNIT},
-    {BarCollector::MIN3,   3 * MIN_UNIT},
-    {BarCollector::MIN4,   4 * MIN_UNIT},
-    {BarCollector::MIN5,   5 * MIN_UNIT},
-    {BarCollector::MIN6,   6 * MIN_UNIT},
-    {BarCollector::MIN10, 10 * MIN_UNIT},
-    {BarCollector::MIN12, 12 * MIN_UNIT},
-    {BarCollector::MIN15, 15 * MIN_UNIT},
-    {BarCollector::MIN30, 30 * MIN_UNIT},
-    {BarCollector::HOUR1,  1 * HOUR_UNIT},
-    {BarCollector::HOUR2,  2 * HOUR_UNIT},
-    {BarCollector::HOUR3,  3 * HOUR_UNIT},
-    {BarCollector::HOUR4,  4 * HOUR_UNIT},
-    {BarCollector::HOUR6,  6 * HOUR_UNIT},
-    {BarCollector::HOUR8,  1 * HOUR_UNIT},
-    {BarCollector::HOUR12,  1 * HOUR_UNIT},
-    {BarCollector::DAY,   24 * HOUR_UNIT},
+    {BarCollector::SEC1,    1},
+    {BarCollector::SEC2,    2},
+    {BarCollector::SEC3,    3},
+    {BarCollector::SEC4,    4},
+    {BarCollector::SEC5,    5},
+    {BarCollector::SEC6,    6},
+    {BarCollector::SEC10,  10},
+    {BarCollector::SEC12,  12},
+    {BarCollector::SEC15,  15},
+    {BarCollector::SEC20,  20},
+    {BarCollector::SEC30,  30},
+    {BarCollector::MIN1,    1 * MIN_UNIT},
+    {BarCollector::MIN2,    2 * MIN_UNIT},
+    {BarCollector::MIN3,    3 * MIN_UNIT},
+    {BarCollector::MIN4,    4 * MIN_UNIT},
+    {BarCollector::MIN5,    5 * MIN_UNIT},
+    {BarCollector::MIN6,    6 * MIN_UNIT},
+    {BarCollector::MIN10,  10 * MIN_UNIT},
+    {BarCollector::MIN12,  12 * MIN_UNIT},
+    {BarCollector::MIN15,  15 * MIN_UNIT},
+    {BarCollector::MIN30,  30 * MIN_UNIT},
+    {BarCollector::HOUR1,   1 * HOUR_UNIT},
+    {BarCollector::HOUR2,   2 * HOUR_UNIT},
+    {BarCollector::HOUR3,   3 * HOUR_UNIT},
+    {BarCollector::HOUR4,   4 * HOUR_UNIT},
+    {BarCollector::HOUR6,   6 * HOUR_UNIT},
+    {BarCollector::HOUR8,   8 * HOUR_UNIT},
+    {BarCollector::HOUR12, 12 * HOUR_UNIT},
+    {BarCollector::DAY,    24 * HOUR_UNIT},
 };
 
 void BarCollector::setTradingDay(const QString &tradingDay, const QString &lastNight)
 {
-    auto date = QDateTime::fromString(tradingDay, "yyyyMMdd");
+    auto date = QDateTime::fromString(tradingDay, QStringLiteral("yyyyMMdd"));
     date.setTimeZone(QTimeZone::utc());
     auto newTradingDayBase = date.toSecsSinceEpoch();
     if (tradingDayBase != newTradingDayBase) {
@@ -118,7 +121,7 @@ void BarCollector::setTradingDay(const QString &tradingDay, const QString &lastN
         lastVolume = 0;
     }
 
-    date = QDateTime::fromString(lastNight, "yyyyMMdd");
+    date = QDateTime::fromString(lastNight, QStringLiteral("yyyyMMdd"));
     date.setTimeZone(QTimeZone::utc());
     lastNightBase = date.toSecsSinceEpoch();
     morningBase = lastNightBase + 24 * 3600;

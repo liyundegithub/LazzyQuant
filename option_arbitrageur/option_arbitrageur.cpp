@@ -152,7 +152,7 @@ void OptionArbitrageur::preparePricing(const QMultiMap<QString, int> &underlying
     }
     qInfo() << "Use s0:" << s0List;
 
-    QDate startDate = QDate::fromString(tradingDay, "yyyyMMdd");
+    QDate startDate = QDate::fromString(tradingDay, QStringLiteral("yyyyMMdd"));
 
     if (pPricingEngine != nullptr) {
         delete pPricingEngine;

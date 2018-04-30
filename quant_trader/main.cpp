@@ -101,11 +101,11 @@ int main(int argc, char *argv[])
     if (replayMode) {
         TradingCalendar tc;
         QStringList replayDates;
-        QDate startDate = QDate::fromString(replayStartDate, "yyyyMMdd");
-        QDate endDate = QDate::fromString(replayEndDate, "yyyyMMdd");
+        QDate startDate = QDate::fromString(replayStartDate, QStringLiteral("yyyyMMdd"));
+        QDate endDate = QDate::fromString(replayEndDate, QStringLiteral("yyyyMMdd"));
         for (QDate date = startDate; date <= endDate; date = date.addDays(1)) {
             if (tc.isTradingDay(date)) {
-                replayDates << date.toString("yyyyMMdd");
+                replayDates << date.toString(QStringLiteral("yyyyMMdd"));
             }
         }
 

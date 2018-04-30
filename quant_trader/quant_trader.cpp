@@ -210,7 +210,7 @@ QList<Bar>* QuantTrader::getBars(const QString &instrumentID, int timeFrame)
     // Load Collector Bars
     QList<Bar> collectedBarList;
     const QString tableName = time_frame_str;
-    const QStringList tables = sqlDB.tables();
+    const QStringList tables = sqlDB.isOpen() ? sqlDB.tables() : QStringList();
     if (tables.contains(tableName, Qt::CaseInsensitive)) {
         QSqlQuery qry(sqlDB);
         bool ok = qry.exec("SELECT * from " + QString("%1.%2").arg(instrumentID).arg(tableName));
@@ -396,11 +396,11 @@ void QuantTrader::setTradingDay(const QString &tradingDay)
     qDebug() << "Set Trading Day to" << tradingDay;
 
     TradingCalendar tc;
-    QDate date = QDate::fromString(tradingDay, "yyyyMMdd");
+    QDate date = QDate::fromString(tradingDay, QStringLiteral("yyyyMMdd"));
     do {
         date = date.addDays(-1);
     } while (!tc.isTradingDay(date));
-    QString lastTradingDay = date.toString("yyyyMMdd");
+    QString lastTradingDay = date.toString(QStringLiteral("yyyyMMdd"));
 
     for (auto * collector : qAsConst(collector_map)) {
         collector->setTradingDay(tradingDay, lastTradingDay);
