@@ -1,16 +1,12 @@
 #include "divergent_bar.h"
 
 DivergentBar::DivergentBar(QObject *parent) :
-    MQL5Indicator(0, parent),
-    bullishDivergent(),
-    bearishDivergent()
+    MQL5Indicator(0, parent)
 {
-    //
 }
 
 void DivergentBar::OnInit()
 {
-    //
 }
 
 void DivergentBar::preCalculate()

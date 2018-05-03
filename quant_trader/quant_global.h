@@ -2,6 +2,7 @@
 #define QUANT_GLOBAL_H
 
 #include "indicator/ma.h"
+#include "indicator/macd.h"
 #include "indicator/parabolicsar.h"
 #include "indicator/bollinger_band.h"
 #include "indicator/divergent_bar.h"
@@ -13,6 +14,7 @@
 
 const QMap<QString, const QMetaObject*> indicatorMetaObjects = {
     {"MA", &MA::staticMetaObject},
+    {"MACD", &Macd::staticMetaObject},
     {"ParabolicSAR", &ParabolicSAR::staticMetaObject},
     {"BollingerBand", &BollingerBand::staticMetaObject},
     {"AwesomeOscillator", &AwesomeOscillator::staticMetaObject},

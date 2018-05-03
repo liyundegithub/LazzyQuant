@@ -1,11 +1,8 @@
 #include "bollinger_band.h"
+#include "../mql5_moving_averages.h"
 
-BollingerBand::BollingerBand(int InpBandsPeriod, int InpBandsShift, double InpBandsDeviations, ENUM_APPLIED_PRICE applyTo, QObject *parent) :
-    MQL5IndicatorOnSingleDataBuffer(4, applyTo, parent),
-    ExtMLBuffer(),
-    ExtTLBuffer(),
-    ExtBLBuffer(),
-    ExtStdDevBuffer()
+BollingerBand::BollingerBand(int InpBandsPeriod, int InpBandsShift, double InpBandsDeviations, ENUM_APPLIED_PRICE appliedPrice, QObject *parent) :
+    MQL5IndicatorOnSingleDataBuffer(4, appliedPrice, parent)
 {
 //--- check for input values
    if(InpBandsPeriod<2)
@@ -94,25 +91,6 @@ int BollingerBand::OnCalculate (const int rates_total,                  // size 
 //---- OnCalculate done. Return new prev_calculated.
    return(rates_total);
 }
-
-//+------------------------------------------------------------------+
-//| Simple Moving Average                                            |
-//+------------------------------------------------------------------+
-template<class T>
-double SimpleMA(const int position, const int period, const T &price)
-  {
-//---
-   double result=0.0;
-//--- check position
-   if(position>=period-1 && period>0)
-     {
-      //--- calculate value
-      for(int i=0;i<period;i++) result+=price[position-i];
-      result/=period;
-     }
-//---
-   return(result);
-  }
 
 //+------------------------------------------------------------------+
 //| Calculate Standard Deviation                                     |

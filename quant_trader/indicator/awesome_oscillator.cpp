@@ -3,13 +3,8 @@
 #define DATA_LIMIT 33
 
 AwesomeOscillator::AwesomeOscillator(QObject *parent) :
-    MQL5Indicator(4, parent),
-    ExtAOBuffer(),
-    ExtColorBuffer(),
-    ExtFastBuffer(),
-    ExtSlowBuffer()
+    MQL5Indicator(4, parent)
 {
-    //
 }
 
 void AwesomeOscillator::OnInit()

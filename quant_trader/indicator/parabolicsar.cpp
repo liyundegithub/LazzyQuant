@@ -1,15 +1,10 @@
 #include "parabolicsar.h"
-#include <QDebug>
 
 ParabolicSAR::ParabolicSAR(double SARStep, double SARMaximum, QObject *parent) :
     MQL5Indicator(3, parent),
     InpSARStep(SARStep),
-    InpSARMaximum(SARMaximum),
-    ExtSARBuffer(),
-    ExtEPBuffer(),
-    ExtAFBuffer()
+    InpSARMaximum(SARMaximum)
 {
-    qDebug() << "ParabolicSAR: Step =" << SARStep << ", Maximum =" << SARMaximum;
 }
 
 //+------------------------------------------------------------------+

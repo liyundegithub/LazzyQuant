@@ -1,14 +1,11 @@
 #include "ma.h"
-#include <QDebug>
 
-MA::MA(int MAPeriod, int MAShift, ENUM_MA_METHOD MAMethod, ENUM_APPLIED_PRICE applyTo, QObject *parent) :
-    MQL5IndicatorOnSingleDataBuffer(1, applyTo, parent),
+MA::MA(int MAPeriod, int MAShift, ENUM_MA_METHOD MAMethod, ENUM_APPLIED_PRICE appliedPrice, QObject *parent) :
+    MQL5IndicatorOnSingleDataBuffer(1, appliedPrice, parent),
     InpMAPeriod(MAPeriod),
     InpMAShift(MAShift),
-    InpMAMethod(MAMethod),
-    ExtLineBuffer()
+    InpMAMethod(MAMethod)
 {
-    qDebug() << "MA: period =" << MAPeriod << ", shift =" << MAShift << ", method =" << MAMethod << ", applyTo =" << applyTo;
 }
 
 //+------------------------------------------------------------------+

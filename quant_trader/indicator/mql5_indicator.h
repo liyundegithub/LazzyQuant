@@ -235,13 +235,13 @@ typedef double (* SIMPLIFY_PRICE)(double, double, double, double);
 
 class MQL5IndicatorOnSingleDataBuffer : public MQL5Indicator {
     Q_OBJECT
-    Q_PROPERTY(ENUM_APPLIED_PRICE applyTo MEMBER applied CONSTANT)
+    Q_PROPERTY(ENUM_APPLIED_PRICE AppliedPrice MEMBER InpAppliedPrice CONSTANT)
 
 public:
-    explicit MQL5IndicatorOnSingleDataBuffer(int indicator_buffers, ENUM_APPLIED_PRICE applyTo, QObject *parent = 0);
+    explicit MQL5IndicatorOnSingleDataBuffer(int indicator_buffers, ENUM_APPLIED_PRICE appliedPrice, QObject *parent = 0);
 
 protected:
-    const ENUM_APPLIED_PRICE applied;
+    const ENUM_APPLIED_PRICE InpAppliedPrice;
     SIMPLIFY_PRICE simplify_func;
     IndicatorBuffer<double> applied_price_buffer;
 

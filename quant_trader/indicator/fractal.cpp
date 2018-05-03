@@ -3,13 +3,8 @@
 #include <cfloat>
 
 Fractal::Fractal(QObject *parent) :
-    MQL5Indicator(2, parent),
-    ExtUpperBuffer(),
-    ExtLowerBuffer(),
-    confirmedUpIndex(),
-    confirmedDnIndex()
+    MQL5Indicator(2, parent)
 {
-    //
 }
 
 void Fractal::OnInit()

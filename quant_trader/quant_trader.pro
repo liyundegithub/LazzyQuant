@@ -20,6 +20,7 @@ SOURCES += main.cpp \
     indicator/indicator_functions.cpp \
     indicator/mql5_indicator.cpp \
     indicator/ma.cpp \
+    indicator/macd.cpp \
     indicator/parabolicsar.cpp \
     indicator/bollinger_band.cpp \
     indicator/awesome_oscillator.cpp \
@@ -47,10 +48,12 @@ HEADERS += ../config.h \
     quant_global.h \
     quant_trader.h \
     mql5_compatible.h \
+    mql5_moving_averages.h \
     indicator/abstract_indicator.h \
     indicator/indicator_functions.h \
     indicator/mql5_indicator.h \
     indicator/ma.h \
+    indicator/macd.h \
     indicator/parabolicsar.h \
     indicator/bollinger_band.h \
     indicator/awesome_oscillator.h \
