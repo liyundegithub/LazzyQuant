@@ -544,7 +544,7 @@ void MarketWatcher::startReplay(const QString &date)
     if (!mdList.empty()) {
         emit tradingDayChanged(date);
 
-        for (const auto &md : mdList) {
+        for (const auto &md : qAsConst(mdList)) {
             emitNewMarketData(md);
         }
         emit endOfReplay(date);

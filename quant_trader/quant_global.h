@@ -9,7 +9,7 @@
 #include "indicator/awesome_oscillator.h"
 #include "indicator/fractal.h"
 #include "strategy/DblMaPsar_strategy.h"
-#include "strategy/bighit_strategy.h"
+#include "strategy/BigHit_strategy.h"
 #include "strategy/chaos2.h"
 
 const QMap<QString, const QMetaObject*> indicatorMetaObjects = {

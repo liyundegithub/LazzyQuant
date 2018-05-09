@@ -74,6 +74,10 @@ void QuantTrader::loadQuantTraderSettings()
     settings->endGroup();
 }
 
+/*!
+ * \brief QuantTrader::loadTradeStrategySettings
+ * 载入量化交易策略.
+ */
 void QuantTrader::loadTradeStrategySettings()
 {
     auto settings = getSettingsSmart(ORGANIZATION, "trade_strategy");

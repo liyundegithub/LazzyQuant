@@ -24,6 +24,7 @@ OptionArbitrageur::OptionArbitrageur(const QStringList &allInstruments, OptionHe
         }
     }
 
+    // 暂每次仅支持一种策略.
     if (!underlyingsForRiskFree.empty()) {
         setupRiskFree(options);
     } else {
