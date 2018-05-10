@@ -39,7 +39,7 @@ protected:
     bool loggedIn;
     QSet<QString> subscribeSet;
     QMap<QString, QList<QPair<QTime, QTime>>> tradingTimeMap;   // 交易时间段总表.
-    QMap<QString, QPair<QTime, QTime>> currentTradingTimeMap;   // 当前, 或下一交易时段表.
+    QMap<QString, QPair<int, int>> currentTradingTimeMap;   // 当前, 或下一交易时段表.
 
     bool saveDepthMarketData;
     QString saveDepthMarketDataPath;

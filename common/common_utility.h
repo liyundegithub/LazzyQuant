@@ -59,6 +59,21 @@ QList<int> enumValueToList(int value)
     return valueList;
 }
 
+static inline quint8 charToDigit(const char ten, const char one)
+{
+    return quint8(10 * (ten - '0') + one - '0');
+}
+
+// Convert string with format hh:mm:ss into seconds
+static inline int hhmmssToSec(const char *hhmmss)
+{
+    quint8 hour, minute, second;
+    hour   = charToDigit(hhmmss[0], hhmmss[1]);
+    minute = charToDigit(hhmmss[3], hhmmss[4]);
+    second = charToDigit(hhmmss[6], hhmmss[7]);
+    return hour * 3600 + minute * 60 + second;
+}
+
 template<class T>
 static inline bool isWithinRange(const T &t, const T &rangeStart, const T &rangeEnd)
 {

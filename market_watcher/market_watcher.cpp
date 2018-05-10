@@ -225,7 +225,8 @@ void MarketWatcher::setCurrentTradingTime(const QString &instrumentID)
     }
 
     if (minIdx >= 0 && minIdx < len) {
-        currentTradingTimeMap[instrumentID] = tradingTimeMap[instrumentID][minIdx];
+        currentTradingTimeMap[instrumentID].first = QTime(0, 0).secsTo(tradingTimeMap[instrumentID][minIdx].first);
+        currentTradingTimeMap[instrumentID].second = QTime(0, 0).secsTo(tradingTimeMap[instrumentID][minIdx].second);
     } else {
         qDebug() << "minIdx =" << minIdx;
         qFatal("Should never see this!");
@@ -346,13 +347,13 @@ bool MarketWatcher::checkTradingTimes(const QString &instrumentID)
 void MarketWatcher::processDepthMarketData(const CThostFtdcDepthMarketDataField& depthMarketDataField)
 {
     const QString instrumentID(depthMarketDataField.InstrumentID);
-    QTime time = QTime::fromString(depthMarketDataField.UpdateTime, QStringLiteral("hh:mm:ss"));
+    int time = hhmmssToSec(depthMarketDataField.UpdateTime);
 
     const auto &tradetime = currentTradingTimeMap[instrumentID];
     if (isWithinRange(time, tradetime.first, tradetime.second)) {
-        QTime emitTime = (time == tradetime.second) ? time.addSecs(-1) : time;
+        int emitTime = (time == tradetime.second) ? (time == 0 ? 86399 : (time - 1)) : time;
         emit newMarketData(instrumentID,
-                           QTime(0, 0).secsTo(emitTime),
+                           emitTime,
                            depthMarketDataField.LastPrice,
                            depthMarketDataField.Volume,
                            depthMarketDataField.AskPrice1,
@@ -377,9 +378,9 @@ void MarketWatcher::processDepthMarketData(const CThostFtdcDepthMarketDataField&
 void MarketWatcher::emitNewMarketData(const CThostFtdcDepthMarketDataField& depthMarketDataField)
 {
     const QString instrumentID(depthMarketDataField.InstrumentID);
-    const QTime time = QTime::fromString(depthMarketDataField.UpdateTime, QStringLiteral("hh:mm:ss"));
+    int time = hhmmssToSec(depthMarketDataField.UpdateTime);
     emit newMarketData(instrumentID,
-                       QTime(0, 0).secsTo(time),
+                       time,
                        depthMarketDataField.LastPrice,
                        depthMarketDataField.Volume,
                        depthMarketDataField.AskPrice1,
