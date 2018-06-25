@@ -6,7 +6,6 @@
 
 #include "config_struct.h"
 #include "common_utility.h"
-#include "sinyee_tick.h"
 #include "sinyee_replayer.h"
 #include "sinyee_replayer_adaptor.h"
 
@@ -69,6 +68,52 @@ QList<SinYeeTick> readTicks(QDataStream& tickStream, int num)
     return tickList;
 }
 
+void SinYeeReplayer::appendTicksToList(const QString &date, const QString &instrument)
+{
+    QString tickFilePath = sinYeeDataPath + "/" + instrument + "/" + instrument + "_" + date + ".tick";
+    QFile tickFile(tickFilePath);
+    if (!tickFile.open(QFile::ReadOnly)) {
+        qCritical() << "Open file:" << tickFilePath << "failed!";
+        return;
+    }
+    QDataStream tickStream(&tickFile);
+    tickStream.setByteOrder(QDataStream::LittleEndian);
+    tickStream.setFloatingPointPrecision(QDataStream::SinglePrecision);
+
+    int skipped = tickStream.skipRawData(6);
+    Q_ASSERT(skipped == 6);
+
+    const QStringList contractNames = getAvailableContracts(tickStream);
+    qDebug() << contractNames;
+    for (const auto &contractName : contractNames) {
+        qint32 num;
+        tickStream >> num;
+        Q_ASSERT(num >= 0);
+        qInfo() << num << "items for" << contractName;
+
+        const auto tickList = readTicks(tickStream, num);
+        if (!contractName.endsWith("99")) {
+            for (const auto &item : tickList) {
+                tickPairList << qMakePair(contractName, item);
+            }
+        }
+    }
+    tickFile.close();
+}
+
+void SinYeeReplayer::sortTickPairList()
+{
+    std::stable_sort(tickPairList.begin(), tickPairList.end(), [](const auto &item1, const auto &item2) -> bool {
+        if (item1.second.time == item2.second.time) {
+            return item1.second.msec < item2.second.msec;
+        } else {
+            return item1.second.time < item2.second.time;
+        }
+    });
+    tickCnt = tickPairList.size();
+    replayIdx = 0;
+}
+
 /*!
  * \brief SinYeeReplayer::startReplay
  * 复盘指定日期的行情, 复盘合约由配置文件中ReplayList指定
@@ -101,64 +146,55 @@ void SinYeeReplayer::startReplay(const QString &date, const QString &instrument)
  */
 void SinYeeReplayer::startReplay(const QString &date, const QStringList &instruments)
 {
-    QList<QPair<QString, SinYeeTick>> tickPairList;
-
+    replayDate = date;
+    tickPairList.clear();
+    sumVol.clear();
     for (const auto &instrument : instruments) {
-        QString tickFilePath = sinYeeDataPath + "/" + instrument + "/" + instrument + "_" + date + ".tick";
-        QFile tickFile(tickFilePath);
-        if (!tickFile.open(QFile::ReadOnly)) {
-            qCritical() << "Open file:" << tickFilePath << "failed!";
-            continue;
-        }
-        QDataStream tickStream(&tickFile);
-        tickStream.setByteOrder(QDataStream::LittleEndian);
-        tickStream.setFloatingPointPrecision(QDataStream::SinglePrecision);
+        appendTicksToList(date, instrument);
+    }
+    sortTickPairList();
+    if (tickCnt > 0) {
+        emit tradingDayChanged(date);
+    }
+    replayTo(INT_MAX);
+}
 
-        int skipped = tickStream.skipRawData(6);
-        Q_ASSERT(skipped == 6);
+void SinYeeReplayer::prepareReplay(const QString &date, const QString &instrument)
+{
+    replayDate = date;
+    tickPairList.clear();
+    sumVol.clear();
+    appendTicksToList(date, instrument);
+    sortTickPairList();
+    if (tickCnt > 0) {
+        emit tradingDayChanged(date);
+    }
+}
 
-        const QStringList contractNames = getAvailableContracts(tickStream);
-        qDebug() << contractNames;
-        for (const auto &contractName : contractNames) {
-            qint32 num;
-            tickStream >> num;
-            Q_ASSERT(num >= 0);
-            qInfo() << num << "items for" << contractName;
-
-            const auto tickList = readTicks(tickStream, num);
-            if (!contractName.endsWith("99")) {
-                for (const auto &item : tickList) {
-                    tickPairList << qMakePair(contractName, item);
-                }
+void SinYeeReplayer::replayTo(int time)
+{
+    if (tickCnt > 0) {
+        for (; replayIdx < tickCnt; replayIdx++) {
+            const auto &item = tickPairList[replayIdx];
+            const auto &tick = item.second;
+            if (time >= tick.time) {
+                const int emitTime = tick.time % 86400;
+                sumVol[item.first] += tick.volume;
+                emit newMarketData(item.first,
+                                   emitTime,
+                                   tick.price,
+                                   sumVol[item.first],
+                                   tick.askPrice,
+                                   tick.askVolume,
+                                   tick.bidPrice,
+                                   tick.bidVolume);
+            } else {
+                break;
             }
         }
-        tickFile.close();
-    }
-
-    std::stable_sort(tickPairList.begin(), tickPairList.end(), [](const auto &item1, const auto &item2) -> bool {
-        if (item1.second.time == item2.second.time) {
-            return item1.second.msec < item2.second.msec;
-        } else {
-            return item1.second.time < item2.second.time;
+        if (replayIdx >= tickCnt) {
+            emit endOfReplay(replayDate);
+            tickCnt = 0;
         }
-    });
-
-    if (!tickPairList.empty()) {
-        emit tradingDayChanged(date);
-        QMap<QString, int> sumVol;
-        for (const auto &item : qAsConst(tickPairList)) {
-            const auto &tick = item.second;
-            const int emitTime = tick.time % 86400;
-            sumVol[item.first] += tick.volume;
-            emit newMarketData(item.first,
-                               emitTime,
-                               tick.price,
-                               sumVol[item.first],
-                               tick.askPrice,
-                               tick.askVolume,
-                               tick.bidPrice,
-                               tick.bidVolume);
-        }
-        emit endOfReplay(date);
     }
 }

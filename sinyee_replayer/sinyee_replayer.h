@@ -4,6 +4,8 @@
 #include <QObject>
 #include <QStringList>
 
+#include "sinyee_tick.h"
+
 struct CONFIG_ITEM;
 
 class SinYeeReplayer : public QObject
@@ -14,8 +16,18 @@ class SinYeeReplayer : public QObject
     QString sinYeeDataPath;
     QStringList replayList;
 
+    QString replayDate;
+    QList<QPair<QString, SinYeeTick>> tickPairList;
+    int tickCnt;
+    int replayIdx;
+    QMap<QString, int> sumVol;
+
 public:
     explicit SinYeeReplayer(const CONFIG_ITEM &config, QObject *parent = 0);
+
+private:
+    void appendTicksToList(const QString &date, const QString &instrument);
+    void sortTickPairList();
 
 signals:
     void tradingDayChanged(const QString& tradingDay);
@@ -27,6 +39,9 @@ public slots:
     void startReplay(const QString &date);
     void startReplay(const QString &date, const QString &instrument);
     void startReplay(const QString &date, const QStringList &instruments);
+
+    void prepareReplay(const QString &date, const QString &instrument);
+    void replayTo(int time);
 };
 
 #endif // SINYEE_REPLAYER_H
