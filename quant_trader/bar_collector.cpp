@@ -2,6 +2,8 @@
 #include <QMetaEnum>
 #include <QDateTime>
 #include <QTimeZone>
+
+#include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QSqlError>
 
@@ -19,7 +21,7 @@ BarCollector::BarCollector(const QString &instrumentID, int timeFrameFlags, bool
     }
 
     if (saveBarsToDB) {
-        sqlDB = QSqlDatabase::database();
+        QSqlDatabase sqlDB = QSqlDatabase::database();
         QSqlQuery qry(sqlDB);
         if (!qry.exec("SHOW DATABASES")) {
             qCritical().noquote() << "Show databases failed!";
@@ -32,24 +34,24 @@ BarCollector::BarCollector(const QString &instrumentID, int timeFrameFlags, bool
             QString dbName = qry.value(0).toString();
             dbNames << dbName;
         }
-        if (!dbNames.contains(instrument, Qt::CaseInsensitive)) {
-            if (!qry.exec("CREATE DATABASE " + instrument)) {
-                qCritical().noquote() << "Create database" << instrument << "failed!";
+        if (!dbNames.contains("market", Qt::CaseInsensitive)) {
+            if (!qry.exec("CREATE DATABASE market")) {
+                qCritical().noquote() << "Create database market failed!";
                 qCritical().noquote() << qry.lastError();
                 this->saveBarsToDB = false;
                 return;
             }
         }
         sqlDB.close();
-        sqlDB.setDatabaseName(instrument);
+        sqlDB.setDatabaseName("market");
         sqlDB.open();
         const QStringList tables = sqlDB.tables();
 
         for (auto key : qAsConst(keys)) {
             // Check if the table is already created for collected bars
-            QString tableName = QMetaEnum::fromType<TimeFrames>().valueToKey(key);
+            QString tableName = QString("%1_%2").arg(instrumentID, QMetaEnum::fromType<TimeFrames>().valueToKey(key));
             if (!tables.contains(tableName, Qt::CaseInsensitive)) {
-                QString tableOfDB = QString("%1.%2").arg(instrument).arg(tableName);
+                QString tableOfDB = QString("market.%1").arg(tableName);
                 bool ok = qry.exec("CREATE TABLE " + tableOfDB + " ("
                                    "`time` BIGINT NOT NULL,"
                                    "`open` DOUBLE NULL,"
@@ -62,13 +64,16 @@ BarCollector::BarCollector(const QString &instrumentID, int timeFrameFlags, bool
                                    "PRIMARY KEY (`time`))");
 
                 if (!ok) {
-                    qCritical().noquote() << "Create table" << tableOfDB << "failed!";
+                    qCritical().noquote() << "Create table" << tableName << "failed!";
                     qCritical().noquote() << qry.lastError();
                     this->saveBarsToDB = false;
                     break;
                 }
             }
         }
+        sqlDB.close();
+        sqlDB.setDatabaseName("indicator");
+        sqlDB.open();
     }
 }
 
@@ -192,9 +197,10 @@ void BarCollector::saveEmitReset(int timeFrame, Bar &bar)
 
 void BarCollector::saveBar(int timeFrame, const Bar &bar)
 {
+    QSqlDatabase sqlDB = QSqlDatabase();
     QSqlQuery qry(sqlDB);
     QString tableName = QMetaEnum::fromType<TimeFrames>().valueToKey(timeFrame);
-    QString tableOfDB = QString("%1.%2").arg(instrument).arg(tableName);
+    QString tableOfDB = QString("market.%1_%2").arg(instrument).arg(tableName);
     qry.prepare("INSERT INTO " + tableOfDB + " (time, open, high, low, close, tick_volume, volume, type) "
                   "VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
     qry.bindValue(0, bar.time);

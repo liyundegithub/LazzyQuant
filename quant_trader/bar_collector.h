@@ -3,7 +3,6 @@
 
 #include <QObject>
 #include <QMap>
-#include <QSqlDatabase>
 
 #include "bar.h"
 
@@ -62,7 +61,6 @@ public:
 protected:
     const QString instrument;
     bool saveBarsToDB;
-    QSqlDatabase sqlDB;
 
     int lastVolume = 0;
     qint64 lastNightBase = 0;
