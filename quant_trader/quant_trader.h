@@ -30,7 +30,6 @@ protected:
     QString dbHostName;
     QString dbUserName;
     QString dbPassword;
-    QSqlDatabase sqlDB;
 
     void loadQuantTraderSettings();
     void loadTradeStrategySettings();

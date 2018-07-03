@@ -46,14 +46,14 @@ void QuantTrader::loadQuantTraderSettings()
     dbPassword = settings->value("password").toString();
     settings->endGroup();
 
-    sqlDB = QSqlDatabase::addDatabase(dbDriver);
+    QSqlDatabase sqlDB = QSqlDatabase::addDatabase(dbDriver);
     sqlDB.setHostName(dbHostName);
     sqlDB.setUserName(dbUserName);
     sqlDB.setPassword(dbPassword);
 
-    bool ok = this->sqlDB.open();
+    bool ok = sqlDB.open();
     if (!ok) {
-        qCritical() << "Open database failed!" << this->sqlDB.lastError().text();
+        qCritical() << "Open database failed!" << sqlDB.lastError().text();
     }
 
     settings->beginGroup("Collector");
@@ -213,11 +213,12 @@ QList<Bar>* QuantTrader::getBars(const QString &instrumentID, int timeFrame)
 
     // Load Collector Bars
     QList<Bar> collectedBarList;
-    const QString tableName = time_frame_str;
+    const QString tableName = QString("%1_%2").arg(instrumentID).arg(time_frame_str);
+    QSqlDatabase sqlDB = QSqlDatabase::database();
     const QStringList tables = sqlDB.isOpen() ? sqlDB.tables() : QStringList();
     if (tables.contains(tableName, Qt::CaseInsensitive)) {
         QSqlQuery qry(sqlDB);
-        bool ok = qry.exec("SELECT * from " + QString("%1.%2").arg(instrumentID).arg(tableName));
+        bool ok = qry.exec("SELECT * from " + QString("market.%1").arg(tableName));
         qDebug() << "select" << ok;
         while (qry.next()) {
             Bar bar;
@@ -519,6 +520,7 @@ void QuantTrader::onMarketClose()
  */
 bool QuantTrader::checkDataBaseStatus()
 {
+    QSqlDatabase sqlDB = QSqlDatabase::database();
     QSqlQuery qry(sqlDB);
     bool ret = qry.exec("SHOW PROCESSLIST");
     if (!ret) {
