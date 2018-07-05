@@ -20,7 +20,7 @@ protected:
     // Following QString keys are instumentIDs
     QMap<QString, BarCollector*> collector_map;
     QMap<QString, QMap<int, QList<Bar>>> bars_map;
-    QMultiMap<QString, AbstractIndicator*> indicator_map;
+    QMap<QString, QMultiMap<int, AbstractIndicator*>> indicatorMap;
     QMultiMap<QString, AbstractStrategy*> strategy_map;
     QMap<QString, boost::optional<int>> position_map;
 

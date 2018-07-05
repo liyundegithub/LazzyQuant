@@ -1,7 +1,7 @@
 #include "ma.h"
 
-MA::MA(int MAPeriod, int MAShift, ENUM_MA_METHOD MAMethod, ENUM_APPLIED_PRICE appliedPrice, QObject *parent) :
-    MQL5IndicatorOnSingleDataBuffer(1, appliedPrice, parent),
+MA::MA(int MAPeriod, int MAShift, ENUM_MA_METHOD MAMethod, ENUM_APPLIED_PRICE AppliedPrice, QObject *parent) :
+    MQL5IndicatorOnSingleDataBuffer(1, AppliedPrice, parent),
     InpMAPeriod(MAPeriod),
     InpMAShift(MAShift),
     InpMAMethod(MAMethod)

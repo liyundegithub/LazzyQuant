@@ -1,8 +1,8 @@
 #include "bollinger_band.h"
 #include "../mql5_moving_averages.h"
 
-BollingerBand::BollingerBand(int InpBandsPeriod, int InpBandsShift, double InpBandsDeviations, ENUM_APPLIED_PRICE appliedPrice, QObject *parent) :
-    MQL5IndicatorOnSingleDataBuffer(4, appliedPrice, parent)
+BollingerBand::BollingerBand(int InpBandsPeriod, int InpBandsShift, double InpBandsDeviations, ENUM_APPLIED_PRICE AppliedPrice, QObject *parent) :
+    MQL5IndicatorOnSingleDataBuffer(4, AppliedPrice, parent)
 {
 //--- check for input values
    if(InpBandsPeriod<2)

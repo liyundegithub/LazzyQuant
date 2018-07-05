@@ -324,22 +324,27 @@ AbstractIndicator* QuantTrader::registerIndicator(const QString &instrumentID, i
 
     qDebug() << params;
 
-    const auto pIndicators = indicator_map.values(currentInstrumentID);
-    for (AbstractIndicator *pIndicator : pIndicators) {
-        QObject *obj = dynamic_cast<QObject*>(pIndicator);
-        if (indicator_name == obj->metaObject()->className()) {
-            bool match = true;
-            for (int i = 0; i < parameter_number; i++) {
-                QVariant value = obj->property(names[i]);
-                if (params[i] != value) {
-                    match = false;
+    if (indicatorMap.contains(currentInstrumentID)) {
+        const auto pIndicators = indicatorMap[currentInstrumentID].values(currentTimeFrame);
+        for (AbstractIndicator *pIndicator : pIndicators) {
+            QObject *obj = dynamic_cast<QObject*>(pIndicator);
+            if (indicator_name == obj->metaObject()->className()) {
+                bool match = true;
+                for (int i = 0; i < parameter_number; i++) {
+                    QVariant value = obj->property(names[i]);
+                    if (params[i] != value) {
+                        match = false;
+                    }
                 }
-            }
-            if (match) {
-                return pIndicator;
+                if (match) {
+                    qDebug() << "Use exist" << currentInstrumentID << currentTimeFrame << indicator_name;
+                    return pIndicator;
+                }
             }
         }
     }
+
+    qDebug() << "Create new" << currentInstrumentID << currentTimeFrame << indicator_name;
 
     QVector<QGenericArgument> args;
     args.reserve(10);
@@ -381,13 +386,13 @@ AbstractIndicator* QuantTrader::registerIndicator(const QString &instrumentID, i
         return nullptr;
     }
 
-    auto* ret = dynamic_cast<AbstractIndicator*>(obj);
+    auto* pIndicator = dynamic_cast<AbstractIndicator*>(obj);
 
-    indicator_map.insert(currentInstrumentID, ret);
-    ret->setBarList(getBars(currentInstrumentID, currentTimeFrame), collector_map[currentInstrumentID]->getBarPtr(currentTimeFrame));
-    ret->update();
+    indicatorMap[currentInstrumentID].insert(currentTimeFrame, pIndicator);
+    pIndicator->setBarList(getBars(currentInstrumentID, currentTimeFrame), collector_map[currentInstrumentID]->getBarPtr(currentTimeFrame));
+    pIndicator->update();
 
-    return ret;
+    return pIndicator;
 }
 
 /*!

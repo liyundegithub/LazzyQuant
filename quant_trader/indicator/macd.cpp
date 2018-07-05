@@ -1,8 +1,8 @@
 #include "macd.h"
 #include "../mql5_moving_averages.h"
 
-Macd::Macd(int FastEMA, int SlowEMA, int SignalSMA, ENUM_APPLIED_PRICE appliedPrice, QObject *parent) :
-    MQL5IndicatorOnSingleDataBuffer(4, appliedPrice, parent),
+Macd::Macd(int FastEMA, int SlowEMA, int SignalSMA, ENUM_APPLIED_PRICE AppliedPrice, QObject *parent) :
+    MQL5IndicatorOnSingleDataBuffer(4, AppliedPrice, parent),
     InpFastEMA(FastEMA),
     InpSlowEMA(SlowEMA),
     InpSignalSMA(SignalSMA)

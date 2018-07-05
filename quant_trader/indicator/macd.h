@@ -12,7 +12,7 @@ class Macd : public MQL5IndicatorOnSingleDataBuffer
     Q_PROPERTY(int SignalSMA MEMBER InpSignalSMA CONSTANT)
 
 public:
-    Q_INVOKABLE explicit Macd(int FastEMA, int SlowEMA, int SignalSMA, ENUM_APPLIED_PRICE appliedPrice = PRICE_CLOSE, QObject *parent = nullptr);
+    Q_INVOKABLE explicit Macd(int FastEMA, int SlowEMA, int SignalSMA, ENUM_APPLIED_PRICE AppliedPrice = PRICE_CLOSE, QObject *parent = nullptr);
 
     void OnInit() override;
 

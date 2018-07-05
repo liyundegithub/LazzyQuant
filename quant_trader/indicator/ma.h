@@ -12,7 +12,7 @@ class MA : public MQL5IndicatorOnSingleDataBuffer
     Q_PROPERTY(ENUM_MA_METHOD MAMethod MEMBER InpMAMethod CONSTANT)
 
 public:
-    Q_INVOKABLE explicit MA(int MAPeriod, int MAShift, ENUM_MA_METHOD MAMethod, ENUM_APPLIED_PRICE appliedPrice = PRICE_CLOSE, QObject *parent = 0);
+    Q_INVOKABLE explicit MA(int MAPeriod, int MAShift, ENUM_MA_METHOD MAMethod, ENUM_APPLIED_PRICE AppliedPrice = PRICE_CLOSE, QObject *parent = 0);
 
     void OnInit() override;
 

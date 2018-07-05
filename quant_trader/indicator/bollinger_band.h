@@ -12,7 +12,7 @@ class BollingerBand : public MQL5IndicatorOnSingleDataBuffer
     Q_PROPERTY(double BandsDeviations MEMBER ExtBandsDeviations CONSTANT)
 
 public:
-    Q_INVOKABLE explicit BollingerBand(int InpBandsPeriod, int InpBandsShift, double InpBandsDeviations, ENUM_APPLIED_PRICE appliedPrice, QObject *parent = 0);
+    Q_INVOKABLE explicit BollingerBand(int InpBandsPeriod, int InpBandsShift, double InpBandsDeviations, ENUM_APPLIED_PRICE AppliedPrice, QObject *parent = 0);
 
     void OnInit() override;
 
