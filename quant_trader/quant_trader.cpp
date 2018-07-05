@@ -391,6 +391,23 @@ AbstractIndicator* QuantTrader::registerIndicator(const QString &instrumentID, i
 }
 
 /*!
+ * \brief QuantTrader::onNewBar
+ * 储存新收集的K线数据并计算相关策略.
+ *
+ * \param instrumentID 合约代码.
+ * \param timeFrame 时间框架(枚举)
+ * \param bar 新的K线数据.
+ */
+void QuantTrader::onNewBar(const QString &instrumentID, int timeFrame, const Bar &bar)
+{
+    bars_map[instrumentID][timeFrame].append(bar);
+    const auto strategyList = strategy_map.values(instrumentID);
+    for (auto *strategy : strategyList) {
+        strategy->checkIfNewBar(timeFrame);
+    }
+}
+
+/*!
  * \brief QuantTrader::setTradingDay
  * 设定交易日期.
  *
@@ -470,23 +487,6 @@ void QuantTrader::onMarketData(const QString &instrumentID, int time, double las
             setPosition(instrumentID, new_position_sum.get());
             qDebug().noquote() << QTime(0, 0).addSecs(time).toString() << "New position for" << instrumentID << new_position_sum.get() << ", price =" << lastPrice;
         }
-    }
-}
-
-/*!
- * \brief QuantTrader::onNewBar
- * 储存新收集的K线数据并计算相关策略.
- *
- * \param instrumentID 合约代码.
- * \param timeFrame 时间框架(枚举)
- * \param bar 新的K线数据.
- */
-void QuantTrader::onNewBar(const QString &instrumentID, int timeFrame, const Bar &bar)
-{
-    bars_map[instrumentID][timeFrame].append(bar);
-    const auto strategyList = strategy_map.values(instrumentID);
-    for (auto *strategy : strategyList) {
-        strategy->checkIfNewBar(timeFrame);
     }
 }
 

@@ -47,11 +47,13 @@ public:
 
     AbstractIndicator* registerIndicator(const QString &instrumentID, int timeFrame, QString indicator_name, ...);
 
+private slots:
+    void onNewBar(const QString &instrumentID, int timeFrame, const Bar &bar);
+
 public slots:
     void setTradingDay(const QString &tradingDay);
     void onMarketData(const QString &instrumentID, int time, double lastPrice, int volume,
                       double askPrice1, int askVolume1, double bidPrice1, int bidVolume1);
-    void onNewBar(const QString &instrumentID, int timeFrame, const Bar &bar);
     void onMarketPause();
     void onMarketClose();
     bool checkDataBaseStatus();
