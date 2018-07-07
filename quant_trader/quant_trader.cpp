@@ -288,7 +288,7 @@ static QVariant getParam(const QByteArray &typeName, va_list &ap)
 
 AbstractIndicator* QuantTrader::registerIndicator(const QString &instrumentID, int timeFrame, QString indicator_name, ...)
 {
-    if (instrumentID != nullptr && instrumentID.length() > 0) {
+    if (!instrumentID.isEmpty()) {
         currentInstrumentID = instrumentID;
     }
     if (timeFrame > 0) {

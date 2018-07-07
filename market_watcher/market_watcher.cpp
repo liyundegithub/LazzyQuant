@@ -189,7 +189,7 @@ void MarketWatcher::timesUp(int index)
 
             if (saveDepthMarketData) {
                 auto &depthMarketDataList = depthMarketDataListMap[instrumentID];
-                if (depthMarketDataList.length() > 0) {
+                if (!depthMarketDataList.empty()) {
                     QString fileName = saveDepthMarketDataPath + "/" + instrumentID + "/" + QDateTime::currentDateTime().toString(QStringLiteral("yyyyMMdd_hhmmss_zzz")) + ".data";
                     QFile depthMarketDataFile(fileName);
                     depthMarketDataFile.open(QFile::WriteOnly);
