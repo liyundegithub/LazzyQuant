@@ -5,7 +5,6 @@
 #include <boost/optional.hpp>
 #include <QObject>
 #include <QMap>
-#include <QSqlDatabase>
 
 class Bar;
 class BarCollector;
@@ -57,6 +56,7 @@ public slots:
     void onMarketPause();
     void onMarketClose();
     bool checkDataBaseStatus();
+    void quit();
 };
 
 #endif // QUANT_TRADER_H

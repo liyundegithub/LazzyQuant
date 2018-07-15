@@ -1,5 +1,7 @@
+#include <QCoreApplication>
 #include <QFile>
 #include <QSettings>
+#include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QSqlError>
 
@@ -545,4 +547,9 @@ bool QuantTrader::checkDataBaseStatus()
         }
     }
     return ret;
+}
+
+void QuantTrader::quit()
+{
+    QCoreApplication::quit();
 }
