@@ -30,9 +30,13 @@
     </method>
     <method name="prepareReplay">
       <arg name="date" type="s" direction="in"/>
-      <arg name="instrument" type="s" direction="in"/>
+    </method>
+    <method name="prepareReplay">
+      <arg name="date" type="s" direction="in"/>
+      <arg name="instruments" type="as" direction="in"/>
     </method>
     <method name="replayTo">
+      <arg type="b" direction="out"/>
       <arg name="time" type="i" direction="in"/>
     </method>
   </interface>

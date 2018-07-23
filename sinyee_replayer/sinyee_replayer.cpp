@@ -146,6 +146,17 @@ void SinYeeReplayer::startReplay(const QString &date, const QString &instrument)
  */
 void SinYeeReplayer::startReplay(const QString &date, const QStringList &instruments)
 {
+    prepareReplay(date, instruments);
+    replayTo(INT_MAX);
+}
+
+void SinYeeReplayer::prepareReplay(const QString &date)
+{
+    prepareReplay(date, replayList);
+}
+
+void SinYeeReplayer::prepareReplay(const QString &date, const QStringList &instruments)
+{
     replayDate = date;
     tickPairList.clear();
     sumVol.clear();
@@ -156,23 +167,11 @@ void SinYeeReplayer::startReplay(const QString &date, const QStringList &instrum
     if (tickCnt > 0) {
         emit tradingDayChanged(date);
     }
-    replayTo(INT_MAX);
 }
 
-void SinYeeReplayer::prepareReplay(const QString &date, const QString &instrument)
+bool SinYeeReplayer::replayTo(int time)
 {
-    replayDate = date;
-    tickPairList.clear();
-    sumVol.clear();
-    appendTicksToList(date, instrument);
-    sortTickPairList();
-    if (tickCnt > 0) {
-        emit tradingDayChanged(date);
-    }
-}
-
-void SinYeeReplayer::replayTo(int time)
-{
+    bool ret = false;
     if (tickCnt > 0) {
         for (; replayIdx < tickCnt; replayIdx++) {
             const auto &item = tickPairList[replayIdx];
@@ -180,6 +179,11 @@ void SinYeeReplayer::replayTo(int time)
             if (time >= tick.time) {
                 const int emitTime = tick.time % 86400;
                 sumVol[item.first] += tick.volume;
+                auto hour = emitTime / 3600;
+                auto minute = (emitTime % 3600) / 60;
+                if (hour == 8 || hour == 0 || hour == 3 || (hour == 10 && minute == 15) || (hour == 11 && minute == 30) || hour == 15) {
+                    continue;
+                }
                 emit newMarketData(item.first,
                                    emitTime,
                                    tick.price,
@@ -188,6 +192,7 @@ void SinYeeReplayer::replayTo(int time)
                                    tick.askVolume,
                                    tick.bidPrice,
                                    tick.bidVolume);
+                ret = true;
             } else {
                 break;
             }
@@ -197,4 +202,5 @@ void SinYeeReplayer::replayTo(int time)
             tickCnt = 0;
         }
     }
+    return ret;
 }

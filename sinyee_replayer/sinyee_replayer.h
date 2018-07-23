@@ -18,8 +18,8 @@ class SinYeeReplayer : public QObject
 
     QString replayDate;
     QList<QPair<QString, SinYeeTick>> tickPairList;
-    int tickCnt;
-    int replayIdx;
+    int tickCnt = 0;
+    int replayIdx = 0;
     QMap<QString, int> sumVol;
 
 public:
@@ -40,8 +40,9 @@ public slots:
     void startReplay(const QString &date, const QString &instrument);
     void startReplay(const QString &date, const QStringList &instruments);
 
-    void prepareReplay(const QString &date, const QString &instrument);
-    void replayTo(int time);
+    void prepareReplay(const QString &date);
+    void prepareReplay(const QString &date, const QStringList &instruments);
+    bool replayTo(int time);
 };
 
 #endif // SINYEE_REPLAYER_H
