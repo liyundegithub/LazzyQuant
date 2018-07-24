@@ -9,6 +9,10 @@
 #include "sinyee_replayer.h"
 #include "sinyee_replayer_adaptor.h"
 
+const QDateTime data_date_base = QDateTime::fromString("1988-01-01 00:00:00", "yyyy-MM-dd HH:mm:ss");
+const QDateTime real_date_base = QDateTime::fromString("2008-01-01 00:00:00", "yyyy-MM-dd HH:mm:ss");
+const int date_diff_int = data_date_base.secsTo(real_date_base);
+
 SinYeeReplayer::SinYeeReplayer(const CONFIG_ITEM &config, QObject *parent) :
     QObject(parent)
 {
@@ -171,6 +175,7 @@ void SinYeeReplayer::prepareReplay(const QString &date, const QStringList &instr
 
 bool SinYeeReplayer::replayTo(int time)
 {
+    time -= date_diff_int;
     bool ret = false;
     if (tickCnt > 0) {
         for (; replayIdx < tickCnt; replayIdx++) {

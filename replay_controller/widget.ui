@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Widget</class>
+ <widget class="QWidget" name="Widget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>400</width>
+    <height>300</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Replay Controller</string>
+  </property>
+  <widget class="QPushButton" name="playButton">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>170</y>
+     <width>80</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>▶</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pauseButton">
+   <property name="geometry">
+    <rect>
+     <x>160</x>
+     <y>170</y>
+     <width>80</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string> ▏▏</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="stopButton">
+   <property name="geometry">
+    <rect>
+     <x>290</x>
+     <y>170</y>
+     <width>80</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>■</string>
+   </property>
+  </widget>
+  <widget class="QDateTimeEdit" name="startDateTimeEdit">
+   <property name="geometry">
+    <rect>
+     <x>150</x>
+     <y>43</y>
+     <width>194</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="date">
+    <date>
+     <year>2007</year>
+     <month>12</month>
+     <day>31</day>
+    </date>
+   </property>
+   <property name="time">
+    <time>
+     <hour>8</hour>
+     <minute>0</minute>
+     <second>0</second>
+    </time>
+   </property>
+   <property name="displayFormat">
+    <string>yyyy/M/d HH:mm:ss</string>
+   </property>
+   <property name="timeSpec">
+    <enum>Qt::UTC</enum>
+   </property>
+  </widget>
+  <widget class="QDateTimeEdit" name="stopDateTimeEdit">
+   <property name="geometry">
+    <rect>
+     <x>150</x>
+     <y>71</y>
+     <width>194</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="date">
+    <date>
+     <year>2016</year>
+     <month>12</month>
+     <day>28</day>
+    </date>
+   </property>
+   <property name="displayFormat">
+    <string>yyyy/M/d HH:mm:ss</string>
+   </property>
+   <property name="timeSpec">
+    <enum>Qt::UTC</enum>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label">
+   <property name="geometry">
+    <rect>
+     <x>60</x>
+     <y>40</y>
+     <width>54</width>
+     <height>111</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>开始时间
+
+停止时间
+
+    周期
+
+    速度</string>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="periodBox">
+   <property name="geometry">
+    <rect>
+     <x>160</x>
+     <y>100</y>
+     <width>72</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <item>
+    <property name="text">
+     <string>1分钟</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>5分钟</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>15分钟</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>30分钟</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>60分钟</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>1天</string>
+    </property>
+   </item>
+  </widget>
+  <widget class="QSlider" name="speedSlider">
+   <property name="geometry">
+    <rect>
+     <x>150</x>
+     <y>130</y>
+     <width>181</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="minimum">
+    <number>1</number>
+   </property>
+   <property name="maximum">
+    <number>10</number>
+   </property>
+   <property name="pageStep">
+    <number>1</number>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="QDateTimeEdit" name="currentDateTimeEdit">
+   <property name="geometry">
+    <rect>
+     <x>150</x>
+     <y>245</y>
+     <width>194</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="displayFormat">
+    <string>yyyy/M/d HH:mm:ss</string>
+   </property>
+   <property name="timeSpec">
+    <enum>Qt::UTC</enum>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_2">
+   <property name="geometry">
+    <rect>
+     <x>60</x>
+     <y>250</y>
+     <width>54</width>
+     <height>12</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>当前时间</string>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
