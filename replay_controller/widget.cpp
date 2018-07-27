@@ -1,5 +1,4 @@
 #include <QTimer>
-#include <QDebug>
 #include <QCoreApplication>
 
 #include "widget.h"
@@ -48,7 +47,10 @@ void Widget::onTimer()
         if (currentDate != targetDate) {
             haveData1 = replayer->replayTo(targetDate);
             auto td = QDateTime::fromSecsSinceEpoch(targetDate, Qt::UTC);
-            replayer->prepareReplay(td.toString(QStringLiteral("yyyyMMdd")));
+            bool haveData3 = replayer->prepareReplay(td.toString(QStringLiteral("yyyyMMdd")));
+            if (!haveData3) {
+                targetTime = targetDate + 24 * 3600 - 1;
+            }
             currentDate = targetDate;
         }
         haveData2 = replayer->replayTo(targetTime);

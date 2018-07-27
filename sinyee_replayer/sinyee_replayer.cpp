@@ -154,12 +154,12 @@ void SinYeeReplayer::startReplay(const QString &date, const QStringList &instrum
     replayTo(INT_MAX);
 }
 
-void SinYeeReplayer::prepareReplay(const QString &date)
+bool SinYeeReplayer::prepareReplay(const QString &date)
 {
-    prepareReplay(date, replayList);
+    return prepareReplay(date, replayList);
 }
 
-void SinYeeReplayer::prepareReplay(const QString &date, const QStringList &instruments)
+bool SinYeeReplayer::prepareReplay(const QString &date, const QStringList &instruments)
 {
     replayDate = date;
     tickPairList.clear();
@@ -171,6 +171,7 @@ void SinYeeReplayer::prepareReplay(const QString &date, const QStringList &instr
     if (tickCnt > 0) {
         emit tradingDayChanged(date);
     }
+    return tickCnt > 0;
 }
 
 bool SinYeeReplayer::replayTo(int time)

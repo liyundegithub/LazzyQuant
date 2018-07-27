@@ -40,8 +40,8 @@ public slots:
     void startReplay(const QString &date, const QString &instrument);
     void startReplay(const QString &date, const QStringList &instruments);
 
-    void prepareReplay(const QString &date);
-    void prepareReplay(const QString &date, const QStringList &instruments);
+    bool prepareReplay(const QString &date);
+    bool prepareReplay(const QString &date, const QStringList &instruments);
     bool replayTo(int time);
 };
 

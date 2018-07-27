@@ -4,4 +4,5 @@ SUBDIRS = market_watcher \
           quant_trader \
           trade_executer \
           sinyee_replayer \
-          future_arbitrageur
+          future_arbitrageur \
+          replay_controller
