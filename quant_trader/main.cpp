@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
         pWatcherOrReplayer = pWatcher;
     }
 
-    QuantTrader quantTrader(saveBarsToDB);
+    QuantTrader quantTrader(traderConfigs[0], saveBarsToDB);
     MultipleTimer *marketOpenTimer = nullptr;
     MultipleTimer *marketCloseTimer = nullptr;
 

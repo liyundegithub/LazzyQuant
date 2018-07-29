@@ -1,0 +1,45 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN" "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node>
+  <interface name="com.lazzyquant.quant_trader">
+    <signal name="newBarFormed">
+      <arg name="instrumentID" type="s" direction="out"/>
+      <arg name="timeFrame" type="s" direction="out"/>
+    </signal>
+    <signal name="indicatorUpdated">
+      <arg name="instrumentID" type="s" direction="out"/>
+      <arg name="timeFrame" type="s" direction="out"/>
+      <arg name="indicatorName" type="s" direction="out"/>
+    </signal>
+    <signal name="strategyStateUpdated">
+      <arg name="strategyID" type="s" direction="out"/>
+    </signal>
+    <method name="setTradingDay">
+      <arg name="tradingDay" type="s" direction="in"/>
+    </method>
+    <method name="onMarketData">
+      <arg name="instrumentID" type="s" direction="in"/>
+      <arg name="time" type="i" direction="in"/>
+      <arg name="lastPrice" type="d" direction="in"/>
+      <arg name="volume" type="i" direction="in"/>
+      <arg name="askPrice1" type="d" direction="in"/>
+      <arg name="askVolume1" type="i" direction="in"/>
+      <arg name="bidPrice1" type="d" direction="in"/>
+      <arg name="bidVolume1" type="i" direction="in"/>
+    </method>
+    <method name="onMarketPause">
+    </method>
+    <method name="onMarketClose">
+    </method>
+    <method name="checkDataBaseStatus">
+      <arg type="b" direction="out"/>
+    </method>
+    <method name="onModified">
+      <arg name="name" type="s" direction="in"/>
+    </method>
+    <method name="getEditableList">
+      <arg type="as" direction="out"/>
+    </method>
+    <method name="quit">
+    </method>
+  </interface>
+</node>

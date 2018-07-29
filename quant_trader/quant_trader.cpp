@@ -13,7 +13,9 @@
 #include "bar_collector.h"
 #include "quant_global.h"
 
-QuantTrader::QuantTrader(bool saveBarsToDB, QObject *parent) :
+#include "quant_trader_adaptor.h"
+
+QuantTrader::QuantTrader(const CONFIG_ITEM &config, bool saveBarsToDB, QObject *parent) :
     QObject(parent),
     saveBarsToDB(saveBarsToDB)
 {
@@ -22,6 +24,11 @@ QuantTrader::QuantTrader(bool saveBarsToDB, QObject *parent) :
 
     loadQuantTraderSettings();
     loadTradeStrategySettings();
+
+    new Quant_traderAdaptor(this);
+    QDBusConnection dbus = QDBusConnection::sessionBus();
+    dbus.registerObject(config.dbusObject, this);
+    dbus.registerService(config.dbusService);
 }
 
 QuantTrader::~QuantTrader()
@@ -138,6 +145,11 @@ void QuantTrader::loadTradeStrategySettings()
         strategy->setBarList(multiTimeFrameBars);
         strategy->loadStatus();
         strategy_map.insert(instrument, strategy);
+
+        Editable *editable = dynamic_cast<Editable*>(strategy);
+        if (editable) {
+            editableMap.insert(group, editable);
+        }
 
         auto position = strategy->getPosition();
         if (!position_map.contains(instrument)) {
@@ -388,11 +400,25 @@ AbstractIndicator* QuantTrader::registerIndicator(const QString &instrumentID, i
         return nullptr;
     }
 
-    auto* pIndicator = dynamic_cast<AbstractIndicator*>(obj);
+    auto *pIndicator = dynamic_cast<AbstractIndicator*>(obj);
 
     indicatorMap[currentInstrumentID].insert(currentTimeFrame, pIndicator);
     pIndicator->setBarList(getBars(currentInstrumentID, currentTimeFrame), collector_map[currentInstrumentID]->getBarPtr(currentTimeFrame));
     pIndicator->update();
+
+    auto *editable = dynamic_cast<Editable*>(obj);
+    QString signature = instrumentID + "_" + QMetaEnum::fromType<BarCollector::TimeFrames>().valueToKey(timeFrame) + "_" + indicator_name;
+    if (params.length() > 0) {
+        for (const auto &param : qAsConst(params)) {
+            signature += "_";
+            signature += param.toString();
+        }
+    }
+    if (editable) {
+        editable->signature = signature.toLower();
+        editable->setup();
+        editableMap.insert(editable->signature, editable);
+    }
 
     return pIndicator;
 }
@@ -412,6 +438,7 @@ void QuantTrader::onNewBar(const QString &instrumentID, int timeFrame, const Bar
     for (auto *strategy : strategyList) {
         strategy->checkIfNewBar(timeFrame);
     }
+    emit newBarFormed(instrumentID, QMetaEnum::fromType<BarCollector::TimeFrames>().valueToKey(timeFrame));
 }
 
 /*!
@@ -547,6 +574,21 @@ bool QuantTrader::checkDataBaseStatus()
         }
     }
     return ret;
+}
+
+void QuantTrader::onModified(const QString &name)
+{
+    auto *editable = editableMap.value(name.toLower(), nullptr);
+    if (editable) {
+        editable->loadFromDB();
+    } else {
+        qWarning() << __FUNCTION__ << name << "is not found!";
+    }
+}
+
+QStringList QuantTrader::getEditableList()
+{
+    return editableMap.keys();
 }
 
 void QuantTrader::quit()

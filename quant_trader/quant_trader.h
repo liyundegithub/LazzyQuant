@@ -6,14 +6,17 @@
 #include <QObject>
 #include <QMap>
 
+struct CONFIG_ITEM;
 class Bar;
 class BarCollector;
 class AbstractIndicator;
 class AbstractStrategy;
+class Editable;
 
 class QuantTrader : public QObject
 {
     Q_OBJECT
+    Q_CLASSINFO("D-Bus Interface", "com.lazzyquant.quant_trader")
 
 protected:
     // Following QString keys are instumentIDs
@@ -22,6 +25,9 @@ protected:
     QMap<QString, QMultiMap<int, AbstractIndicator*>> indicatorMap;
     QMultiMap<QString, AbstractStrategy*> strategy_map;
     QMap<QString, boost::optional<int>> position_map;
+
+    // QString key is indicator signature (Usually name + parameters) or strategy ID
+    QMap<QString, Editable*> editableMap;
 
     QString kt_export_dir;
     bool saveBarsToDB;
@@ -38,7 +44,7 @@ protected:
     int currentTimeFrame;
 
 public:
-    explicit QuantTrader(bool saveBarsToDB, QObject *parent = 0);
+    explicit QuantTrader(const CONFIG_ITEM &config, bool saveBarsToDB, QObject *parent = 0);
     ~QuantTrader();
 
     std::function<void(const QString&, int)> setPosition = [](auto, auto) -> void {};
@@ -49,6 +55,11 @@ public:
 private slots:
     void onNewBar(const QString &instrumentID, int timeFrame, const Bar &bar);
 
+signals:
+    void newBarFormed(const QString &instrumentID, const QString &timeFrame);
+    void indicatorUpdated(const QString &instrumentID, const QString &timeFrame, const QString &indicatorName);
+    void strategyStateUpdated(const QString &strategyID);
+
 public slots:
     void setTradingDay(const QString &tradingDay);
     void onMarketData(const QString &instrumentID, int time, double lastPrice, int volume,
@@ -56,6 +67,11 @@ public slots:
     void onMarketPause();
     void onMarketClose();
     bool checkDataBaseStatus();
+
+    // Indicator or strategy has been modified.
+    void onModified(const QString &name);
+    // For debug only
+    QStringList getEditableList();
     void quit();
 };
 

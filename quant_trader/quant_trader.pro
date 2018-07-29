@@ -16,6 +16,7 @@ SOURCES += main.cpp \
     bar.cpp \
     bar_collector.cpp \
     quant_trader.cpp \
+    editable.cpp \
     indicator/abstract_indicator.cpp \
     indicator/indicator_functions.cpp \
     indicator/mql5_indicator.cpp \
@@ -24,6 +25,9 @@ SOURCES += main.cpp \
     indicator/parabolicsar.cpp \
     indicator/bollinger_band.cpp \
     indicator/awesome_oscillator.cpp \
+    indicator/divergent_bar.cpp \
+    indicator/fractal.cpp \
+    indicator/zen/segment.cpp \
     strategy/template/trailing_stop.cpp \
     strategy/template/single_time_frame_strategy.cpp \
     strategy/template/multi_time_frame_strategy.cpp \
@@ -31,11 +35,11 @@ SOURCES += main.cpp \
     strategy/BigHit_strategy.cpp \
     strategy/addon_trailingstop.cpp \
     strategy/chaos2.cpp \
-    indicator/divergent_bar.cpp \
-    indicator/fractal.cpp
+    strategy/lemon1.cpp
 
 INCLUDEPATH += ../ ../common/
 DBUS_INTERFACES += ../interface/market_watcher.xml ../interface/trade_executer.xml ../interface/sinyee_replayer.xml
+DBUS_ADAPTORS += ../interface/quant_trader.xml
 
 HEADERS += ../config.h \
     ../common/common_utility.h \
@@ -49,6 +53,7 @@ HEADERS += ../config.h \
     quant_trader.h \
     mql5_compatible.h \
     mql5_moving_averages.h \
+    editable.h \
     indicator/abstract_indicator.h \
     indicator/indicator_functions.h \
     indicator/mql5_indicator.h \
@@ -57,6 +62,9 @@ HEADERS += ../config.h \
     indicator/parabolicsar.h \
     indicator/bollinger_band.h \
     indicator/awesome_oscillator.h \
+    indicator/divergent_bar.h \
+    indicator/fractal.h \
+    indicator/zen/segment.h \
     strategy/template/trailing_stop.h \
     strategy/template/abstract_strategy.h \
     strategy/template/single_time_frame_strategy.h \
@@ -65,5 +73,4 @@ HEADERS += ../config.h \
     strategy/BigHit_strategy.h \
     strategy/addon_trailingstop.h \
     strategy/chaos2.h \
-    indicator/divergent_bar.h \
-    indicator/fractal.h
+    strategy/lemon1.h
