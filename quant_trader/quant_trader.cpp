@@ -407,7 +407,7 @@ AbstractIndicator* QuantTrader::registerIndicator(const QString &instrumentID, i
     pIndicator->update();
 
     auto *editable = dynamic_cast<Editable*>(obj);
-    QString signature = instrumentID + "_" + QMetaEnum::fromType<BarCollector::TimeFrames>().valueToKey(timeFrame) + "_" + indicator_name;
+    QString signature = currentInstrumentID + "_" + QMetaEnum::fromType<BarCollector::TimeFrames>().valueToKey(timeFrame) + "_" + indicator_name;
     if (params.length() > 0) {
         for (const auto &param : qAsConst(params)) {
             signature += "_";
