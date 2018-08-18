@@ -5,4 +5,5 @@ SUBDIRS = market_watcher \
           trade_executer \
           sinyee_replayer \
           future_arbitrageur \
-          replay_controller
+          replay_controller \
+          lazzy_controller

@@ -5,14 +5,6 @@
       <arg name="instrumentID" type="s" direction="out"/>
       <arg name="timeFrame" type="s" direction="out"/>
     </signal>
-    <signal name="indicatorUpdated">
-      <arg name="instrumentID" type="s" direction="out"/>
-      <arg name="timeFrame" type="s" direction="out"/>
-      <arg name="indicatorName" type="s" direction="out"/>
-    </signal>
-    <signal name="strategyStateUpdated">
-      <arg name="strategyID" type="s" direction="out"/>
-    </signal>
     <method name="setTradingDay">
       <arg name="tradingDay" type="s" direction="in"/>
     </method>
@@ -38,6 +30,33 @@
     </method>
     <method name="getEditableList">
       <arg type="as" direction="out"/>
+    </method>
+    <method name="getPositionByInstrumentId">
+      <arg type="i" direction="out"/>
+      <arg name="instrument" type="s" direction="in"/>
+    </method>
+    <method name="getPositionByStrategyId">
+      <arg type="i" direction="out"/>
+      <arg name="id" type="s" direction="in"/>
+    </method>
+    <method name="getInstrumentByStrategyId">
+      <arg type="s" direction="out"/>
+      <arg name="id" type="s" direction="in"/>
+    </method>
+    <method name="getStrategyId">
+      <arg type="as" direction="out"/>
+      <arg name="instrument" type="s" direction="in"/>
+    </method>
+    <method name="getStrategyId">
+      <arg type="as" direction="out"/>
+    </method>
+    <method name="getStrategyEnabled">
+      <arg type="b" direction="out"/>
+      <arg name="id" type="s" direction="in"/>
+    </method>
+    <method name="setStrategyEnabled">
+      <arg name="id" type="s" direction="in"/>
+      <arg name="state" type="b" direction="in"/>
     </method>
     <method name="quit">
     </method>

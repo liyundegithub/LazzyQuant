@@ -15,6 +15,7 @@ protected:
     QString strategyID;
     QString instrumentID;
     int timeFrames;
+    bool enabled = true;
 
     boost::optional<int> position;
 
@@ -39,6 +40,11 @@ public:
 
     virtual void checkIfNewBar(int) {}
     virtual void onNewTick(int time, double lastPrice) = 0;
+
+    QString getId() const  { return strategyID; }
+    QString getInstrument() const { return instrumentID; }
+    bool isEnabled() const  { return enabled; }
+    void setEnabled(bool state) { enabled = state; }
 
 };
 

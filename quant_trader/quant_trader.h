@@ -12,6 +12,7 @@ class BarCollector;
 class AbstractIndicator;
 class AbstractStrategy;
 class Editable;
+class MQL5Indicator;
 
 class QuantTrader : public QObject
 {
@@ -28,6 +29,8 @@ protected:
 
     // QString key is indicator signature (Usually name + parameters) or strategy ID
     QMap<QString, Editable*> editableMap;
+    QMap<QString, MQL5Indicator*> displayableMap;
+    QMap<QString, AbstractStrategy*> strategyIdMap;
 
     QString kt_export_dir;
     bool saveBarsToDB;
@@ -57,8 +60,6 @@ private slots:
 
 signals:
     void newBarFormed(const QString &instrumentID, const QString &timeFrame);
-    void indicatorUpdated(const QString &instrumentID, const QString &timeFrame, const QString &indicatorName);
-    void strategyStateUpdated(const QString &strategyID);
 
 public slots:
     void setTradingDay(const QString &tradingDay);
@@ -71,7 +72,15 @@ public slots:
     // Indicator or strategy has been modified.
     void onModified(const QString &name);
     // For debug only
-    QStringList getEditableList();
+    QStringList getEditableList() const;
+
+    int getPositionByInstrumentId(const QString &instrument) const;
+    int getPositionByStrategyId(const QString &id) const;
+    QString getInstrumentByStrategyId(const QString &id) const;
+    QStringList getStrategyId(const QString &instrument = QString()) const;
+    bool getStrategyEnabled(const QString &id) const;
+    void setStrategyEnabled(const QString &id, bool state);
+
     void quit();
 };
 

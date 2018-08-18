@@ -145,6 +145,7 @@ void QuantTrader::loadTradeStrategySettings()
         strategy->setBarList(multiTimeFrameBars);
         strategy->loadStatus();
         strategy_map.insert(instrument, strategy);
+        strategyIdMap.insert(group, strategy);
 
         Editable *editable = dynamic_cast<Editable*>(strategy);
         if (editable) {
@@ -406,7 +407,6 @@ AbstractIndicator* QuantTrader::registerIndicator(const QString &instrumentID, i
     pIndicator->setBarList(getBars(currentInstrumentID, currentTimeFrame), collector_map[currentInstrumentID]->getBarPtr(currentTimeFrame));
     pIndicator->update();
 
-    auto *editable = dynamic_cast<Editable*>(obj);
     QString signature = currentInstrumentID + "_" + QMetaEnum::fromType<BarCollector::TimeFrames>().valueToKey(timeFrame) + "_" + indicator_name;
     if (params.length() > 0) {
         for (const auto &param : qAsConst(params)) {
@@ -414,10 +414,16 @@ AbstractIndicator* QuantTrader::registerIndicator(const QString &instrumentID, i
             signature += param.toString();
         }
     }
+    auto *editable = dynamic_cast<Editable*>(obj);
     if (editable) {
         editable->signature = signature.toLower();
         editable->setup();
         editableMap.insert(editable->signature, editable);
+    }
+
+    auto *displayable = dynamic_cast<MQL5Indicator*>(obj);
+    if (displayable) {
+        displayableMap.insert(signature.toLower(), displayable);
     }
 
     return pIndicator;
@@ -586,9 +592,74 @@ void QuantTrader::onModified(const QString &name)
     }
 }
 
-QStringList QuantTrader::getEditableList()
+QStringList QuantTrader::getEditableList() const
 {
     return editableMap.keys();
+}
+
+int QuantTrader::getPositionByInstrumentId(const QString &instrument) const
+{
+    auto p = position_map.value(instrument);
+    if (p.is_initialized()) {
+        return p.value();
+    } else {
+        return -INT_MAX;
+    }
+}
+
+int QuantTrader::getPositionByStrategyId(const QString &id) const
+{
+    int ret = -INT_MAX;
+    auto pStrategy = strategyIdMap.value(id);
+    if (pStrategy) {
+        auto p = pStrategy->getPosition();
+        if (p.is_initialized()) {
+            ret = p.value();
+        }
+    }
+    return ret;
+}
+
+QString QuantTrader::getInstrumentByStrategyId(const QString &id) const
+{
+    auto ret = QString();
+    auto pStrategy = strategyIdMap.value(id);
+    if (pStrategy) {
+        ret = pStrategy->getInstrument();
+    }
+    return ret;
+}
+
+QStringList QuantTrader::getStrategyId(const QString &instrument) const
+{
+    if (instrument.isEmpty()) {
+        return strategyIdMap.keys();
+    } else {
+        const auto strategyList = strategy_map.values(instrument);
+        QStringList strategyIdList;
+        for (const auto item : strategyList) {
+            strategyIdList << item->getId();
+        }
+        return strategyIdList;
+    }
+}
+
+bool QuantTrader::getStrategyEnabled(const QString &id) const
+{
+    auto pStrategy = strategyIdMap.value(id);
+    if (pStrategy) {
+        return pStrategy->isEnabled();
+    } else {
+        return false;
+    }
+}
+
+void QuantTrader::setStrategyEnabled(const QString &id, bool state)
+{
+    auto pStrategy = strategyIdMap.value(id);
+    if (pStrategy) {
+        pStrategy->setEnabled(state);
+    }
 }
 
 void QuantTrader::quit()
