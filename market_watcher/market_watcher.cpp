@@ -31,7 +31,7 @@ MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, bool replayMode, QObject
             qFatal("Can not replay without SaveDepthMarketDataPath!");
             return;
         }
-        if (!dir.mkpath(saveDepthMarketDataPath)) {
+        if (saveDepthMarketData && !dir.mkpath(saveDepthMarketDataPath)) {
             qWarning() << "Create directory:" << saveDepthMarketDataPath << "failed! Depth market data will not be saved!";
             saveDepthMarketData = false;
         }

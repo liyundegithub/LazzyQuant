@@ -188,10 +188,10 @@
       <arg name="price" type="d" direction="in"/>
     </method>
     <method name="cancelOrder">
+      <arg name="instrument" type="s" direction="in"/>
       <arg name="orderRefID" type="i" direction="in"/>
       <arg name="frontID" type="i" direction="in"/>
       <arg name="sessionID" type="i" direction="in"/>
-      <arg name="instrument" type="s" direction="in"/>
     </method>
     <method name="cancelAllOrders">
       <arg name="instrument" type="s" direction="in"/>
@@ -219,10 +219,9 @@
       <arg name="price" type="d" direction="in"/>
     </method>
     <method name="parkOrderCancel">
-      <arg name="orderRefID" type="i" direction="in"/>
-      <arg name="frontID" type="i" direction="in"/>
-      <arg name="sessionID" type="i" direction="in"/>
       <arg name="instrument" type="s" direction="in"/>
+      <arg name="exchangeID" type="s" direction="in"/>
+      <arg name="orderSysID" type="t" direction="in"/>
     </method>
     <method name="parkOrderCancelAll">
       <arg name="instrument" type="s" direction="in"/>

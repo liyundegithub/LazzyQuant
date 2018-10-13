@@ -98,9 +98,9 @@ private slots:
     int insertLimitOrder(const QString &instrument, int openClose, int volume, double price, bool allOrAny = false, bool gfdOrIoc = true);
     int insertMarketOrder(const QString &instrument, int openClose, int volume);
     int insertCombineOrder(const QString &instrument, int openClose1, int openClose2, int volume, double price, bool allOrAny = false, bool gfdOrIoc = true);
-    int orderAction(char *orderRef, int frontID, int sessionID, const QString &instrument);
+    int orderAction(const QString &instrument, const char *orderRef, int frontID, int sessionID);
     int insertParkedLimitOrder(const QString &instrument, int openClose, int volume, double price, bool allOrAny = false, bool gfdOrIoc = true);
-    int insertParkedOrderAction(char *orderRef, int frontID, int sessionID, const QString &instrument);
+    int insertParkedOrderAction(const QString &instrument, const char *exchangeID, const char *orderSysID);
     int removeParkedOrder(char *parkedOrderID);
     int removeParkedOrderAction(char *parkedOrderActionID);
     int qryMaxOrderVolume(const QString &instrument, bool direction, int openClose);
@@ -156,12 +156,12 @@ public slots:
     void buyCombine(const QString &instrument1, const QString &instrument2, int volume, double price, int orderType = LIMIT_ORDER);
     void sellCombine(const QString &instrument1, const QString &instrument2, int volume, double price, int orderType = LIMIT_ORDER);
 
-    void cancelOrder(int orderRefID, int frontID, int sessionID, const QString &instrument);
+    void cancelOrder(const QString &instrument, int orderRefID, int frontID, int sessionID);
     void cancelAllOrders(const QString &instrument);
 
     void parkBuyLimit(const QString &instrument, int volume, double price, int orderType = LIMIT_ORDER);
     void parkSellLimit(const QString &instrument, int volume, double price, int orderType = LIMIT_ORDER);
-    void parkOrderCancel(int orderRefID, int frontID, int sessionID, const QString &instrument);
+    void parkOrderCancel(const QString &instrument, const QString &exchangeID, qulonglong orderSysID);
     void parkOrderCancelAll(const QString &instrument);
     void removeParkedOrder(int id);
     void removeParkedOrderAction(int id);

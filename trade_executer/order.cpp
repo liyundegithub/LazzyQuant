@@ -35,9 +35,11 @@ Order::Order(const CThostFtdcOrderField &field)
     price = field.LimitPrice;
     vol = field.VolumeTotalOriginal;
     volRemain = field.VolumeTotal;
-    sscanf(field.OrderRef, "%12d", &refId);
+    refId = field.OrderRef;
     frontId = field.FrontID;
     sessionId = field.SessionID;
+    exchangeId = field.ExchangeID;
+    orderSysId = field.OrderSysID;
     direction = (field.Direction == THOST_FTDC_D_Buy);
     status = parseCTPOrderStatus(field.OrderStatus);
 }
@@ -51,6 +53,8 @@ Order::Order(const Order &other)
     refId = other.refId;
     frontId = other.frontId;
     sessionId = other.sessionId;
+    exchangeId = other.exchangeId;
+    orderSysId = other.orderSysId;
     direction = other.direction;
     status = other.status;
 }
@@ -59,4 +63,14 @@ void Order::updateStatus(const CThostFtdcOrderField &field)
 {
     volRemain = field.VolumeTotal;
     status = parseCTPOrderStatus(field.OrderStatus);
+}
+
+bool Order::matchId(const QByteArray &refId, int frontId, int sessionId) const
+{
+    return (refId == this->refId && frontId == this->frontId && sessionId == this->sessionId);
+}
+
+bool Order::matchId(const QByteArray &exchangeId, const QByteArray &orderSysId) const
+{
+    return (exchangeId == this->exchangeId && orderSysId == this->orderSysId);
 }

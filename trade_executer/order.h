@@ -17,9 +17,11 @@ public:
     double price;
     int vol;
     int volRemain;
-    int refId;
+    QByteArray refId;
     int frontId;
     int sessionId;
+    QByteArray exchangeId;
+    QByteArray orderSysId;
     bool direction; // true: long, false: short
     OrderStatus status;
 
@@ -35,6 +37,8 @@ public:
     }
 
     void updateStatus(const CThostFtdcOrderField &field);
+    bool matchId(const QByteArray &refId, int frontId, int sessionId) const;
+    bool matchId(const QByteArray &exchangeId, const QByteArray &orderSysId) const;
 };
 
 #endif // ORDER_H

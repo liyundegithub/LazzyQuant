@@ -319,21 +319,21 @@ void CtpExecuter::customEvent(QEvent *event)
     case RSP_PARKED_ORDER_ACTION:
     {
         auto *paevent = static_cast<RspParkedOrderActionEvent*>(event);
+        const auto &field = paevent->parkedOrderActionField;
         if (paevent->errorID == 0) {
-            int refId;
-            sscanf(paevent->parkedOrderActionField.OrderRef, "%12d", &refId);
             const auto orders = orderMap.values(paevent->parkedOrderActionField.InstrumentID);
             bool found = false;
             for (const auto &order : orders) {
-                if (order.refId == refId && order.frontId == paevent->parkedOrderActionField.FrontID && order.sessionId == paevent->parkedOrderActionField.SessionID) {
-                    qInfo() << "Inserted Parked Order Action ID =" << paevent->parkedOrderActionField.ParkedOrderActionID << paevent->parkedOrderActionField.InstrumentID << refId << paevent->parkedOrderActionField.FrontID << paevent->parkedOrderActionField.SessionID << "-->" <<
-                                directionMap[order.direction] << order.price << order.volRemain;
+                if (order.matchId(field.ExchangeID, field.OrderSysID)) {
+                    qInfo().noquote() << "Inserted Parked Order Action ID =" << QString(field.ParkedOrderActionID).trimmed() <<
+                                         parkedOrderStatusMap[field.Status] << field.InstrumentID << field.ExchangeID << field.OrderSysID <<
+                                         "-->" << order.direction << order.price << order.volRemain;
                     found = true;
                     break;
                 }
             }
             if (!found) {
-                qWarning() << "Not found " << paevent->parkedOrderActionField.ParkedOrderActionID << paevent->parkedOrderActionField.InstrumentID << refId << paevent->parkedOrderActionField.FrontID << paevent->parkedOrderActionField.SessionID;
+                qWarning() << "Not found " << paevent->parkedOrderActionField.ParkedOrderActionID << paevent->parkedOrderActionField.InstrumentID << paevent->parkedOrderActionField.OrderRef << paevent->parkedOrderActionField.FrontID << paevent->parkedOrderActionField.SessionID;
             }
         } else {
             qWarning() << "RSP_PARKED_ORDER_ACTION errorID =" << (paevent->errorID);
@@ -344,7 +344,7 @@ void CtpExecuter::customEvent(QEvent *event)
     {
         auto *rpevent = static_cast<RspRemoveParkedOrderEvent*>(event);
         if (rpevent->errorID == 0) {
-            qInfo() << "Parked Order" << rpevent->removeParkedOrderField.ParkedOrderID << "Removed!";
+            qInfo() << "Parked Order" << QString(rpevent->removeParkedOrderField.ParkedOrderID).trimmed() << "Removed!";
         } else {
             qWarning() << "RSP_REMOVE_PARKED_ORDER errorID =" << rpevent->errorID;
         }
@@ -354,7 +354,7 @@ void CtpExecuter::customEvent(QEvent *event)
     {
         auto *rpaevent = static_cast<RspRemoveParkedOrderActionEvent*>(event);
         if (rpaevent->errorID == 0) {
-            qInfo() << "Parked Order Action" << rpaevent->removeParkedOrderActionField.ParkedOrderActionID << "Removed!";
+            qInfo() << "Parked Order Action" << QString(rpaevent->removeParkedOrderActionField.ParkedOrderActionID).trimmed() << "Removed!";
         } else {
             qWarning() << "RSP_REMOVE_PARKED_ORDER_ACTION errorID =" << rpaevent->errorID;
         }
@@ -375,18 +375,15 @@ void CtpExecuter::customEvent(QEvent *event)
     case RTN_ORDER:
     {
         auto *revent = static_cast<RtnOrderEvent*>(event);
+        const auto &field = revent->orderField;
+
         qDebug() << revent->orderField.VolumeTotal << revent->orderField.InsertTime << revent->orderField.OrderStatus <<
                     QTextCodec::codecForName("GBK")->toUnicode(revent->orderField.StatusMsg);
 
-        int refId;
-        int frontId = revent->orderField.FrontID;
-        int sessionId = revent->orderField.SessionID;
-        sscanf(revent->orderField.OrderRef, "%12d", &refId);
-
         bool updated = false;
-        for (auto &item : orderMap) {
-            if (item.refId == refId && item.frontId == frontId && item.sessionId == sessionId) {
-                item.updateStatus(revent->orderField);
+        for (auto &order : orderMap) {
+            if (order.matchId(field.OrderRef, field.FrontID, field.SessionID)) {
+                order.updateStatus(revent->orderField);
                 updated = true;
             }
         }
@@ -471,14 +468,16 @@ void CtpExecuter::customEvent(QEvent *event)
     case RSP_QRY_TRADE:
     {
         auto *qtevent = static_cast<QryTradeEvent*>(event);
+        Q_UNUSED(qtevent)
     }
         break;
     case RSP_QRY_PARKED_ORDER:
     {
         auto *qpevent = static_cast<QryParkedOrderEvent*>(event);
         qInfo() << qpevent->parkedOrderList.size() << "parkedOrders";
-        for (const auto &item : qpevent->parkedOrderList) {
-            qInfo() << item.ParkedOrderID << item.InstrumentID << directionMap[item.Direction] << item.LimitPrice << item.VolumeTotalOriginal << parkedOrderStatusMap[item.Status];
+        for (const auto &field : qpevent->parkedOrderList) {
+            qInfo().noquote() << field.ParkedOrderID << parkedOrderStatusMap[field.Status] <<
+                                 field.InstrumentID << directionMap[field.Direction] << field.LimitPrice << field.VolumeTotalOriginal;
         }
     }
         break;
@@ -486,21 +485,19 @@ void CtpExecuter::customEvent(QEvent *event)
     {
         auto *qpaevent = static_cast<QryParkedOrderActionEvent*>(event);
         qInfo() << qpaevent->parkedOrderActionList.size() << "parkedOrderActions";
-        for (const auto &item : qpaevent->parkedOrderActionList) {
-            const auto orders = orderMap.values(item.InstrumentID);
-            int refId;
-            sscanf(item.OrderRef, "%12d", &refId);
+        for (const auto &field : qpaevent->parkedOrderActionList) {
+            const auto orders = orderMap.values(field.InstrumentID);
             bool found = false;
             for (const auto &order : orders) {
-                if (order.refId == refId && order.frontId == item.FrontID && order.sessionId == item.SessionID) {
-                    qInfo() << item.ParkedOrderActionID << item.InstrumentID << refId << item.FrontID << item.SessionID << "-->" <<
-                                directionMap[order.direction] << order.price << order.volRemain;
+                if (order.matchId(field.ExchangeID, field.OrderSysID)) {
+                    qInfo().noquote() << field.ParkedOrderActionID << parkedOrderStatusMap[field.Status] << field.InstrumentID << field.ExchangeID << field.OrderSysID <<
+                                         "-->" << order.direction << order.price << order.volRemain;
                     found = true;
                     break;
                 }
             }
             if (!found) {
-                qWarning() << "Not found " << item.ParkedOrderActionID << item.InstrumentID << refId << item.FrontID << item.SessionID;
+                qWarning() << "Not found " << field.ParkedOrderActionID << field.InstrumentID << field.ExchangeID << field.OrderSysID;
             }
         }
     }
@@ -1002,13 +999,13 @@ int CtpExecuter::insertCombineOrder(const QString &instrument, int openClose1, i
  * \brief CtpExecuter::orderAction
  * 报单操作(仅支持撤单)
  *
+ * \param instrument 合约代码.
  * \param orderRef 报单引用(TThostFtdcOrderRefType)
  * \param frontID 前置编号.
  * \param sessionID 会话编号.
- * \param instrument 合约代码.
  * \return nRequestID
  */
-int CtpExecuter::orderAction(char *orderRef, int frontID, int sessionID, const QString &instrument)
+int CtpExecuter::orderAction(const QString &instrument, const char *orderRef, int frontID, int sessionID)
 {
     CThostFtdcInputOrderActionField orderAction;
     memset(&orderAction, 0, sizeof(CThostFtdcInputOrderActionField));
@@ -1079,22 +1076,21 @@ int CtpExecuter::insertParkedLimitOrder(const QString &instrument, int openClose
  * \brief CtpExecuter::insertParkedOrderAction
  * 预埋撤单操作.
  *
- * \param orderRef 报单引用(TThostFtdcOrderRefType)
- * \param frontID 前置编号.
- * \param sessionID 会话编号.
  * \param instrument 合约代码.
+ * \param exchangeID 交易所代码.
+ * \param orderSysID 报单编号.
  * \return nRequestID
  */
-int CtpExecuter::insertParkedOrderAction(char *orderRef, int frontID, int sessionID, const QString &instrument)
+int CtpExecuter::insertParkedOrderAction(const QString &instrument, const char *exchangeID, const char *orderSysID)
 {
     CThostFtdcParkedOrderActionField parkedOrderAction;
     memset(&parkedOrderAction, 0, sizeof(CThostFtdcParkedOrderActionField));
     strcpy(parkedOrderAction.BrokerID, c_brokerID);
     strcpy(parkedOrderAction.InvestorID, c_userID);
+    strcpy(parkedOrderAction.ExchangeID, exchangeID);
+    strcpy(parkedOrderAction.OrderSysID, orderSysID);
+    strcpy(parkedOrderAction.UserID, c_userID);
     strcpy(parkedOrderAction.InstrumentID, instrument.toLatin1().constData());
-    memcpy(parkedOrderAction.OrderRef, orderRef, sizeof(TThostFtdcOrderRefType));
-    parkedOrderAction.FrontID = frontID;
-    parkedOrderAction.SessionID = sessionID;
     parkedOrderAction.ActionFlag = THOST_FTDC_AF_Delete;
 
     int id = nRequestID.fetchAndAddRelaxed(1);
@@ -1608,11 +1604,11 @@ void CtpExecuter::updateOrderMap(const QString &instrument)
     qInfo() << __FUNCTION__ << instrument;
     CHECK_LOGIN_STATE()
 
-    if (instrument == "") {
+    if (instrument.isEmpty()) {
         orderMap.clear();
     } else {
         const auto keys = orderMap.uniqueKeys();
-        for (const auto key : keys) {
+        for (const auto &key : keys) {
             orderMap.remove(key);
         }
     }
@@ -1987,19 +1983,19 @@ void CtpExecuter::sellCombine(const QString &instrument1, const QString &instrum
  * \brief CtpExecuter::cancelOrder
  * 取消未成交的订单.
  *
+ * \param instrument 合约代码.
  * \param orderRefID 订单引用号.
  * \param frontID 前置编号.
  * \param sessionID 会话编号.
- * \param instrument 合约代码.
  */
-void CtpExecuter::cancelOrder(int orderRefID, int frontID, int sessionID, const QString &instrument)
+void CtpExecuter::cancelOrder(const QString &instrument, int orderRefID, int frontID, int sessionID)
 {
     qInfo() << __FUNCTION__ << instrument << ", orderRefID =" << orderRefID << ", frontID =" << frontID << ", sessionID =" << sessionID;
     CHECK_LOGIN_STATE()
 
     TThostFtdcOrderRefType orderRef;
     sprintf(orderRef, "%12d", orderRefID);
-    orderAction(orderRef, frontID, sessionID, instrument);
+    orderAction(instrument, orderRef, frontID, sessionID);
     orderCancelCountMap[instrument] ++;
     qInfo() << "Cancel order count of" << instrument << ":" << orderCancelCountMap[instrument];
 }
@@ -2016,10 +2012,12 @@ void CtpExecuter::cancelAllOrders(const QString &instrument)
     CHECK_LOGIN_STATE()
     CHECK_USER_CACHE_READY()
 
-    const auto orderList = (instrument == "") ? orderMap.values() : orderMap.values(instrument);
+    const auto orderList = (instrument.isEmpty()) ? orderMap.values() : orderMap.values(instrument);
     for (const auto &item : orderList) {
         if (item.status == OrderStatus::UNKNOWN || item.status == OrderStatus::PENDING) {
-            cancelOrder(item.refId, item.frontId, item.sessionId, item.instrument);
+            orderAction(item.instrument, item.refId.constData(), item.frontId, item.sessionId);
+            orderCancelCountMap[item.instrument] ++;
+            qInfo() << "Cancel order count of" << item.instrument << ":" << orderCancelCountMap[item.instrument];
         }
     }
 }
@@ -2068,20 +2066,19 @@ void CtpExecuter::parkSellLimit(const QString &instrument, int volume, double pr
  * \brief CtpExecuter::parkOrderCancel
  * 预埋撤单.
  *
- * \param orderRefID 订单引用号.
- * \param frontID 前置编号.
- * \param sessionID 会话编号.
  * \param instrument 合约代码.
+ * \param exchangeID 交易所代码.
+ * \param orderSysID 报单编号.
  */
-void CtpExecuter::parkOrderCancel(int orderRefID, int frontID, int sessionID, const QString &instrument)
+void CtpExecuter::parkOrderCancel(const QString &instrument, const QString &exchangeID, qulonglong orderSysID)
 {
-    qInfo() << __FUNCTION__ << instrument << ", orderRefID =" << orderRefID << ", frontID =" << frontID << ", sessionID =" << sessionID;
+    qInfo() << __FUNCTION__ << instrument << ", exchangeID =" << exchangeID << ", orderSysID =" << orderSysID;
     CHECK_LOGIN_STATE()
 
-    TThostFtdcOrderRefType orderRef;
-    sprintf(orderRef, "%12d", orderRefID);
+    TThostFtdcOrderSysIDType sysID;
+    sprintf(sysID, "%12llu", orderSysID);
 
-    insertParkedOrderAction(orderRef, frontID, sessionID, instrument);
+    insertParkedOrderAction(instrument, exchangeID.toLatin1().constData(), sysID);
 }
 
 /*!
@@ -2096,12 +2093,10 @@ void CtpExecuter::parkOrderCancelAll(const QString &instrument)
     CHECK_LOGIN_STATE()
     CHECK_USER_CACHE_READY()
 
-    const auto orderList = (instrument == "") ? orderMap.values() : orderMap.values(instrument);
+    const auto orderList = (instrument.isEmpty()) ? orderMap.values() : orderMap.values(instrument);
     for (const auto &item : orderList) {
         if (item.status == OrderStatus::UNKNOWN || item.status == OrderStatus::PENDING) {
-            TThostFtdcOrderRefType orderRef;
-            sprintf(orderRef, "%12d", item.refId);
-            insertParkedOrderAction(orderRef, item.frontId, item.sessionId, item.instrument);
+            insertParkedOrderAction(item.instrument, item.exchangeId.constData(), item.orderSysId.constData());
         }
     }
 }

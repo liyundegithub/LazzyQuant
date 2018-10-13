@@ -13,7 +13,7 @@
 #define TM1 \
     QTime t1 = QTime::currentTime();
 #define TM2 \
-    qDebug() << t1.msecsTo(QTime::currentTime()) << "ms";
+    qWarning() << t1.msecsTo(QTime::currentTime()) << "ms";
 
 static inline bool isTimeCloseEnouogh(uint time1, uint time2, uint diff)
 {
@@ -109,11 +109,11 @@ const QString DL[] = {"c",  "cs", "fb", "bb", "jd", "l",  "v",  "pp"};
 // 大连商品交易所  (夜盘)          黄大豆1号, 黄大豆2号, 豆粕, 大豆原油, 棕榈油, 冶金焦炭, 焦煤, 铁矿石.
 const QString DY[] = {"a",  "b",  "m",  "y",  "p",  "j",  "jm", "i"};
 // 郑州商品交易所.
-const QString ZZ[] = {"jr", "lr", "pm", "ri", "rs", "sf", "sm", "wh"};
+const QString ZZ[] = {"jr", "lr", "pm", "ri", "rs", "sf", "sm", "wh", "ap"};
 // 郑州商品交易所 (夜盘)
 const QString ZY[] = {"cf", "cy", "fg", "ma", "oi", "rm", "sr", "ta", "zc", "tc"};	// zc原来为tc
 // 中金所.
-const QString ZJ[] = {"ic", "if", "ih", "t",  "tf"};
+const QString ZJ[] = {"ic", "if", "ih", "t",  "tf", "ts"};
 
 QString getSuffix(const QString &instrumentID);
 
