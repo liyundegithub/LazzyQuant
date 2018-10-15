@@ -460,8 +460,8 @@ void CtpExecuter::customEvent(QEvent *event)
 
         for (const auto &item : qoevent->orderList) {
             orderMap.insert(item.InstrumentID, item);
-            qDebug() << item.InstrumentID << QTextCodec::codecForName("GBK")->toUnicode(item.StatusMsg);
-            qDebug() << item.OrderRef << item.FrontID << item.SessionID;
+            qDebug().noquote() << item.OrderRef << item.FrontID << item.SessionID << item.InstrumentID <<
+                                  QTextCodec::codecForName("GBK")->toUnicode(item.StatusMsg) << item.ExchangeID << item.OrderSysID;
         }
     }
         break;
@@ -876,8 +876,6 @@ int CtpExecuter::insertLimitOrder(const QString &instrument, int openClose, int 
     strcpy(inputOrder.InvestorID, c_userID);
     strcpy(inputOrder.InstrumentID, instrument.toLatin1().constData());
     strcpy(inputOrder.OrderRef, "");
-//	sprintf(inputOrder.OrderRef, "%12d", orderRef);
-//	orderRef++;
 
     inputOrder.Direction = volume > 0 ? THOST_FTDC_D_Buy : THOST_FTDC_D_Sell;
     inputOrder.CombOffsetFlag[0] = ctpOffsetFlags[openClose];
@@ -920,8 +918,6 @@ int CtpExecuter::insertMarketOrder(const QString &instrument, int openClose, int
     strcpy(inputOrder.InvestorID, c_userID);
     strcpy(inputOrder.InstrumentID, instrument.toLatin1().constData());
     strcpy(inputOrder.OrderRef, "");
-//	sprintf(inputOrder.OrderRef, "%12d", orderRef);
-//	orderRef++;
 
     inputOrder.Direction = volume > 0 ? THOST_FTDC_D_Buy : THOST_FTDC_D_Sell;
     inputOrder.CombOffsetFlag[0] = ctpOffsetFlags[openClose];
@@ -968,8 +964,6 @@ int CtpExecuter::insertCombineOrder(const QString &instrument, int openClose1, i
     strcpy(inputOrder.InvestorID, c_userID);
     strcpy(inputOrder.InstrumentID, instrument.toLatin1().constData());
     strcpy(inputOrder.OrderRef, "");
-//	sprintf(inputOrder.OrderRef, "%12d", orderRef);
-//	orderRef++;
 
     inputOrder.Direction = volume > 0 ? THOST_FTDC_D_Buy : THOST_FTDC_D_Sell;
     inputOrder.CombOffsetFlag[0] = ctpOffsetFlags[openClose1];
@@ -1047,8 +1041,6 @@ int CtpExecuter::insertParkedLimitOrder(const QString &instrument, int openClose
     strcpy(parkedOrder.InvestorID, c_userID);
     strcpy(parkedOrder.InstrumentID, instrument.toLatin1().constData());
     strcpy(parkedOrder.OrderRef, "");
-//	sprintf(inputOrder.OrderRef, "%12d", orderRef);
-//	orderRef++;
 
     parkedOrder.Direction = volume > 0 ? THOST_FTDC_D_Buy : THOST_FTDC_D_Sell;
     parkedOrder.CombOffsetFlag[0] = ctpOffsetFlags[openClose];
@@ -1599,6 +1591,12 @@ double CtpExecuter::getLowerLimit(const QString &instrument)
     }
 }
 
+/*!
+ * \brief CtpExecuter::updateOrderMap
+ * 更新以instrument开头的合约的订单信息.
+ *
+ * \param instrument 合约代码.
+ */
 void CtpExecuter::updateOrderMap(const QString &instrument)
 {
     qInfo() << __FUNCTION__ << instrument;
@@ -1609,7 +1607,9 @@ void CtpExecuter::updateOrderMap(const QString &instrument)
     } else {
         const auto keys = orderMap.uniqueKeys();
         for (const auto &key : keys) {
-            orderMap.remove(key);
+            if (key.startsWith(instrument)) {
+                orderMap.remove(key);
+            }
         }
     }
 
@@ -1984,17 +1984,36 @@ void CtpExecuter::sellCombine(const QString &instrument1, const QString &instrum
  * 取消未成交的订单.
  *
  * \param instrument 合约代码.
+ * \param orderRef 订单引用.
+ * \param frontID 前置编号.
+ * \param sessionID 会话编号.
+ */
+void CtpExecuter::cancelOrder(const QString &instrument, const QString &orderRef, int frontID, int sessionID)
+{
+    qInfo() << __FUNCTION__ << instrument << ", orderRef =" << orderRef << ", frontID =" << frontID << ", sessionID =" << sessionID;
+    CHECK_LOGIN_STATE()
+
+    orderAction(instrument, orderRef.toLatin1().constData(), frontID, sessionID);
+    orderCancelCountMap[instrument] ++;
+    qInfo() << "Cancel order count of" << instrument << ":" << orderCancelCountMap[instrument];
+}
+
+/*!
+ * \brief CtpExecuter::cancelOrderI
+ * 取消未成交的订单, 此为重载版本, 为了方便输入OrderRefID.
+ *
+ * \param instrument 合约代码.
  * \param orderRefID 订单引用号.
  * \param frontID 前置编号.
  * \param sessionID 会话编号.
  */
-void CtpExecuter::cancelOrder(const QString &instrument, int orderRefID, int frontID, int sessionID)
+void CtpExecuter::cancelOrderI(const QString &instrument, qulonglong orderRefID, int frontID, int sessionID)
 {
     qInfo() << __FUNCTION__ << instrument << ", orderRefID =" << orderRefID << ", frontID =" << frontID << ", sessionID =" << sessionID;
     CHECK_LOGIN_STATE()
 
     TThostFtdcOrderRefType orderRef;
-    sprintf(orderRef, "%12d", orderRefID);
+    sprintf(orderRef, "%llu", orderRefID);
     orderAction(instrument, orderRef, frontID, sessionID);
     orderCancelCountMap[instrument] ++;
     qInfo() << "Cancel order count of" << instrument << ":" << orderCancelCountMap[instrument];
@@ -2107,13 +2126,13 @@ void CtpExecuter::parkOrderCancelAll(const QString &instrument)
  *
  * \param id 预埋报单编号.
  */
-void CtpExecuter::removeParkedOrder(int id)
+void CtpExecuter::removeParkedOrder(qulonglong id)
 {
     qInfo() << __FUNCTION__ << "id =" << id;
     CHECK_LOGIN_STATE()
 
     TThostFtdcParkedOrderIDType parkedOrderID;
-    sprintf(parkedOrderID, "%12d", id);
+    sprintf(parkedOrderID, "%1lu", id);
     removeParkedOrder(parkedOrderID);
 }
 
@@ -2123,13 +2142,13 @@ void CtpExecuter::removeParkedOrder(int id)
  *
  * \param id 预埋撤单编号.
  */
-void CtpExecuter::removeParkedOrderAction(int id)
+void CtpExecuter::removeParkedOrderAction(qulonglong id)
 {
     qInfo() << __FUNCTION__ << "id =" << id;
     CHECK_LOGIN_STATE()
 
     TThostFtdcParkedOrderActionIDType parkedOrderActionID;
-    sprintf(parkedOrderActionID, "%12d", id);
+    sprintf(parkedOrderActionID, "%1lu", id);
     removeParkedOrderAction(parkedOrderActionID);
 }
 

@@ -156,15 +156,16 @@ public slots:
     void buyCombine(const QString &instrument1, const QString &instrument2, int volume, double price, int orderType = LIMIT_ORDER);
     void sellCombine(const QString &instrument1, const QString &instrument2, int volume, double price, int orderType = LIMIT_ORDER);
 
-    void cancelOrder(const QString &instrument, int orderRefID, int frontID, int sessionID);
+    void cancelOrder(const QString &instrument, const QString &orderRef, int frontID, int sessionID);
+    void cancelOrderI(const QString &instrument, qulonglong orderRefID, int frontID, int sessionID);
     void cancelAllOrders(const QString &instrument);
 
     void parkBuyLimit(const QString &instrument, int volume, double price, int orderType = LIMIT_ORDER);
     void parkSellLimit(const QString &instrument, int volume, double price, int orderType = LIMIT_ORDER);
     void parkOrderCancel(const QString &instrument, const QString &exchangeID, qulonglong orderSysID);
     void parkOrderCancelAll(const QString &instrument);
-    void removeParkedOrder(int id);
-    void removeParkedOrderAction(int id);
+    void removeParkedOrder(qulonglong id);
+    void removeParkedOrderAction(qulonglong id);
 
     void setPosition(const QString &instrument, int newPosition);
     int getPosition(const QString &instrument) const;
