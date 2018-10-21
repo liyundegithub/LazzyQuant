@@ -19,17 +19,13 @@ Bar::Bar(const KTExportBar &ktbar)
     volume = ktbar.m_fVolume;
 }
 
-Bar::~Bar()
-{
-}
-
 void Bar::reset()
 {
     time = 0;
-    open = -1.5f;
+    open = -1.5;
     high = -DBL_MAX;
     low = DBL_MAX;
-    close = -1.0f;
+    close = -1.0;
     tick_volume = 0;
     volume = 0;
 }

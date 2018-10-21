@@ -33,7 +33,6 @@ public:
 
     Bar();
     Bar(const KTExportBar &ktbar);
-    ~Bar();
 
     void reset();
     bool isEmpty() const;

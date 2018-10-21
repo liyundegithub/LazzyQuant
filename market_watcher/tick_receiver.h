@@ -66,7 +66,7 @@ public:
         DepthMarketDataField(*pDepthMarketDataField) {}
 };
 
-class CTickReceiver : public CThostFtdcMdSpi {
+class CTickReceiver final : public CThostFtdcMdSpi {
     QObject * const receiver;
 
 public:

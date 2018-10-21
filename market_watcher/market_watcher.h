@@ -22,8 +22,8 @@ class MarketWatcher : public QObject {
     Q_CLASSINFO("D-Bus Interface", "com.lazzyquant.market_watcher")
 
 public:
-    explicit MarketWatcher(const CONFIG_ITEM &config, bool replayMode = false, QObject *parent = 0);
-    ~MarketWatcher();
+    explicit MarketWatcher(const CONFIG_ITEM &config, bool replayMode = false, QObject *parent = nullptr);
+    ~MarketWatcher() override;
 
 protected:
     TradingCalendar tradingCalendar;

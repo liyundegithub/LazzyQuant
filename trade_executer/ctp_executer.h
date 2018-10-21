@@ -24,8 +24,8 @@ class CtpExecuter : public QObject
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "com.lazzyquant.trade_executer")
 public:
-    explicit CtpExecuter(const CONFIG_ITEM &config, QObject *parent = 0);
-    ~CtpExecuter();
+    explicit CtpExecuter(const CONFIG_ITEM &config, QObject *parent = nullptr);
+    ~CtpExecuter() override;
 
     enum LoginState {
         AUTHENTICATED,

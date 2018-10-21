@@ -414,7 +414,7 @@ public:
         pInputForQuoteField(*pInputForQuote) {}
 };
 
-class CTradeHandler : public CThostFtdcTraderSpi {
+class CTradeHandler final : public CThostFtdcTraderSpi {
     QObject * const receiver;
 
     int lastRequestID;
