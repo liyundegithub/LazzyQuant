@@ -49,7 +49,7 @@ public:
     Q_DECLARE_FLAGS(TimeFrames, TimeFrame)
     Q_FLAG(TimeFrames)
 
-    explicit BarCollector(const QString &instrumentID, int timeFrameFlags, bool saveBarsToDB, QObject *parent = 0);
+    explicit BarCollector(const QString &instrumentID, int timeFrameFlags, bool saveBarsToDB, QObject *parent = nullptr);
     ~BarCollector();
 
     Bar *getBarPtr(int timeFrame) {

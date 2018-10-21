@@ -10,6 +10,7 @@
 #include "trading_calendar.h"
 #include "multiple_timer.h"
 #include "message_handler.h"
+#include "trade_logger.h"
 
 #include "market_watcher_interface.h"
 #include "sinyee_replayer_interface.h"
@@ -17,6 +18,8 @@
 
 using std::placeholders::_1;
 using std::placeholders::_2;
+using std::placeholders::_3;
+using std::placeholders::_4;
 
 int main(int argc, char *argv[])
 {
@@ -43,6 +46,8 @@ int main(int argc, char *argv[])
             QCoreApplication::translate("main", "Connect to TradeExecuter, should not be used with -n")},
         {{"n", "noexecuter"},
             QCoreApplication::translate("main", "Don't connect to TradeExecuter, should not be used with -x")},
+        {{"l", "savetradelog"},
+            QCoreApplication::translate("main", "Save trade log to DB.")},
         {{"f", "logtofile"},
             QCoreApplication::translate("main", "Save log to a file")},
     });
@@ -60,6 +65,7 @@ int main(int argc, char *argv[])
 
     bool explicitConnectToExecuter = parser.isSet("executer");
     bool explicitNoConnectToExecuter = parser.isSet("noexecuter");
+    bool saveTradeLogToDB = parser.isSet("savetradelog");
 
     bool log2File = parser.isSet("logtofile");
     setupMessageHandler(true, log2File, "quant_trader");
@@ -96,6 +102,16 @@ int main(int argc, char *argv[])
         pExecuter = new com::lazzyquant::trade_executer(EXECUTER_DBUS_SERVICE, EXECUTER_DBUS_OBJECT, QDBusConnection::sessionBus());
         quantTrader.cancelAllOrders = std::bind(&com::lazzyquant::trade_executer::cancelAllOrders, pExecuter, _1);
         quantTrader.setPosition = std::bind(&com::lazzyquant::trade_executer::setPosition, pExecuter, _1, _2);
+    }
+
+    TradeLogger *pLogger = nullptr;
+    if (saveTradeLogToDB) {
+        pLogger = new TradeLogger("quant_trader_" + QDateTime::currentDateTime().toString(QStringLiteral("yyyyMMddhhmmss")));
+        quantTrader.logTrade = std::bind(&TradeLogger::positionChanged, pLogger, _1, _2, _3, _4);
+    } else {
+        quantTrader.logTrade = [](int time, const QString &instrumentID, int newPosition, double price) -> void {
+            qInfo().noquote() << QTime(0, 0).addSecs(time).toString() << "New position for" << instrumentID << newPosition << ", price =" << price;
+        };
     }
 
     if (replayMode) {
@@ -141,6 +157,9 @@ int main(int argc, char *argv[])
     }
 
     int ret = a.exec();
+    if (pLogger) {
+        delete pLogger;
+    }
     delete pConnManager;
     if (marketOpenTimer) {
         marketOpenTimer->disconnect();

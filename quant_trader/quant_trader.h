@@ -47,11 +47,12 @@ protected:
     int currentTimeFrame;
 
 public:
-    explicit QuantTrader(const CONFIG_ITEM &config, bool saveBarsToDB, QObject *parent = 0);
+    explicit QuantTrader(const CONFIG_ITEM &config, bool saveBarsToDB, QObject *parent = nullptr);
     ~QuantTrader();
 
     std::function<void(const QString&, int)> setPosition = [](auto, auto) -> void {};
     std::function<void(const QString&)> cancelAllOrders = [](auto) -> void {};
+    std::function<void(int, const QString&, int, double)> logTrade = [](auto, auto, auto, auto) -> void {};
 
     AbstractIndicator* registerIndicator(const QString &instrumentID, int timeFrame, QString indicator_name, ...);
 

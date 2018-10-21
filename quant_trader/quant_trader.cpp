@@ -519,13 +519,13 @@ void QuantTrader::onMarketData(const QString &instrumentID, int time, double las
                 position_map[instrumentID] = new_position_sum;
                 cancelAllOrders(instrumentID);
                 setPosition(instrumentID, new_position_sum.get());
-                qDebug().noquote() << QTime(0, 0).addSecs(time).toString() << "New position for" << instrumentID << new_position_sum.get() << ", price =" << lastPrice;
+                logTrade(time, instrumentID, new_position_sum.get(), lastPrice);
             }
         } else {
             position_map[instrumentID] = new_position_sum;
             cancelAllOrders(instrumentID);
             setPosition(instrumentID, new_position_sum.get());
-            qDebug().noquote() << QTime(0, 0).addSecs(time).toString() << "New position for" << instrumentID << new_position_sum.get() << ", price =" << lastPrice;
+            logTrade(time, instrumentID, new_position_sum.get(), lastPrice);
         }
     }
 }

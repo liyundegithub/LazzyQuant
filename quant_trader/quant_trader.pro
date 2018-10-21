@@ -13,6 +13,8 @@ SOURCES += main.cpp \
     ../common/connection_manager.cpp \
     ../common/trading_calendar.cpp \
     ../common/message_handler.cpp \
+    ../common/db_helper.cpp \
+    ../common/trade_logger.cpp \
     bar.cpp \
     bar_collector.cpp \
     quant_trader.cpp \
@@ -47,6 +49,8 @@ HEADERS += ../config.h \
     ../common/connection_manager.h \
     ../common/trading_calendar.h \
     ../common/message_handler.h \
+    ../common/db_helper.h \
+    ../common/trade_logger.h \
     bar.h \
     bar_collector.h \
     quant_global.h \
