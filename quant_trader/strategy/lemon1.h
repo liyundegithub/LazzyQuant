@@ -27,7 +27,7 @@ class Lemon1 : public AddOnTrailingStop
     Q_OBJECT
 
 public:
-    Q_INVOKABLE explicit Lemon1(const QString &id, const QString &instrumentID, int timeFrame, QObject *parent = 0);
+    Q_INVOKABLE explicit Lemon1(const QString &id, const QString &instrumentID, int timeFrame, QObject *parent = nullptr);
     friend class Class2WiseMan;
 
     void setParameter(const QVariant &param1, const QVariant &param2, const QVariant &param3,

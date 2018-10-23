@@ -8,7 +8,7 @@ class DblMaPsarStrategy : public SingleTimeFrameStrategy
     Q_OBJECT
 
 public:
-    Q_INVOKABLE explicit DblMaPsarStrategy(const QString &id, const QString &instrumentID, int timeFrame, QObject *parent = 0);
+    Q_INVOKABLE explicit DblMaPsarStrategy(const QString &id, const QString &instrumentID, int timeFrame, QObject *parent = nullptr);
 
     void setParameter(const QVariant &param1, const QVariant &param2, const QVariant &param3,
                       const QVariant &param4, const QVariant &param5, const QVariant &param6,

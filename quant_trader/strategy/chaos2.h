@@ -52,7 +52,7 @@ class Chaos2 : public AddOnTrailingStop
     Q_OBJECT
 
 public:
-    Q_INVOKABLE explicit Chaos2(const QString &id, const QString &instrumentID, int timeFrame, QObject *parent = 0);
+    Q_INVOKABLE explicit Chaos2(const QString &id, const QString &instrumentID, int timeFrame, QObject *parent = nullptr);
     friend class WiseMan;
     friend class WiseMan3;
     friend class AOSignal;
