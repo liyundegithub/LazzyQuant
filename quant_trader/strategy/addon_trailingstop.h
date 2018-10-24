@@ -40,7 +40,7 @@ protected:
     QList<PriceTrigger*> takenSignals;
 
     void onNewBar() override;
-    void onNewTick(int time, double lastPrice) override;
+    void onNewTick(qint64 time, double lastPrice) override;
     virtual QList<EnterSignalNeedConfirm*> getOpenSignals() = 0;
     virtual QList<EnterSignalNeedConfirm*> getAddOnSignals() = 0;
 };

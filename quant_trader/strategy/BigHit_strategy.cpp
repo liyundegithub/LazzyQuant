@@ -61,7 +61,7 @@ void BigHitStrategy::onNewBar()
     }
 }
 
-void BigHitStrategy::onNewTick(int time, double lastPrice)
+void BigHitStrategy::onNewTick(qint64 time, double lastPrice)
 {
     if (!recentPrices.empty()) {
         while (!recentPrices.empty() && !isTimeCloseEnouogh(recentPrices.head().first, time, dT)) {

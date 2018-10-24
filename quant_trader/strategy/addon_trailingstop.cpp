@@ -63,7 +63,7 @@ Container filterAndDelete(const Container& src, Filter remove, EnterSignalNeedCo
     return ret;
 }
 
-void AddOnTrailingStop::onNewTick(int time, double lastPrice)
+void AddOnTrailingStop::onNewTick(qint64 time, double lastPrice)
 {
     Q_UNUSED(time)
 

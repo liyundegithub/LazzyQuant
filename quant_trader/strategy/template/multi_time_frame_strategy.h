@@ -31,7 +31,7 @@ public:
     virtual void setBarList(const QMap<int, QPair<QList<Bar>*, Bar*>> &listAndLast);
 
     void checkIfNewBar(int newBarTimeFrame) override;
-    void onNewTick(int time, double lastPrice) override;
+    void onNewTick(qint64 time, double lastPrice) override;
 
 };
 

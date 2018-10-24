@@ -17,8 +17,8 @@ public:
                       const QVariant &param4, const QVariant &param5, const QVariant &param6,
                       const QVariant &param7, const QVariant &param8, const QVariant &param9) override;
     void setParameter(int deltaTime, double deltaPrice, int timeOut);
-    void onNewBar();
-    void onNewTick(int time, double lastPrice);
+    void onNewBar() override;
+    void onNewTick(qint64 time, double lastPrice) override;
 
 protected:
     int dT;
@@ -26,7 +26,7 @@ protected:
     int tO;
 
     bool biggestVolEver;
-    int expireTime;
+    qint64 expireTime;
     int bigHit;
     QQueue<QPair<int, double>> recentPrices;
 };

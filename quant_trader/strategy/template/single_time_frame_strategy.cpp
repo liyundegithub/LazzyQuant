@@ -86,7 +86,7 @@ void SingleTimeFrameStrategy::checkIfNewBar(int newBarTimeFrame)
     }
 }
 
-void SingleTimeFrameStrategy::onNewTick(int time, double lastPrice)
+void SingleTimeFrameStrategy::onNewTick(qint64 time, double lastPrice)
 {
     Q_UNUSED(time)
     checkTPSL(lastPrice);

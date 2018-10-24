@@ -39,7 +39,7 @@ public:
                               const QVariant &param7, const QVariant &param8, const QVariant &param9) = 0;
 
     virtual void checkIfNewBar(int) {}
-    virtual void onNewTick(int time, double lastPrice) = 0;
+    virtual void onNewTick(qint64 time, double lastPrice) = 0;
 
     QString getId() const  { return strategyID; }
     QString getInstrument() const { return instrumentID; }
