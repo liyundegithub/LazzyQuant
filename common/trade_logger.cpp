@@ -9,10 +9,10 @@ TradeLogger::TradeLogger(const QString &name):
     name(name)
 {
     createDbIfNotExist("tradelog");
-    createTablesIfNotExist("tradelog", {name}, " (time INT NULL, instrument VARCHAR(45) NULL, price FLOAT NULL, volume INT NULL, direction BOOLEAN NULL, opencloseflag BOOLEAN NULL)");
+    createTablesIfNotExist("tradelog", {name}, " (time BIGINT NULL, instrument VARCHAR(45) NULL, price FLOAT NULL, volume INT NULL, direction BOOLEAN NULL, opencloseflag BOOLEAN NULL)");
 }
 
-void TradeLogger::positionChanged(int actionTime, const QString &instrumentID, int newPosition, double price)
+void TradeLogger::positionChanged(qint64 actionTime, const QString &instrumentID, int newPosition, double price)
 {
     int oldPosition = positionMap[instrumentID];
     if (newPosition == oldPosition) {
@@ -45,27 +45,27 @@ void TradeLogger::positionChanged(int actionTime, const QString &instrumentID, i
     positionMap[instrumentID] = newPosition;
 }
 
-void TradeLogger::openLong(int actionTime, const QString &instrumentID, double price, int volume)
+void TradeLogger::openLong(qint64 actionTime, const QString &instrumentID, double price, int volume)
 {
     saveActionToDB(actionTime, instrumentID, price, volume, true, true);
 }
 
-void TradeLogger::openShort(int actionTime, const QString &instrumentID, double price, int volume)
+void TradeLogger::openShort(qint64 actionTime, const QString &instrumentID, double price, int volume)
 {
     saveActionToDB(actionTime, instrumentID, price, volume, false, true);
 }
 
-void TradeLogger::closeLong(int actionTime, const QString &instrumentID, double price, int volume)
+void TradeLogger::closeLong(qint64 actionTime, const QString &instrumentID, double price, int volume)
 {
     saveActionToDB(actionTime, instrumentID, price, volume, false, false);
 }
 
-void TradeLogger::closeShort(int actionTime, const QString &instrumentID, double price, int volume)
+void TradeLogger::closeShort(qint64 actionTime, const QString &instrumentID, double price, int volume)
 {
     saveActionToDB(actionTime, instrumentID, price, volume, true, false);
 }
 
-void TradeLogger::saveActionToDB(int actionTime, const QString &instrumentID, double price, int volume, bool direction, bool openCloseFlag)
+void TradeLogger::saveActionToDB(qint64 actionTime, const QString &instrumentID, double price, int volume, bool direction, bool openCloseFlag)
 {
     QSqlDatabase sqlDB = QSqlDatabase();
     QSqlQuery qry(sqlDB);

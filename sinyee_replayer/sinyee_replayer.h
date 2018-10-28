@@ -5,6 +5,7 @@
 #include <QStringList>
 
 #include "sinyee_tick.h"
+#include "time_mapper.h"
 
 struct CONFIG_ITEM;
 
@@ -12,6 +13,8 @@ class SinYeeReplayer : public QObject
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "com.lazzyquant.sinyee_replayer")
+
+    TimeMapper mapTime;
 
     QString sinYeeDataPath;
     QStringList replayList;
@@ -23,7 +26,7 @@ class SinYeeReplayer : public QObject
     QMap<QString, int> sumVol;
 
 public:
-    explicit SinYeeReplayer(const CONFIG_ITEM &config, QObject *parent = 0);
+    explicit SinYeeReplayer(const CONFIG_ITEM &config, QObject *parent = nullptr);
 
 private:
     void appendTicksToList(const QString &date, const QString &instrument);
@@ -32,7 +35,7 @@ private:
 signals:
     void tradingDayChanged(const QString& tradingDay);
     void endOfReplay(const QString& tradingDay);
-    void newMarketData(const QString& instrumentID, int time, double lastPrice, int volume,
+    void newMarketData(const QString& instrumentID, qint64 time, double lastPrice, int volume,
                        double askPrice1, int askVolume1, double bidPrice1, int bidVolume1);
 
 public slots:

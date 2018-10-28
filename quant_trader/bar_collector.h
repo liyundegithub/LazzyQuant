@@ -55,16 +55,14 @@ public:
     Bar *getBarPtr(int timeFrame) {
         return &barMap[timeFrame];
     }
-    void setTradingDay(const QString &tradingDay, const QString &lastNight);
-    bool onMarketData(int time, double lastPrice, int volume);
+    void setTradingDay(const QString &tradingDay);
+    bool onMarketData(qint64 currentTime, double lastPrice, int volume);
 
 protected:
     const QString instrument;
     bool saveBarsToDB;
 
     int lastVolume = 0;
-    qint64 lastNightBase = 0;
-    qint64 morningBase = 0;
     qint64 tradingDayBase = 0;
 
     QList<int> keys;

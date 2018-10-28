@@ -9,6 +9,7 @@
 #include <QTime>
 
 #include "trading_calendar.h"
+#include "time_mapper.h"
 
 class QSettings;
 class CThostFtdcMdApi;
@@ -27,6 +28,7 @@ public:
 
 protected:
     TradingCalendar tradingCalendar;
+    TimeMapper mapTime;
 
     const QString name;
     const bool replayMode;
@@ -55,9 +57,6 @@ protected:
     QByteArray brokerID;
     QByteArray userID;
     QByteArray password;
-    const char* c_brokerID;
-    const char* c_userID;
-    const char* c_password;
 
     void customEvent(QEvent *) override;
 
@@ -70,7 +69,7 @@ protected:
 signals:
     void tradingDayChanged(const QString& tradingDay);
     void endOfReplay(const QString& tradingDay);
-    void newMarketData(const QString& instrumentID, int time, double lastPrice, int volume,
+    void newMarketData(const QString& instrumentID, qint64 time, double lastPrice, int volume,
                        double askPrice1, int askVolume1, double bidPrice1, int bidVolume1);
 
 public slots:
@@ -78,6 +77,7 @@ public slots:
     bool isReplayMode() const { return replayMode; }
     bool isLoggedIn() const { return loggedIn; }
     QString getTradingDay() const;
+    void setTradingDay(const QString &tradingDay);
     void subscribeInstruments(const QStringList &instruments, bool updateIni = true);
     QStringList getSubscribeList() const;
     void startReplay(const QString &date);

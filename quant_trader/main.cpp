@@ -109,8 +109,9 @@ int main(int argc, char *argv[])
         pLogger = new TradeLogger("quant_trader_" + QDateTime::currentDateTime().toString(QStringLiteral("yyyyMMddhhmmss")));
         quantTrader.logTrade = std::bind(&TradeLogger::positionChanged, pLogger, _1, _2, _3, _4);
     } else {
-        quantTrader.logTrade = [](int time, const QString &instrumentID, int newPosition, double price) -> void {
-            qInfo().noquote() << QTime(0, 0).addSecs(time).toString() << "New position for" << instrumentID << newPosition << ", price =" << price;
+        quantTrader.logTrade = [](qint64 time, const QString &instrumentID, int newPosition, double price) -> void {
+            qInfo().noquote() << QDateTime::fromSecsSinceEpoch(time, QTimeZone::utc()).toString(QStringLiteral("yyyy-MM-dd HH:mm:ss"))
+                              << "New position for" << instrumentID << newPosition << ", price =" << price;
         };
     }
 

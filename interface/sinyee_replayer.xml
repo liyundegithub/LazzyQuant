@@ -9,7 +9,7 @@
     </signal>
     <signal name="newMarketData">
       <arg name="instrumentID" type="s" direction="out"/>
-      <arg name="time" type="i" direction="out"/>
+      <arg name="time" type="x" direction="out"/>
       <arg name="lastPrice" type="d" direction="out"/>
       <arg name="volume" type="i" direction="out"/>
       <arg name="askPrice1" type="d" direction="out"/>

@@ -1,6 +1,7 @@
 #include "depth_market.h"
 
-#include <QTime>
+#include <QDateTime>
+#include <QTimeZone>
 #include <QDebugStateSaver>
 
 #define TOLERANCE   0.000001
@@ -16,7 +17,7 @@ DepthMarket::DepthMarket() :
     // default ctor
 }
 
-DepthMarket::DepthMarket(int time, double lastPrice, double askPrice, int askVolume, double bidPrice, int bidVolume) :
+DepthMarket::DepthMarket(qint64 time, double lastPrice, double askPrice, int askVolume, double bidPrice, int bidVolume) :
     time(time),
     lastPrice(lastPrice),
     askPrice(askPrice),
@@ -38,7 +39,7 @@ QDebug operator<<(QDebug dbg, const DepthMarket &depthMarket)
 {
     QDebugStateSaver saver(dbg);
     dbg.nospace() << "Ask 1:\t" << depthMarket.askPrice << '\t' << depthMarket.askVolume << '\n'
-                  << " ------ " << QTime(0, 0).addSecs(depthMarket.time).toString() <<  " lastPrice:" << depthMarket.lastPrice << " ------ " << '\n'
+                  << " ------ " << QDateTime::fromSecsSinceEpoch(depthMarket.time, QTimeZone::utc()).toString(QStringLiteral("yyyy-MM-dd HH:mm:ss")) << " lastPrice:" << depthMarket.lastPrice << " ------ " << '\n'
                   << "Bid 1:\t" << depthMarket.bidPrice << '\t' << depthMarket.bidVolume;
     return dbg;
 }

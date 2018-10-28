@@ -187,7 +187,7 @@ void OptionArbitrageur::setTradingDay(const QString &tradingDay)
  * 处理市场数据, 寻找套利机会.
  *
  * \param instrumentID 合约代码.
- * \param time       时间.
+ * \param time       Unix时间戳.
  * \param lastPrice  最新成交价.
  * \param volume     成交量.
  * \param askPrice1  卖一价.
@@ -195,7 +195,7 @@ void OptionArbitrageur::setTradingDay(const QString &tradingDay)
  * \param bidPrice1  买一价.
  * \param bidVolume1 买一量.
  */
-void OptionArbitrageur::onMarketData(const QString &instrumentID, int time, double lastPrice, int volume,
+void OptionArbitrageur::onMarketData(const QString &instrumentID, qint64 time, double lastPrice, int volume,
                                      double askPrice1, int askVolume1, double bidPrice1, int bidVolume1)
 {
     Q_UNUSED(volume)

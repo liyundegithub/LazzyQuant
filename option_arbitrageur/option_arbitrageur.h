@@ -38,14 +38,14 @@ protected:
     BaseStrategy *pStrategy = nullptr;
 
 public:
-    explicit OptionArbitrageur(const QStringList &allInstruments, OptionHelper *pHelper, QObject *parent = 0);
+    explicit OptionArbitrageur(const QStringList &allInstruments, OptionHelper *pHelper, QObject *parent = nullptr);
     ~OptionArbitrageur();
 
     QSet<QString> getUnderlyingIDs() const { return underlyingIDs; }
 
 public slots:
     void setTradingDay(const QString &tradingDay);
-    void onMarketData(const QString &instrumentID, int time, double lastPrice, int volume,
+    void onMarketData(const QString &instrumentID, qint64 time, double lastPrice, int volume,
                       double askPrice1, int askVolume1, double bidPrice1, int bidVolume1);
     void onMarketClose();
 };

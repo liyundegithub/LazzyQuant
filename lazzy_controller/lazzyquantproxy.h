@@ -28,7 +28,7 @@ signals:
     // market_watcher or sinyee_replayer
     void tradingDayChanged(const QString &tradingDay);
     void endOfReplay(const QString &tradingDay);
-    void newMarketData(const QString &instrumentID, int time, double lastPrice, int volume,
+    void newMarketData(const QString &instrumentID, qint64 time, double lastPrice, int volume,
                        double askPrice1, int askVolume1, double bidPrice1, int bidVolume1);
 
     // quant_trader

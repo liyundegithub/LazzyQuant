@@ -7,7 +7,6 @@
 
 #include "config.h"
 #include "common_utility.h"
-#include "trading_calendar.h"
 #include "quant_trader.h"
 #include "bar.h"
 #include "bar_collector.h"
@@ -396,7 +395,7 @@ AbstractIndicator* QuantTrader::registerIndicator(const QString &instrumentID, i
                             args.value(3), args.value(4), args.value(5),
                             args.value(6), args.value(7), args.value(8), args.value(9));
 
-    if (obj == 0) {
+    if (!obj) {
         qCritical() << "newInstance returns 0!";
         return nullptr;
     }
@@ -457,15 +456,11 @@ void QuantTrader::setTradingDay(const QString &tradingDay)
 {
     qDebug() << "Set Trading Day to" << tradingDay;
 
-    TradingCalendar tc;
-    QDate date = QDate::fromString(tradingDay, QStringLiteral("yyyyMMdd"));
-    do {
-        date = date.addDays(-1);
-    } while (!tc.isTradingDay(date));
-    QString lastTradingDay = date.toString(QStringLiteral("yyyyMMdd"));
-
-    for (auto * collector : qAsConst(collector_map)) {
-        collector->setTradingDay(tradingDay, lastTradingDay);
+    if (tradingDay != currentTradingDay) {
+        for (auto * collector : qAsConst(collector_map)) {
+            collector->setTradingDay(tradingDay);
+        }
+        currentTradingDay = tradingDay;
     }
 }
 
@@ -475,15 +470,15 @@ void QuantTrader::setTradingDay(const QString &tradingDay)
  * 统计相关策略给出的仓位, 如果与旧数值不同则发送给执行模块.
  *
  * \param instrumentID 合约代码.
- * \param time 时间.
- * \param lastPrice 最新成交价.
- * \param volume 成交量.
- * \param askPrice1  卖一价.
- * \param askVolume1 卖一量.
- * \param bidPrice1  买一价.
- * \param bidVolume1 买一量.
+ * \param time         Unix时间戳.
+ * \param lastPrice    最新成交价.
+ * \param volume       成交量.
+ * \param askPrice1    卖一价.
+ * \param askVolume1   卖一量.
+ * \param bidPrice1    买一价.
+ * \param bidVolume1   买一量.
  */
-void QuantTrader::onMarketData(const QString &instrumentID, int time, double lastPrice, int volume,
+void QuantTrader::onMarketData(const QString &instrumentID, qint64 time, double lastPrice, int volume,
                                double askPrice1, int askVolume1, double bidPrice1, int bidVolume1)
 {
     Q_UNUSED(askPrice1)
@@ -492,16 +487,15 @@ void QuantTrader::onMarketData(const QString &instrumentID, int time, double las
     Q_UNUSED(bidVolume1)
 
     BarCollector *collector = collector_map.value(instrumentID, nullptr);
-    bool isNewTick = false;
-    if (collector != nullptr) {
-        isNewTick = collector->onMarketData(time, lastPrice, volume);
-    }
+    bool isNewTick = collector && collector->onMarketData(time, lastPrice, volume);
 
     const auto strategyList = strategy_map.values(instrumentID);
     boost::optional<int> new_position_sum;
     for (auto *strategy : strategyList) {
         if (isNewTick) {    // 有新的成交.
-            strategy->onNewTick(time, lastPrice);
+            if (strategy->isEnabled()) {
+                strategy->onNewTick(time, lastPrice);
+            }
         }
         auto position = strategy->getPosition();
         if (position.is_initialized()) {

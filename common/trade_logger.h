@@ -11,14 +11,14 @@ class TradeLogger
 public:
     explicit TradeLogger(const QString &name);
 
-    void positionChanged(int actionTime, const QString &instrumentID, int newPosition, double price);
-    void openLong(int actionTime, const QString &instrumentID, double price, int volume);
-    void openShort(int actionTime, const QString &instrumentID, double price, int volume);
-    void closeLong(int actionTime, const QString &instrumentID, double price, int volume);
-    void closeShort(int actionTime, const QString &instrumentID, double price, int volume);
+    void positionChanged(qint64 actionTime, const QString &instrumentID, int newPosition, double price);
+    void openLong(qint64 actionTime, const QString &instrumentID, double price, int volume);
+    void openShort(qint64 actionTime, const QString &instrumentID, double price, int volume);
+    void closeLong(qint64 actionTime, const QString &instrumentID, double price, int volume);
+    void closeShort(qint64 actionTime, const QString &instrumentID, double price, int volume);
 
 protected:
-    void saveActionToDB(int actionTime, const QString &instrumentID, double price, int volume, bool direction, bool openCloseFlag);
+    void saveActionToDB(qint64 actionTime, const QString &instrumentID, double price, int volume, bool direction, bool openCloseFlag);
 };
 
 #endif // TRADE_LOGGER_H

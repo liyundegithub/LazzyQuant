@@ -9,11 +9,15 @@ TEMPLATE = app
 
 SOURCES += main.cpp \
     ../common/common_utility.cpp \
+    ../common/trading_calendar.cpp \
+    ../common/time_mapper.cpp \
     sinyee_replayer.cpp \
     sinyee_tick.cpp
 
 HEADERS += \
     ../common/common_utility.h \
+    ../common/trading_calendar.h \
+    ../common/time_mapper.h \
     sinyee_replayer.h \
     sinyee_tick.h
 

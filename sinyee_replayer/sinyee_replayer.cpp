@@ -170,6 +170,7 @@ bool SinYeeReplayer::prepareReplay(const QString &date, const QStringList &instr
     sortTickPairList();
     if (tickCnt > 0) {
         emit tradingDayChanged(date);
+        mapTime.setTradingDay(date);
     }
     return tickCnt > 0;
 }
@@ -183,15 +184,21 @@ bool SinYeeReplayer::replayTo(int time)
             const auto &item = tickPairList[replayIdx];
             const auto &tick = item.second;
             if (time >= tick.time) {
-                const int emitTime = tick.time % 86400;
+                int emitTime = tick.time % 86400;
                 sumVol[item.first] += tick.volume;
                 auto hour = emitTime / 3600;
                 auto minute = (emitTime % 3600) / 60;
                 if (hour == 8 || hour == 0 || hour == 3 || (hour == 10 && minute == 15) || (hour == 11 && minute == 30) || hour == 15) {
                     continue;
                 }
+                if (hour < 8) {
+                    emitTime -= (4 * 3600);
+                    if (emitTime < 0) {
+                        emitTime += 86400;
+                    }
+                }
                 emit newMarketData(item.first,
-                                   emitTime,
+                                   mapTime(emitTime),
                                    tick.price,
                                    sumVol[item.first],
                                    tick.askPrice,

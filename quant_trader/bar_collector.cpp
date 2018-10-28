@@ -116,33 +116,20 @@ static const QMap<BarCollector::TimeFrame, int> g_time_table = {
     {BarCollector::DAY,    24 * HOUR_UNIT},
 };
 
-void BarCollector::setTradingDay(const QString &tradingDay, const QString &lastNight)
+void BarCollector::setTradingDay(const QString &tradingDay)
 {
-    auto date = QDateTime::fromString(tradingDay, QStringLiteral("yyyyMMdd"));
-    date.setTimeZone(QTimeZone::utc());
-    auto newTradingDayBase = date.toSecsSinceEpoch();
+    auto tradingDateTime = QDateTime::fromString(tradingDay, QStringLiteral("yyyyMMdd"));
+    tradingDateTime.setTimeZone(QTimeZone::utc());
+    auto newTradingDayBase = tradingDateTime.toSecsSinceEpoch();
     if (tradingDayBase != newTradingDayBase) {
         tradingDayBase = newTradingDayBase;
         lastVolume = 0;
     }
-
-    date = QDateTime::fromString(lastNight, QStringLiteral("yyyyMMdd"));
-    date.setTimeZone(QTimeZone::utc());
-    lastNightBase = date.toSecsSinceEpoch();
-    morningBase = lastNightBase + 24 * 3600;
 }
 
-bool BarCollector::onMarketData(int time, double lastPrice, int volume)
+bool BarCollector::onMarketData(qint64 currentTime, double lastPrice, int volume)
 {
     const bool isNewTick = (volume != lastVolume);
-    qint64 currentTime = 0;
-    if (time < 8 * 3600) {
-        currentTime = morningBase + time;
-    } else if (time > 17 * 3600) {
-        currentTime = lastNightBase + time;
-    } else {
-        currentTime = tradingDayBase + time;
-    }
 
     for (auto key : qAsConst(keys)) {
         Bar & bar = barMap[key];

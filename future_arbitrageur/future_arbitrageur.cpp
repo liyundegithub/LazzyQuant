@@ -74,7 +74,7 @@ void FutureArbitrageur::setupStrategies()
     }
 }
 
-void FutureArbitrageur::onMarketData(const QString &instrumentID, int time, double lastPrice, int volume,
+void FutureArbitrageur::onMarketData(const QString &instrumentID, qint64 time, double lastPrice, int volume,
                                      double askPrice1, int askVolume1, double bidPrice1, int bidVolume1)
 {
     Q_UNUSED(volume)

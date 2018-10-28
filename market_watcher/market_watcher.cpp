@@ -72,11 +72,6 @@ MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, bool replayMode, QObject
     password = settings->value("Password").toByteArray();
     settings->endGroup();
 
-    // Pre-convert QString to char*
-    c_brokerID = brokerID.constData();
-    c_userID = userID.constData();
-    c_password = password.constData();
-
     pUserApi = CThostFtdcMdApi::CreateFtdcMdApi(flowPath.constData());
     pReceiver = new CTickReceiver(this);
     pUserApi->RegisterSpi(pReceiver);
@@ -251,6 +246,7 @@ void MarketWatcher::customEvent(QEvent *event)
     case RSP_USER_LOGIN:
         qInfo() << "Market watcher logged in OK!";
         loggedIn = true;
+        setTradingDay(getTradingDay());
         subscribe();
         break;
     case RSP_USER_LOGOUT:
@@ -281,9 +277,9 @@ void MarketWatcher::login()
 {
     CThostFtdcReqUserLoginField reqUserLogin;
     memset(&reqUserLogin, 0, sizeof (CThostFtdcReqUserLoginField));
-    strcpy(reqUserLogin.BrokerID, c_brokerID);
-    strcpy(reqUserLogin.UserID, c_userID);
-    strcpy(reqUserLogin.Password, c_password);
+    strcpy_s(reqUserLogin.BrokerID, brokerID);
+    strcpy_s(reqUserLogin.UserID, userID);
+    strcpy_s(reqUserLogin.Password, password);
 
     pUserApi->ReqUserLogin(&reqUserLogin, nRequestID.fetchAndAddRelaxed(1));
 }
@@ -351,7 +347,7 @@ void MarketWatcher::processDepthMarketData(const CThostFtdcDepthMarketDataField&
 
     const auto &tradetime = currentTradingTimeMap[instrumentID];
     if (isWithinRange(time, tradetime.first, tradetime.second)) {
-        int emitTime = (time == tradetime.second) ? (time == 0 ? 86399 : (time - 1)) : time;
+        auto emitTime = mapTime((time == tradetime.second) ? (time == 0 ? 86399 : (time - 1)) : time);
         emit newMarketData(instrumentID,
                            emitTime,
                            depthMarketDataField.LastPrice,
@@ -378,7 +374,7 @@ void MarketWatcher::processDepthMarketData(const CThostFtdcDepthMarketDataField&
 void MarketWatcher::emitNewMarketData(const CThostFtdcDepthMarketDataField& depthMarketDataField)
 {
     const QString instrumentID(depthMarketDataField.InstrumentID);
-    int time = hhmmssToSec(depthMarketDataField.UpdateTime);
+    auto time = mapTime(hhmmssToSec(depthMarketDataField.UpdateTime));
     emit newMarketData(instrumentID,
                        time,
                        depthMarketDataField.LastPrice,
@@ -417,6 +413,17 @@ QString MarketWatcher::getTradingDay() const
     } else {
         return pUserApi->GetTradingDay();
     }
+}
+
+/*!
+ * \brief MarketWatcher::setTradingDay
+ * 设定交易日期.
+ *
+ * \param tradingDay 交易日(yyyyMMdd)
+ */
+void MarketWatcher::setTradingDay(const QString &tradingDay)
+{
+    mapTime.setTradingDay(tradingDay);
 }
 
 /*!
@@ -544,6 +551,7 @@ void MarketWatcher::startReplay(const QString &date)
 
     if (!mdList.empty()) {
         emit tradingDayChanged(date);
+        setTradingDay(date);
 
         for (const auto &md : qAsConst(mdList)) {
             emitNewMarketData(md);
