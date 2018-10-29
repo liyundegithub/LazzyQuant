@@ -8,7 +8,7 @@
 #include "trade_executer_interface.h"
 #include "quant_trader_interface.h"
 
-#include "../LazzyQuant/config.h"
+#include "config.h"
 
 LazzyQuantProxy::LazzyQuantProxy(QObject *parent) :
     QObject(parent)

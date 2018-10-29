@@ -8,6 +8,7 @@
 #include <QSqlError>
 
 #include "common_utility.h"
+#include "db_helper.h"
 #include "bar_collector.h"
 
 BarCollector::BarCollector(const QString &instrumentID, int timeFrameFlags, bool saveBarsToDB, QObject *parent) :
@@ -23,57 +24,29 @@ BarCollector::BarCollector(const QString &instrumentID, int timeFrameFlags, bool
     if (saveBarsToDB) {
         QSqlDatabase sqlDB = QSqlDatabase::database();
         QSqlQuery qry(sqlDB);
-        if (!qry.exec("SHOW DATABASES")) {
-            qCritical().noquote() << "Show databases failed!";
-            qCritical().noquote() << qry.lastError();
+        if (!createDbIfNotExist("market")) {
             this->saveBarsToDB = false;
             return;
         }
-        QStringList dbNames;
-        while (qry.next()) {
-            QString dbName = qry.value(0).toString();
-            dbNames << dbName;
-        }
-        if (!dbNames.contains("market", Qt::CaseInsensitive)) {
-            if (!qry.exec("CREATE DATABASE market")) {
-                qCritical().noquote() << "Create database market failed!";
-                qCritical().noquote() << qry.lastError();
-                this->saveBarsToDB = false;
-                return;
-            }
-        }
-        sqlDB.close();
-        sqlDB.setDatabaseName("market");
-        sqlDB.open();
-        const QStringList tables = sqlDB.tables();
 
+        QStringList tableNames;
         for (auto key : qAsConst(keys)) {
-            // Check if the table is already created for collected bars
             QString tableName = QString("%1_%2").arg(instrumentID, QMetaEnum::fromType<TimeFrames>().valueToKey(key));
-            if (!tables.contains(tableName, Qt::CaseInsensitive)) {
-                QString tableOfDB = QString("market.%1").arg(tableName);
-                bool ok = qry.exec("CREATE TABLE " + tableOfDB + " ("
-                                   "`time` BIGINT NOT NULL,"
-                                   "`open` DOUBLE NULL,"
-                                   "`high` DOUBLE NULL,"
-                                   "`low` DOUBLE NULL,"
-                                   "`close` DOUBLE NULL,"
-                                   "`tick_volume` BIGINT NULL,"
-                                   "`volume` BIGINT NULL,"
-                                   "`type` INT NULL,"
-                                   "PRIMARY KEY (`time`))");
-
-                if (!ok) {
-                    qCritical().noquote() << "Create table" << tableName << "failed!";
-                    qCritical().noquote() << qry.lastError();
-                    this->saveBarsToDB = false;
-                    break;
-                }
-            }
+            tableNames << tableName;
         }
-        sqlDB.close();
-        sqlDB.setDatabaseName("indicator");
-        sqlDB.open();
+        auto format = "(`time`        BIGINT NOT NULL,"
+                      " `open`        DOUBLE NULL,"
+                      " `high`        DOUBLE NULL,"
+                      " `low`         DOUBLE NULL,"
+                      " `close`       DOUBLE NULL,"
+                      " `tick_volume` BIGINT NULL,"
+                      " `volume`      BIGINT NULL,"
+                      " `type`        INT NULL,"
+                      " PRIMARY KEY (`time`))";
+        if (!createTablesIfNotExist("market", tableNames, format)) {
+            this->saveBarsToDB = false;
+            return;
+        }
     }
 }
 
