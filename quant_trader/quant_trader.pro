@@ -19,6 +19,7 @@ SOURCES += main.cpp \
     bar_collector.cpp \
     quant_trader.cpp \
     editable.cpp \
+    indicators_and_strategies.cpp \
     indicator/abstract_indicator.cpp \
     indicator/indicator_functions.cpp \
     indicator/mql5_indicator.cpp \
@@ -53,11 +54,11 @@ HEADERS += ../config.h \
     ../common/trade_logger.h \
     bar.h \
     bar_collector.h \
-    quant_global.h \
     quant_trader.h \
     mql5_compatible.h \
     mql5_moving_averages.h \
     editable.h \
+    indicators_and_strategies.h \
     indicator/abstract_indicator.h \
     indicator/indicator_functions.h \
     indicator/mql5_indicator.h \

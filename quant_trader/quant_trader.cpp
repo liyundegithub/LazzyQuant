@@ -8,11 +8,13 @@
 #include "config.h"
 #include "common_utility.h"
 #include "quant_trader.h"
+#include "quant_trader_adaptor.h"
 #include "bar.h"
 #include "bar_collector.h"
-#include "quant_global.h"
-
-#include "quant_trader_adaptor.h"
+#include "editable.h"
+#include "indicators_and_strategies.h"
+#include "indicator/mql5_indicator.h"
+#include "strategy/template/abstract_strategy.h"
 
 QuantTrader::QuantTrader(const CONFIG_ITEM &config, bool saveBarsToDB, QObject *parent) :
     QObject(parent),
@@ -116,7 +118,7 @@ void QuantTrader::loadTradeStrategySettings()
 
         settings->endGroup();
 
-        const QMetaObject* strategy_meta_object = strategyMetaObjects.value(strategy_name);
+        const QMetaObject* strategy_meta_object = getStrategyMetaObject(strategy_name);
         if (strategy_meta_object == nullptr) {
             qCritical().noquote().nospace() << "Strategy " << group << ": " << strategy_name << " is not supported!";
             continue;
@@ -309,7 +311,7 @@ AbstractIndicator* QuantTrader::registerIndicator(const QString &instrumentID, i
         currentTimeFrame = timeFrame;
     }
 
-    const QMetaObject * metaObject = indicatorMetaObjects.value(indicator_name, nullptr);
+    const QMetaObject * metaObject = getIndicatorMetaObject(indicator_name);
     if (metaObject == nullptr) {
         qCritical() << "Indicator" << indicator_name << "not exist!";
         return nullptr;

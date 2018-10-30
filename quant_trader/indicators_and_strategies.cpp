@@ -1,5 +1,4 @@
-#ifndef QUANT_GLOBAL_H
-#define QUANT_GLOBAL_H
+#include "indicators_and_strategies.h"
 
 #include "indicator/ma.h"
 #include "indicator/macd.h"
@@ -9,10 +8,12 @@
 #include "indicator/awesome_oscillator.h"
 #include "indicator/fractal.h"
 #include "indicator/zen/segment.h"
+
 #include "strategy/DblMaPsar_strategy.h"
 #include "strategy/BigHit_strategy.h"
 #include "strategy/chaos2.h"
 #include "strategy/lemon1.h"
+
 
 const QMap<QString, const QMetaObject*> indicatorMetaObjects = {
     {"MA", &MA::staticMetaObject},
@@ -34,4 +35,13 @@ const QMap<QString, const QMetaObject*> strategyMetaObjects = {
     // Register more strategies here
 };
 
-#endif // QUANT_GLOBAL_H
+
+const QMetaObject* getIndicatorMetaObject(const QString &indicatorName)
+{
+    return indicatorMetaObjects.value(indicatorName, nullptr);
+}
+
+const QMetaObject* getStrategyMetaObject(const QString &strategyName)
+{
+    return strategyMetaObjects.value(strategyName, nullptr);
+}

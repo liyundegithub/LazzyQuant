@@ -1,3 +1,7 @@
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 #include <QSettings>
 #include <QDebug>
 #include <QDir>
@@ -277,9 +281,9 @@ void MarketWatcher::login()
 {
     CThostFtdcReqUserLoginField reqUserLogin;
     memset(&reqUserLogin, 0, sizeof (CThostFtdcReqUserLoginField));
-    strcpy_s(reqUserLogin.BrokerID, brokerID);
-    strcpy_s(reqUserLogin.UserID, userID);
-    strcpy_s(reqUserLogin.Password, password);
+    strcpy(reqUserLogin.BrokerID, brokerID);
+    strcpy(reqUserLogin.UserID, userID);
+    strcpy(reqUserLogin.Password, password);
 
     pUserApi->ReqUserLogin(&reqUserLogin, nRequestID.fetchAndAddRelaxed(1));
 }
