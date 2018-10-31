@@ -3,7 +3,7 @@
 
 #include "config_struct.h"
 
-#define VERSION_STR                 "1.0"
+#define VERSION_STR                 "0.2"
 
 #define PROJECT_NAME                "LazzyQuant"
 #define LOWER_CASE_NAME             "lazzyquant"

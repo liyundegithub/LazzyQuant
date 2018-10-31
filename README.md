@@ -12,10 +12,10 @@
 9. 支持兼容MQL5语法的策略设计  
 
 ## 开发环境:
-&emsp;&emsp;Visual Studio 2015 (Windows) / GCC 5.3 (Linux)  
-&emsp;&emsp;Qt >= 5.8.0  
-&emsp;&emsp;Boost 1.6x  
-&emsp;&emsp;D-Bus 1.10.x  
-&emsp;&emsp;MySQL 5.7.x  
+&emsp;&emsp;Visual Studio 2015/2017 (Windows) / GCC 5.3 (Linux)  
+&emsp;&emsp;Qt 5.9.7  
+&emsp;&emsp;Boost 1.68  
+&emsp;&emsp;D-Bus 1.10.26  
+&emsp;&emsp;MySQL 5.7.24  
 
 #### 部分开发文档存放在LazzyDocument仓库中  

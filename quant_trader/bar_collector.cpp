@@ -22,8 +22,6 @@ BarCollector::BarCollector(const QString &instrumentID, int timeFrameFlags, bool
     }
 
     if (saveBarsToDB) {
-        QSqlDatabase sqlDB = QSqlDatabase::database();
-        QSqlQuery qry(sqlDB);
         if (!createDbIfNotExist("market")) {
             this->saveBarsToDB = false;
             return;
