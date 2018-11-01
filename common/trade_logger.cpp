@@ -14,35 +14,31 @@ TradeLogger::TradeLogger(const QString &name):
 
 void TradeLogger::positionChanged(qint64 actionTime, const QString &instrumentID, int newPosition, double price)
 {
-    int oldPosition = positionMap[instrumentID];
-    if (newPosition == oldPosition) {
+    int &position = positionMap[instrumentID];
+    if (newPosition == position) {
         return;
     }
 
-    if (newPosition >= 0 && oldPosition < 0) {
-        closeShort(actionTime, instrumentID, price, -oldPosition);
-        if (oldPosition != 0) {
-            return;
-        }
-    } else if (newPosition <= 0 && oldPosition > 0) {
-        closeLong(actionTime, instrumentID, price, oldPosition);
-        if (oldPosition != 0) {
-            return;
-        }
+    if (newPosition >= 0 && position < 0) {
+        closeShort(actionTime, instrumentID, price, -position);
+        position = 0;
+    } else if (newPosition <= 0 && position > 0) {
+        closeLong(actionTime, instrumentID, price, position);
+        position = 0;
     }
 
-    int diff = newPosition - oldPosition;
+    int diff = newPosition - position;
 
     if (diff < 0 && newPosition > 0) {
         closeLong(actionTime, instrumentID, price, -diff);
-    } else if (0 >= oldPosition && diff < 0) {
+    } else if (0 >= position && diff < 0) {
         openShort(actionTime, instrumentID, price, -diff);
-    } else if (0 <= oldPosition && diff > 0) {
+    } else if (0 <= position && diff > 0) {
         openLong(actionTime, instrumentID, price, diff);
     } else if (diff > 0 && newPosition < 0) {
         closeShort(actionTime, instrumentID, price, diff);
     }
-    positionMap[instrumentID] = newPosition;
+    position = newPosition;
 }
 
 void TradeLogger::openLong(qint64 actionTime, const QString &instrumentID, double price, int volume)
