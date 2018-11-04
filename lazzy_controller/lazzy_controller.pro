@@ -7,13 +7,18 @@ TEMPLATE = app
 
 SOURCES += main.cpp \
     ../common/common_utility.cpp \
+    ../common/dbus_monitor.cpp \
     mainwindow.cpp \
-    lazzyquantproxy.cpp
+    quant_trader_manager.cpp \
+    quant_trader_manager_dbus.cpp
 
-HEADERS += \
+HEADERS += ../config.h \
     ../common/common_utility.h \
+    ../common/dbus_monitor.h \
     mainwindow.h \
-    lazzyquantproxy.h
+    abstract_manager.h \
+    quant_trader_manager.h \
+    quant_trader_manager_dbus.h
 
 FORMS += \
     mainwindow.ui

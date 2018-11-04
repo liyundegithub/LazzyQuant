@@ -3,7 +3,8 @@
 
 #include <QMainWindow>
 
-class LazzyQuantProxy;
+class QuantTraderManager;
+class DBusMonitor;
 
 namespace Ui {
 class MainWindow;
@@ -14,11 +15,11 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MainWindow(LazzyQuantProxy *proxy, QWidget *parent = 0);
+    explicit MainWindow(QuantTraderManager *manager, QWidget *parent = nullptr);
     ~MainWindow();
 
 public slots:
-    void onModuleState(bool watcherStatus, bool replayerStatus, bool executerStatus, bool traderStatus);
+    void onDbusState(const QList<bool> &statusList);
     void onNewBar(const QString &instrumentID, const QString &timeFrame);
 
 private:
@@ -36,7 +37,9 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
-    LazzyQuantProxy *proxy;
+    QObject *pTrader;
+    const QMetaObject *traderMetaObj;
+    DBusMonitor *monitor;
 
     bool prevTraderStatus = false;
 
