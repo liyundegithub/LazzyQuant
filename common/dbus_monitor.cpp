@@ -7,7 +7,7 @@ DBusMonitor::DBusMonitor(const QList<QObject*> &dbusObjList, int interval, QObje
     QObject(parent)
 {
     for (QObject *obj : dbusObjList) {
-        QDBusAbstractInterface *itf = dynamic_cast<QDBusAbstractInterface*>(obj);
+        QDBusAbstractInterface *itf = qobject_cast<QDBusAbstractInterface*>(obj);
         if (itf) {
             dbusItfList.append(itf);
         }

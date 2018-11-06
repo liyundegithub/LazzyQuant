@@ -10,7 +10,7 @@
     </method>
     <method name="onMarketData">
       <arg name="instrumentID" type="s" direction="in"/>
-      <arg name="time" type="i" direction="in"/>
+      <arg name="time" type="x" direction="in"/>
       <arg name="lastPrice" type="d" direction="in"/>
       <arg name="volume" type="i" direction="in"/>
       <arg name="askPrice1" type="d" direction="in"/>
