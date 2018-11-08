@@ -4,7 +4,6 @@
 #include "config.h"
 #include "market.h"
 #include "message_handler.h"
-#include "multiple_timer.h"
 #include "market_watcher.h"
 
 int main(int argc, char *argv[])
@@ -39,21 +38,9 @@ int main(int argc, char *argv[])
         MarketWatcher *pWatcher = new MarketWatcher(config, replayMode);
         watcherList.append(pWatcher);
     }
-    MultipleTimer *multiTimer = new MultipleTimer({{8, 45}, {8, 50}, {20, 45}, {20, 50}});
-    QObject::connect(multiTimer, &MultipleTimer::timesUp, [=]() -> void {
-        for (const auto & pWatcher : qAsConst(watcherList)) {
-            if (pWatcher->isLoggedIn()) {
-                QString tradingDay = pWatcher->getTradingDay();
-                pWatcher->setTradingDay(tradingDay);
-            } else {
-                qWarning("Market Watcher not login!");
-            }
-        }
-    });
 
     int ret = a.exec();
 
-    delete multiTimer;
     for (const auto & pWatcher : qAsConst(watcherList)) {
         delete pWatcher;
     }

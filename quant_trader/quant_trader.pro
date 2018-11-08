@@ -15,6 +15,7 @@ SOURCES += main.cpp \
     ../common/message_handler.cpp \
     ../common/db_helper.cpp \
     ../common/trade_logger.cpp \
+    quant_trader_manager_dbus.cpp \
     bar.cpp \
     bar_collector.cpp \
     quant_trader.cpp \
@@ -52,6 +53,9 @@ HEADERS += ../config.h \
     ../common/message_handler.h \
     ../common/db_helper.h \
     ../common/trade_logger.h \
+    ../common/abstract_manager.h \
+    quant_trader_manager.h \
+    quant_trader_manager_dbus.h \
     bar.h \
     bar_collector.h \
     quant_trader.h \

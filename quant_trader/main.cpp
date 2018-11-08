@@ -1,19 +1,12 @@
-#include <QList>
-#include <QTime>
 #include <QCoreApplication>
 #include <QCommandLineParser>
 
 #include "config.h"
 #include "quant_trader.h"
-#include "strategy_status.h"
-#include "connection_manager.h"
-#include "trading_calendar.h"
-#include "multiple_timer.h"
 #include "message_handler.h"
 #include "trade_logger.h"
+#include "quant_trader_manager_dbus.h"
 
-#include "market_watcher_interface.h"
-#include "sinyee_replayer_interface.h"
 #include "trade_executer_interface.h"
 
 using std::placeholders::_1;
@@ -70,32 +63,9 @@ int main(int argc, char *argv[])
     bool log2File = parser.isSet("logtofile");
     setupMessageHandler(true, log2File, "quant_trader");
 
-    com::lazzyquant::market_watcher *pWatcher = new com::lazzyquant::market_watcher(WATCHER_DBUS_SERVICE, WATCHER_DBUS_OBJECT, QDBusConnection::sessionBus());
-
-    QObject* pWatcherOrReplayer = nullptr;
-    if (replayMode) {
-        if (pWatcher->isValid() && pWatcher->isReplayMode()) {
-            pWatcherOrReplayer = pWatcher;
-        } else {
-            delete pWatcher;
-            com::lazzyquant::sinyee_replayer *pReplayer = new com::lazzyquant::sinyee_replayer(REPLAYER_DBUS_SERVICE, REPLAYER_DBUS_OBJECT, QDBusConnection::sessionBus());
-            if (pReplayer->isValid()) {
-                pWatcherOrReplayer = pReplayer;
-            } else {
-                delete pReplayer;
-                qWarning() << "No valid data source!";
-                return -1;
-            }
-        }
-    } else {
-        pWatcherOrReplayer = pWatcher;
-    }
-
     QuantTrader quantTrader(traderConfigs[0], saveBarsToDB);
-    MultipleTimer *marketOpenTimer = nullptr;
-    MultipleTimer *marketCloseTimer = nullptr;
-
-    ConnectionManager *pConnManager = new ConnectionManager({pWatcherOrReplayer}, {&quantTrader});
+    QuantTraderManagerDbus manager(&quantTrader, replayMode, {replayStartDate, replayEndDate});
+    qInfo() << "marketSource =" << manager.marketSource;
 
     com::lazzyquant::trade_executer *pExecuter = nullptr;
     if ((!replayMode && !explicitNoConnectToExecuter) || explicitConnectToExecuter) {
@@ -115,62 +85,10 @@ int main(int argc, char *argv[])
         };
     }
 
-    if (replayMode) {
-        TradingCalendar tc;
-        QStringList replayDates;
-        QDate startDate = QDate::fromString(replayStartDate, QStringLiteral("yyyyMMdd"));
-        QDate endDate = QDate::fromString(replayEndDate, QStringLiteral("yyyyMMdd"));
-        for (QDate date = startDate; date <= endDate; date = date.addDays(1)) {
-            if (tc.isTradingDay(date)) {
-                replayDates << date.toString(QStringLiteral("yyyyMMdd"));
-            }
-        }
-
-        QObject::connect(pWatcherOrReplayer, SIGNAL(endOfReplay(QString)), &quantTrader, SLOT(onMarketClose()));
-
-        QTimer::singleShot(500, [pWatcherOrReplayer, replayDates]() -> void {
-                               for (const auto& date : qAsConst(replayDates)) {
-                                   pWatcherOrReplayer->metaObject()->invokeMethod(pWatcherOrReplayer, "startReplay", Q_ARG(QString, date));
-                               }
-                           });
-    } else {
-        marketOpenTimer = new MultipleTimer({{8, 50}, {20, 50}});
-        QObject::connect(marketOpenTimer, &MultipleTimer::timesUp, [pWatcher, &quantTrader]() -> void {
-                             if (pWatcher->isValid() && pWatcher->getStatus() == "Ready") {
-                                 QString tradingDay = pWatcher->getTradingDay();
-                                 quantTrader.setTradingDay(tradingDay);
-                             } else {
-                                 qWarning() << "Market Watcher Not Ready!";
-                             }
-                             quantTrader.checkDataBaseStatus();
-                         });
-
-        QList<QTime> timePoints({{2, 35}, {11, 35}, {15, 5}});
-        int tradingTimeSegments = timePoints.size();
-        marketCloseTimer = new MultipleTimer(timePoints);
-        QObject::connect(marketCloseTimer, &MultipleTimer::timesUp, [&quantTrader, tradingTimeSegments](int idx) -> void {
-            if (idx == (tradingTimeSegments - 1)) {
-                quantTrader.onMarketClose();
-            } else {
-                quantTrader.onMarketPause();
-            }
-        });
-    }
-
     int ret = a.exec();
     if (pLogger) {
         delete pLogger;
     }
-    delete pConnManager;
-    if (marketOpenTimer) {
-        marketOpenTimer->disconnect();
-        delete marketOpenTimer;
-    }
-    if (marketCloseTimer) {
-        marketCloseTimer->disconnect();
-        delete marketCloseTimer;
-    }
-    delete pWatcherOrReplayer;
     if (pExecuter) {
         delete pExecuter;
     }
