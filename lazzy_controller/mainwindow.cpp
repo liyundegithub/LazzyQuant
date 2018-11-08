@@ -1,19 +1,25 @@
+#include "config.h"
 #include "dbus_monitor.h"
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "quant_trader_manager.h"
 
-#include <QDebug>
+#include "market_watcher_interface.h"
+#include "sinyee_replayer_interface.h"
+#include "trade_executer_interface.h"
+#include "quant_trader_interface.h"
 
-MainWindow::MainWindow(QuantTraderManager *manager, QWidget *parent) :
+MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::MainWindow),
-    pTrader(manager->getTrader()),
-    traderMetaObj(pTrader->metaObject())
+    ui(new Ui::MainWindow)
 {
+    pWatcher = new com::lazzyquant::market_watcher(WATCHER_DBUS_SERVICE, WATCHER_DBUS_OBJECT, QDBusConnection::sessionBus(), this);
+    pReplayer = new com::lazzyquant::sinyee_replayer(REPLAYER_DBUS_SERVICE, REPLAYER_DBUS_OBJECT, QDBusConnection::sessionBus(), this);
+    pTrader = new com::lazzyquant::quant_trader(TRADER_DBUS_SERVICE, TRADER_DBUS_OBJECT, QDBusConnection::sessionBus(), this);
+    pExecuter = new com::lazzyquant::trade_executer(EXECUTER_DBUS_SERVICE, EXECUTER_DBUS_OBJECT, QDBusConnection::sessionBus(), this);
+
     ui->setupUi(this);
 
-    monitor = new DBusMonitor({manager->getDataSource(), manager->getTrader(), manager->getExecuter()}, 1000, this);
+    monitor = new DBusMonitor({pWatcher, pReplayer, pExecuter, pTrader}, 1000, this);
     connect(monitor, SIGNAL(dbusStatus(QList<bool>)), this, SLOT(onDbusState(QList<bool>)));
 
     connect(pTrader, SIGNAL(newBarFormed(QString,QString)), this, SLOT(onNewBar(QString,QString)));
@@ -40,23 +46,24 @@ inline static QString getStatusStyleSheet(bool status)
 
 void MainWindow::onDbusState(const QList<bool> &statusList)
 {
-    ui->labelReplayer1->setText(getStatusString(statusList[0]));
+    ui->labelWatcher1->setText(getStatusString(statusList[0]));
+    ui->labelReplayer1->setText(getStatusString(statusList[1]));
     ui->labelExecuter1->setText(getStatusString(statusList[2]));
-    ui->labelTrader1->setText(getStatusString(statusList[1]));
+    ui->labelTrader1->setText(getStatusString(statusList[3]));
 
-    ui->labelReplayer2->setStyleSheet(getStatusStyleSheet(statusList[0]));
+    ui->labelWatcher2->setStyleSheet(getStatusStyleSheet(statusList[0]));
+    ui->labelReplayer2->setStyleSheet(getStatusStyleSheet(statusList[1]));
     ui->labelExecuter2->setStyleSheet(getStatusStyleSheet(statusList[2]));
-    ui->labelTrader2->setStyleSheet(getStatusStyleSheet(statusList[1]));
+    ui->labelTrader2->setStyleSheet(getStatusStyleSheet(statusList[3]));
 
-    if (prevTraderStatus && !statusList[1]) {
+    if (prevTraderStatus && !statusList[3]) {
         prevTraderStatus = false;
         ui->groupBox1->setEnabled(false);
         ui->groupBox2->setEnabled(false);
     }
-    if (!prevTraderStatus && statusList[1]) {
+    if (!prevTraderStatus && statusList[3]) {
         prevTraderStatus = true;
-        QStringList strategyIds;
-        traderMetaObj->invokeMethod(pTrader, "getStrategyId", Qt::DirectConnection, Q_RETURN_ARG(QStringList, strategyIds));
+        QStringList strategyIds = pTrader->getStrategyId();
         int strategyCount = strategyIds.size();
         ui->groupBox1->setEnabled(strategyCount > 0);
         ui->groupBox2->setEnabled(strategyCount > 1);
@@ -92,26 +99,29 @@ void MainWindow::onNewBar(const QString &instrumentID, const QString &timeFrame)
 
 void MainWindow::updateStrategy1Position()
 {
-    int p1;
-    traderMetaObj->invokeMethod(pTrader, "getPositionByStrategyId", Qt::DirectConnection, Q_RETURN_ARG(int, p1), Q_ARG(QString, strategyId1));
+    int p1 = pTrader->getPositionByStrategyId(strategyId1);
+    if (p1 == -INT_MAX) {
+        p1 = 0;
+    }
     ui->lcdNumberPosition1->display(p1);
 }
 
 void MainWindow::updateStrategy2Position()
 {
-    int p2;
-    traderMetaObj->invokeMethod(pTrader, "getPositionByStrategyId", Qt::DirectConnection, Q_RETURN_ARG(int, p2), Q_ARG(QString, strategyId2));
+    int p2 = pTrader->getPositionByStrategyId(strategyId2);
+    if (p2 == -INT_MAX) {
+        p2 = 0;
+    }
     ui->lcdNumberPosition2->display(p2);
 }
 
 void MainWindow::on_comboBoxId1_currentTextChanged(const QString &arg1)
 {
-    traderMetaObj->invokeMethod(pTrader, "getInstrumentByStrategyId", Qt::DirectConnection, Q_RETURN_ARG(QString, instrument1), Q_ARG(QString, arg1));
+    instrument1 = pTrader->getInstrumentByStrategyId(arg1);
     if (!instrument1.isEmpty()) {
         strategyId1 = arg1;
         ui->labelInstrument1->setText(instrument1);
-        bool isStrategyEnabled;
-        traderMetaObj->invokeMethod(pTrader, "getStrategyEnabled", Qt::DirectConnection, Q_RETURN_ARG(bool, isStrategyEnabled), Q_ARG(QString, strategyId1));
+        bool isStrategyEnabled = pTrader->getStrategyEnabled(strategyId1);
         ui->pushButtonEnable1->setDisabled(isStrategyEnabled);
         ui->pushButtonDisable1->setEnabled(isStrategyEnabled);
         updateStrategy1Position();
@@ -125,26 +135,25 @@ void MainWindow::on_comboBoxId1_currentTextChanged(const QString &arg1)
 
 void MainWindow::on_pushButtonEnable1_clicked()
 {
-    traderMetaObj->invokeMethod(pTrader, "setStrategyEnabled", Qt::DirectConnection, Q_ARG(QString, strategyId1), Q_ARG(bool, true));
+    pTrader->setStrategyEnabled(strategyId1, true);
     ui->pushButtonEnable1->setDisabled(true);
     ui->pushButtonDisable1->setEnabled(true);
 }
 
 void MainWindow::on_pushButtonDisable1_clicked()
 {
-    traderMetaObj->invokeMethod(pTrader, "setStrategyEnabled", Qt::DirectConnection, Q_ARG(QString, strategyId1), Q_ARG(bool, false));
+    pTrader->setStrategyEnabled(strategyId1, false);
     ui->pushButtonEnable1->setDisabled(false);
     ui->pushButtonDisable1->setEnabled(false);
 }
 
 void MainWindow::on_comboBoxId2_currentTextChanged(const QString &arg1)
 {
-    traderMetaObj->invokeMethod(pTrader, "getInstrumentByStrategyId", Qt::DirectConnection, Q_RETURN_ARG(QString, instrument2), Q_ARG(QString, arg1));
+    instrument2 = pTrader->getInstrumentByStrategyId(arg1);
     if (!instrument2.isEmpty()) {
         strategyId2 = arg1;
         ui->labelInstrument2->setText(instrument2);
-        bool isStrategyEnabled;
-        traderMetaObj->invokeMethod(pTrader, "getStrategyEnabled", Qt::DirectConnection, Q_RETURN_ARG(bool, isStrategyEnabled), Q_ARG(QString, strategyId2));
+        bool isStrategyEnabled = pTrader->getStrategyEnabled(strategyId2);
         ui->pushButtonEnable2->setDisabled(isStrategyEnabled);
         ui->pushButtonDisable2->setEnabled(isStrategyEnabled);
         updateStrategy2Position();
@@ -158,14 +167,14 @@ void MainWindow::on_comboBoxId2_currentTextChanged(const QString &arg1)
 
 void MainWindow::on_pushButtonEnable2_clicked()
 {
-    traderMetaObj->invokeMethod(pTrader, "setStrategyEnabled", Qt::DirectConnection, Q_ARG(QString, strategyId2), Q_ARG(bool, true));
+    pTrader->setStrategyEnabled(strategyId2, true);
     ui->pushButtonEnable2->setDisabled(true);
     ui->pushButtonDisable2->setEnabled(true);
 }
 
 void MainWindow::on_pushButtonDisable2_clicked()
 {
-    traderMetaObj->invokeMethod(pTrader, "setStrategyEnabled", Qt::DirectConnection, Q_ARG(QString, strategyId2), Q_ARG(bool, false));
+    pTrader->setStrategyEnabled(strategyId2, false);
     ui->pushButtonEnable2->setDisabled(false);
     ui->pushButtonDisable2->setEnabled(false);
 }

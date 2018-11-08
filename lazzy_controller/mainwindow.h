@@ -3,7 +3,10 @@
 
 #include <QMainWindow>
 
-class QuantTraderManager;
+class ComLazzyquantMarket_watcherInterface;
+class ComLazzyquantSinyee_replayerInterface;
+class ComLazzyquantTrade_executerInterface;
+class ComLazzyquantQuant_traderInterface;
 class DBusMonitor;
 
 namespace Ui {
@@ -14,8 +17,14 @@ class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
+    ComLazzyquantMarket_watcherInterface *pWatcher = nullptr;
+    ComLazzyquantSinyee_replayerInterface *pReplayer = nullptr;
+    ComLazzyquantTrade_executerInterface *pExecuter = nullptr;
+    ComLazzyquantQuant_traderInterface *pTrader = nullptr;
+    DBusMonitor *monitor = nullptr;
+
 public:
-    explicit MainWindow(QuantTraderManager *manager, QWidget *parent = nullptr);
+    explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
 public slots:
@@ -37,9 +46,6 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
-    QObject *pTrader;
-    const QMetaObject *traderMetaObj;
-    DBusMonitor *monitor;
 
     bool prevTraderStatus = false;
 
