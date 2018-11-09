@@ -8,7 +8,6 @@
 #include "config.h"
 #include "common_utility.h"
 #include "quant_trader.h"
-#include "quant_trader_adaptor.h"
 #include "bar.h"
 #include "bar_collector.h"
 #include "editable.h"
@@ -23,13 +22,8 @@ QuantTrader::QuantTrader(const CONFIG_ITEM &config, bool saveBarsToDB, QObject *
     qRegisterMetaType<int>("ENUM_MA_METHOD");
     qRegisterMetaType<int>("ENUM_APPLIED_PRICE");
 
-    loadQuantTraderSettings();
-    loadTradeStrategySettings();
-
-    new Quant_traderAdaptor(this);
-    QDBusConnection dbus = QDBusConnection::sessionBus();
-    dbus.registerObject(config.dbusObject, this);
-    dbus.registerService(config.dbusService);
+    loadQuantTraderSettings(config);
+    loadTradeStrategySettings(config);
 }
 
 QuantTrader::~QuantTrader()
@@ -41,9 +35,9 @@ QuantTrader::~QuantTrader()
  * \brief QuantTrader::loadQuantTraderSettings
  * 载入量化交易系统配置.
  */
-void QuantTrader::loadQuantTraderSettings()
+void QuantTrader::loadQuantTraderSettings(const CONFIG_ITEM &config)
 {
-    auto settings = getSettingsSmart(ORGANIZATION, "quant_trader");
+    auto settings = getSettingsSmart(config.organization, config.name);
 
     settings->beginGroup("HistoryPath");
     kt_export_dir = settings->value("ktexport").toString();
@@ -88,9 +82,9 @@ void QuantTrader::loadQuantTraderSettings()
  * \brief QuantTrader::loadTradeStrategySettings
  * 载入量化交易策略.
  */
-void QuantTrader::loadTradeStrategySettings()
+void QuantTrader::loadTradeStrategySettings(const CONFIG_ITEM &config)
 {
-    auto settings = getSettingsSmart(ORGANIZATION, "trade_strategy");
+    auto settings = getSettingsSmart(config.organization, "trade_strategy");
     const QStringList groups = settings->childGroups();
     qDebug() << groups.size() << "strategies in all.";
 

@@ -14,7 +14,6 @@
 #include "common_utility.h"
 #include "multiple_timer.h"
 #include "market_watcher.h"
-#include "market_watcher_adaptor.h"
 #include "tick_receiver.h"
 
 extern QList<Market> markets;
@@ -50,10 +49,6 @@ MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, bool replayMode, QObject
     }
     settings->endGroup();
 
-    new Market_watcherAdaptor(this);
-    QDBusConnection dbus = QDBusConnection::sessionBus();
-    dbus.registerObject(config.dbusObject, this);
-    dbus.registerService(config.dbusService);
 // 复盘模式和实盘模式共用的部分到此为止 ---------------------------------------
     if (replayMode) {
         qInfo() << "Relay mode is ready!";

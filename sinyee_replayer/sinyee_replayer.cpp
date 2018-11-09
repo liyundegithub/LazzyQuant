@@ -7,7 +7,6 @@
 #include "config_struct.h"
 #include "common_utility.h"
 #include "sinyee_replayer.h"
-#include "sinyee_replayer_adaptor.h"
 
 const QDateTime data_date_base = QDateTime::fromString("1988-01-01 00:00:00", "yyyy-MM-dd HH:mm:ss");
 const QDateTime real_date_base = QDateTime::fromString("2008-01-01 00:00:00", "yyyy-MM-dd HH:mm:ss");
@@ -29,11 +28,6 @@ SinYeeReplayer::SinYeeReplayer(const CONFIG_ITEM &config, QObject *parent) :
     }
     settings->endGroup();
     replayList.removeDuplicates();
-
-    new Sinyee_replayerAdaptor(this);
-    QDBusConnection dbus = QDBusConnection::sessionBus();
-    dbus.registerObject(config.dbusObject, this);
-    dbus.registerService(config.dbusService);
 }
 
 QStringList getAvailableContracts(QDataStream& tickStream)

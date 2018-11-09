@@ -5,6 +5,7 @@
 #include "market.h"
 #include "message_handler.h"
 #include "market_watcher.h"
+#include "market_watcher_adaptor.h"
 
 int main(int argc, char *argv[])
 {
@@ -36,12 +37,16 @@ int main(int argc, char *argv[])
     QList<MarketWatcher*> watcherList;
     for (const auto & config : watcherConfigs) {
         MarketWatcher *pWatcher = new MarketWatcher(config, replayMode);
+        new Market_watcherAdaptor(pWatcher);
+        QDBusConnection dbus = QDBusConnection::sessionBus();
+        dbus.registerObject(config.dbusObject, pWatcher);
+        dbus.registerService(config.dbusService);
         watcherList.append(pWatcher);
     }
 
     int ret = a.exec();
 
-    for (const auto & pWatcher : qAsConst(watcherList)) {
+    for (auto pWatcher : qAsConst(watcherList)) {
         delete pWatcher;
     }
     restoreMessageHandler();

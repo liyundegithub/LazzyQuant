@@ -11,7 +11,6 @@
 
 #include "config_struct.h"
 #include "ctp_executer.h"
-#include "trade_executer_adaptor.h"
 #include "trade_handler.h"
 #include "order.h"
 
@@ -135,11 +134,6 @@ CtpExecuter::CtpExecuter(const CONFIG_ITEM &config, QObject *parent) :
         pUserApi->RegisterFront((protocol + address).toLatin1().data());
     }
     settings->endGroup();
-
-    new Trade_executerAdaptor(this);
-    QDBusConnection dbus = QDBusConnection::sessionBus();
-    dbus.registerObject(config.dbusObject, this);
-    dbus.registerService(config.dbusService);
 
     pUserApi->Init();
 }

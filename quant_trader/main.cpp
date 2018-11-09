@@ -3,6 +3,7 @@
 
 #include "config.h"
 #include "quant_trader.h"
+#include "quant_trader_adaptor.h"
 #include "message_handler.h"
 #include "trade_logger.h"
 #include "quant_trader_manager_dbus.h"
@@ -28,7 +29,7 @@ int main(int argc, char *argv[])
 
     parser.addOptions({
         {{"r", "replay"},
-            QCoreApplication::translate("main", "Replay Mode")},
+            QCoreApplication::translate("main", "Replay mode")},
         {{"s", "start"},
             QCoreApplication::translate("main", "Replay start date"), "yyyyMMdd"},
         {{"e", "end"},
@@ -84,6 +85,11 @@ int main(int argc, char *argv[])
                               << "New position for" << instrumentID << newPosition << ", price =" << price;
         };
     }
+
+    new Quant_traderAdaptor(&quantTrader);
+    QDBusConnection dbus = QDBusConnection::sessionBus();
+    dbus.registerObject(traderConfigs[0].dbusObject, &quantTrader);
+    dbus.registerService(traderConfigs[0].dbusService);
 
     int ret = a.exec();
     if (pLogger) {

@@ -2,6 +2,7 @@
 
 #include "config.h"
 #include "sinyee_replayer.h"
+#include "sinyee_replayer_adaptor.h"
 
 int main(int argc, char *argv[])
 {
@@ -11,6 +12,11 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationVersion(VERSION_STR);
 
     SinYeeReplayer replayer(replayerConfigs[0]);
+
+    new Sinyee_replayerAdaptor(&replayer);
+    QDBusConnection dbus = QDBusConnection::sessionBus();
+    dbus.registerObject(replayerConfigs[0].dbusObject, &replayer);
+    dbus.registerService(replayerConfigs[0].dbusService);
 
     return a.exec();
 }

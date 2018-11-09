@@ -86,14 +86,14 @@ void QuantTraderManagerReal<W, T, E>::init()
 
     MultipleTimer *marketOpenTimer = new MultipleTimer({{8, 50}, {20, 50}});
     QObject::connect(marketOpenTimer, &MultipleTimer::timesUp, [=]() -> void {
-                         if (pSource->getStatus() == "Ready") {
-                             QString tradingDay = pSource->getTradingDay();
-                             pSource->setTradingDay(tradingDay);
-                             pTrader->setTradingDay(tradingDay);
+                         if (this->pSource->getStatus() == "Ready") {
+                             QString tradingDay = this->pSource->getTradingDay();
+                             this->pSource->setTradingDay(tradingDay);
+                             this->pTrader->setTradingDay(tradingDay);
                          } else {
                              qWarning() << "Market Watcher Not Ready!";
                          }
-                         pTrader->checkDataBaseStatus();
+                         this->pTrader->checkDataBaseStatus();
                      });
 
     QList<QTime> timePoints({{2, 35}, {11, 35}, {15, 5}});
@@ -101,9 +101,9 @@ void QuantTraderManagerReal<W, T, E>::init()
     MultipleTimer *marketCloseTimer = new MultipleTimer(timePoints);
     QObject::connect(marketCloseTimer, &MultipleTimer::timesUp, [=](int idx) -> void {
         if (idx == (tradingTimeSegments - 1)) {
-            pTrader->onMarketClose();
+            this->pTrader->onMarketClose();
         } else {
-            pTrader->onMarketPause();
+            this->pTrader->onMarketPause();
         }
     });
 }
@@ -143,7 +143,7 @@ void QuantTraderManagerReplay<R, T, E>::init()
 {
     QuantTraderManager<R, T, E>::init();
 
-    QObject::connect(pSource, SIGNAL(endOfReplay(QString)), pTrader, SLOT(onMarketClose()));
+    QObject::connect(this->pSource, SIGNAL(endOfReplay(QString)), this->pTrader, SLOT(onMarketClose()));
 
     if (autoStartReplay) {
         TradingCalendar tc;
@@ -158,7 +158,7 @@ void QuantTraderManagerReplay<R, T, E>::init()
 
         QTimer::singleShot(500, [=]() -> void {
             for (const auto& date : qAsConst(replayDates)) {
-                pSource->startReplay(date);
+                this->pSource->startReplay(date);
             }
         });
     }

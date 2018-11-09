@@ -4,6 +4,7 @@
 #include "config.h"
 #include "message_handler.h"
 #include "ctp_executer.h"
+#include "trade_executer_adaptor.h"
 
 int main(int argc, char *argv[])
 {
@@ -29,12 +30,16 @@ int main(int argc, char *argv[])
     QList<CtpExecuter*> executerList;
     for (const auto & config : executerConfigs) {
         CtpExecuter *pExecuter = new CtpExecuter(config);
+        new Trade_executerAdaptor(pExecuter);
+        QDBusConnection dbus = QDBusConnection::sessionBus();
+        dbus.registerObject(config.dbusObject, pExecuter);
+        dbus.registerService(config.dbusService);
         executerList.append(pExecuter);
     }
 
     int ret = a.exec();
 
-    for (const auto & pExecuter : executerList) {
+    for (auto pExecuter : executerList) {
         delete pExecuter;
     }
     restoreMessageHandler();

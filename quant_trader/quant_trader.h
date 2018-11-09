@@ -39,8 +39,8 @@ protected:
     QString dbUserName;
     QString dbPassword;
 
-    void loadQuantTraderSettings();
-    void loadTradeStrategySettings();
+    void loadQuantTraderSettings(const CONFIG_ITEM &config);
+    void loadTradeStrategySettings(const CONFIG_ITEM &config);
     QList<Bar>* getBars(const QString &instrumentID, int timeFrame);
 
     QString currentInstrumentID;
