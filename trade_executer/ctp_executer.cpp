@@ -1301,7 +1301,7 @@ bool CtpExecuter::checkLimitOrder(const QString &instrument, double price, bool 
 
             double maxLongPrice = -DBL_MAX;
             double minShortPrice = DBL_MAX;
-            for (const auto item : orderList) {
+            for (const auto &item : orderList) {
                 if (item.status == OrderStatus::PENDING || item.status == OrderStatus::UNKNOWN) {
                     if (item.direction) {
                         if (item.price > maxLongPrice) {
@@ -1467,7 +1467,7 @@ void CtpExecuter::updateAccountInfo()
  * 请求查询合约基本信息和当前市价信息.
  * 返回结果将被存入缓存, 供盘中快速查询.
  *
- * \param instruments 合约代码列表
+ * \param instruments 合约代码列表.
  */
 void CtpExecuter::updateInstrumentDataCache()
 {
@@ -2119,7 +2119,7 @@ void CtpExecuter::removeParkedOrder(qulonglong id)
     CHECK_LOGIN_STATE()
 
     TThostFtdcParkedOrderIDType parkedOrderID;
-    sprintf(parkedOrderID, "%1lu", id);
+    sprintf(parkedOrderID, "%llu", id);
     removeParkedOrder(parkedOrderID);
 }
 
@@ -2135,7 +2135,7 @@ void CtpExecuter::removeParkedOrderAction(qulonglong id)
     CHECK_LOGIN_STATE()
 
     TThostFtdcParkedOrderActionIDType parkedOrderActionID;
-    sprintf(parkedOrderActionID, "%1lu", id);
+    sprintf(parkedOrderActionID, "%llu", id);
     removeParkedOrderAction(parkedOrderActionID);
 }
 

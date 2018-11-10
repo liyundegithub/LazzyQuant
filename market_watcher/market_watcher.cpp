@@ -109,10 +109,14 @@ MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, bool replayMode, QObject
 
 MarketWatcher::~MarketWatcher()
 {
+    qDebug() << "~MarketWatcher()";
     if (!replayMode) {
         pUserApi->Release();
         delete pReceiver;
     }
+    if (multiTimer)
+        delete multiTimer;
+    delete settings;
 }
 
 void MarketWatcher::setupTimers()
