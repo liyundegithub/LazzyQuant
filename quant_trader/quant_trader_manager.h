@@ -6,6 +6,7 @@
 #include "connection_manager.h"
 #include "abstract_manager.h"
 
+#include <QCoreApplication>
 #include <QTimer>
 #include <QDebug>
 
@@ -111,15 +112,16 @@ void QuantTraderManagerReal<W, T, E>::init()
 template<class R, class T, class E>
 class QuantTraderManagerReplay : public QuantTraderManager<R, T, E>
 {
-    bool autoStartReplay = false;
     QString startDay;
     QString endDay;
+    bool autoStartReplay = false;
+    bool quitAfterReplay = false;
 
 public:
     QuantTraderManagerReplay(R *pReplayer, T *pTrader, E *pExecuter);
     ~QuantTraderManagerReplay() {}
 
-    void setAutoReplayDate(const QString &startDay, const QString &endDay);
+    void setAutoReplayDate(const QString &startDay, const QString &endDay, bool quitAfterReplay = false);
     void init() override;
 
 };
@@ -131,11 +133,12 @@ QuantTraderManagerReplay<R, T, E>::QuantTraderManagerReplay(R *pReplayer, T *pTr
 }
 
 template<class R, class T, class E>
-void QuantTraderManagerReplay<R, T, E>::setAutoReplayDate(const QString &startDay, const QString &endDay)
+void QuantTraderManagerReplay<R, T, E>::setAutoReplayDate(const QString &startDay, const QString &endDay, bool quitAfterReplay)
 {
-    this->autoStartReplay = true;
     this->startDay = startDay;
     this->endDay = endDay;
+    this->autoStartReplay = true;
+    this->quitAfterReplay = quitAfterReplay;
 }
 
 template<class R, class T, class E>
@@ -154,6 +157,14 @@ void QuantTraderManagerReplay<R, T, E>::init()
             if (tc.isTradingDay(date)) {
                 replayDates << date.toString(QStringLiteral("yyyyMMdd"));
             }
+        }
+
+        if (quitAfterReplay) {
+            QObject::connect(this->pSource, &R::endOfReplay, [=](const QString &day) -> void {
+                if (day == endDay) {
+                    QCoreApplication::quit();
+                }
+            });
         }
 
         QTimer::singleShot(500, [=]() -> void {

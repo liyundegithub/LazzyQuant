@@ -6,7 +6,7 @@
 
 #include "message_handler.h"
 
-FILE *pLogFile = NULL;
+static FILE *pLogFile = NULL;
 
 static void messageOut(QtMsgType type, const QMessageLogContext &context, const QByteArray &localMsg, FILE *pFile)
 {
@@ -59,13 +59,13 @@ void toFile(QtMsgType type, const QMessageLogContext &context, const QString &ms
     }
 }
 
-void setupMessageHandler(bool logtoStdout, bool logtoFile, const QString &moduleName)
+QString setupMessageHandler(bool logtoStdout, bool logtoFile, const QString &moduleName)
 {
     if (logtoFile) {
         QString fullFileName = QCoreApplication::applicationDirPath() + "/" + moduleName;
         fullFileName += QDateTime::currentDateTime().toString(QStringLiteral("_yyyyMMdd_hhmmss"));
-        fullFileName.append(QStringLiteral(".txt"));
-        pLogFile = fopen(fullFileName.toLocal8Bit().constData(), "a");
+        fullFileName.append(".txt");
+        pLogFile = fopen(qPrintable(fullFileName), "a");
         if (pLogFile) {
             if (logtoStdout) {
                 qInstallMessageHandler(toStdOutAndFile);
@@ -73,12 +73,14 @@ void setupMessageHandler(bool logtoStdout, bool logtoFile, const QString &module
                 qInstallMessageHandler(toFile);
             }
         }
+        return fullFileName;
     } else {
         if (logtoStdout) {
             qInstallMessageHandler(toStdOut);
         } else {
             // Do nothing
         }
+        return QString();
     }
 }
 
