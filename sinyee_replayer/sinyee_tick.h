@@ -17,6 +17,9 @@ struct SinYeeTick
     float askVolume;
     float openInterest;
     quint8 direction;
+
+    static QStringList getAvailableContracts(QDataStream& tickStream);
+    static QList<SinYeeTick> readTicks(QDataStream& tickStream, int num);
 };
 
 QDebug operator<<(QDebug dbg, const SinYeeTick &tick);

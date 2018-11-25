@@ -21,6 +21,7 @@ SOURCES += main.cpp \
     ../../market_watcher/tick_receiver.cpp \
     ../../sinyee_replayer/sinyee_replayer.cpp \
     ../../sinyee_replayer/sinyee_tick.cpp \
+    ../../sinyee_replayer/sinyee_bar.cpp \
     ../../trade_executer/ctp_executer.cpp \
     ../../trade_executer/trade_handler.cpp \
     ../../trade_executer/order.cpp \
@@ -65,6 +66,7 @@ HEADERS += ../../config.h \
     ../../market_watcher/tick_receiver.h \
     ../../sinyee_replayer/sinyee_replayer.h \
     ../../sinyee_replayer/sinyee_tick.h \
+    ../../sinyee_replayer/sinyee_bar.h \
     ../../trade_executer/ctp_executer.h \
     ../../trade_executer/trade_handler.h \
     ../../trade_executer/order.h \

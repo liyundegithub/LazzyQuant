@@ -6,6 +6,7 @@
 
 #include "config_struct.h"
 #include "common_utility.h"
+#include "sinyee_bar.h"
 #include "sinyee_replayer.h"
 
 const QDateTime data_date_base = QDateTime::fromString("1988-01-01 00:00:00", "yyyy-MM-dd HH:mm:ss");
@@ -30,42 +31,6 @@ SinYeeReplayer::SinYeeReplayer(const CONFIG_ITEM &config, QObject *parent) :
     replayList.removeDuplicates();
 }
 
-QStringList getAvailableContracts(QDataStream& tickStream)
-{
-    qint16 num;
-    tickStream >> num;
-    Q_ASSERT(num >= 0);
-
-    char buf[32];
-    QStringList contracts;
-
-    for (int i = 0; i < num; i ++) {
-        qint8 strlen;
-        tickStream >> strlen;
-        Q_ASSERT(strlen > 0);
-
-        memset(buf, 0, 32);
-        tickStream.readRawData(buf, strlen);
-        QString contract(buf);
-        contracts << contract;
-
-        tickStream.skipRawData(29 - strlen);
-    }
-
-    return contracts;
-}
-
-QList<SinYeeTick> readTicks(QDataStream& tickStream, int num)
-{
-    QList<SinYeeTick> tickList;
-    for (int i = 0; i < num; i++) {
-        SinYeeTick tick;
-        tickStream >> tick;
-        tickList << tick;
-    }
-    return tickList;
-}
-
 void SinYeeReplayer::appendTicksToList(const QString &date, const QString &instrument)
 {
     QString tickFilePath = sinYeeDataPath + "/" + instrument + "/" + instrument + "_" + date + ".tick";
@@ -81,18 +46,72 @@ void SinYeeReplayer::appendTicksToList(const QString &date, const QString &instr
     int skipped = tickStream.skipRawData(6);
     Q_ASSERT(skipped == 6);
 
-    const QStringList contractNames = getAvailableContracts(tickStream);
+    const QStringList contractNames = SinYeeTick::getAvailableContracts(tickStream);
     qDebug() << contractNames;
+
+    QString barFilePath = sinYeeDataPath + "/" + instrument + "/" + instrument + "_" + date + ".bar";
+    QFile barFile(barFilePath);
+    if (!barFile.open(QFile::ReadOnly)) {
+        qCritical() << "Open file:" << barFilePath << "failed!";
+        return;
+    }
+    QDataStream barStream(&barFile);
+    barStream.setByteOrder(QDataStream::LittleEndian);
+    barStream.setFloatingPointPrecision(QDataStream::SinglePrecision);
+    barStream.startTransaction();
+    skipped = barStream.skipRawData(4);
+    Q_ASSERT(skipped == 4);
+    const auto contractOffsetNum = SinYeeBar::getAvailableContracts(barStream);
+    barStream.rollbackTransaction();
+
     for (const auto &contractName : contractNames) {
+        QList<SinYeeBar> oneMinuteBars;     // 用于检查某个时间是否是在交易时段内.
+        auto isValidTime = [&oneMinuteBars](int tickTime) -> bool {
+            auto tickMinute = tickTime / 60 * 60;
+            for (const auto &bar : qAsConst(oneMinuteBars)) {
+                if (bar.time == tickMinute) {
+                    return true;
+                }
+            }
+            return false;
+        };
+
+        const auto offsetNums = contractOffsetNum.values(contractName);
+        if (!offsetNums.isEmpty()) {
+            auto offset = offsetNums[0].first;
+            auto num = offsetNums[0].second;
+            barStream.startTransaction();
+            barStream.skipRawData(offset);
+            oneMinuteBars = SinYeeBar::readBars(barStream, num);
+            barStream.rollbackTransaction();
+        }
+
+        // 由于数据源的质量问题，可能需要把夜盘最后一分钟不属于交易时段的Bar去除.
+        int i = 0;
+        int size = oneMinuteBars.size();
+        for (; i < size; i++) {
+            QTime barTime = QTime(0, 0).addSecs(oneMinuteBars[i].time);
+            if (barTime == QTime(9, 0)) {
+                break;
+            }
+        }
+        if (i > 0 && i != size) {
+            if (i % 5 == 1) {
+                oneMinuteBars.removeAt(i - 1);
+            }
+        }
+
         qint32 num;
         tickStream >> num;
         Q_ASSERT(num >= 0);
         qInfo() << num << "items for" << contractName;
 
-        const auto tickList = readTicks(tickStream, num);
+        const auto tickList = SinYeeTick::readTicks(tickStream, num);
         if (!contractName.endsWith("99")) {
-            for (const auto &item : tickList) {
-                tickPairList << qMakePair(contractName, item);
+            for (const auto &tick : tickList) {
+                if (isValidTime(tick.time)) {
+                    tickPairList << qMakePair(contractName, tick);
+                }
             }
         }
     }
@@ -181,10 +200,6 @@ bool SinYeeReplayer::replayTo(int time)
                 int emitTime = tick.time % 86400;
                 sumVol[item.first] += tick.volume;
                 auto hour = emitTime / 3600;
-                auto minute = (emitTime % 3600) / 60;
-                if (hour == 8 || hour == 0 || hour == 3 || (hour == 10 && minute == 15) || (hour == 11 && minute == 30) || hour == 15) {
-                    continue;
-                }
                 if (hour < 8) {
                     emitTime -= (4 * 3600);
                     if (emitTime < 0) {

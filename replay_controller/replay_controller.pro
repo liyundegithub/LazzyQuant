@@ -11,6 +11,7 @@ SOURCES += main2.cpp \
     ../common/time_mapper.cpp \
     ../sinyee_replayer/sinyee_replayer.cpp \
     ../sinyee_replayer/sinyee_tick.cpp \
+    ../sinyee_replayer/sinyee_bar.cpp \
     widget.cpp
 
 HEADERS += \
@@ -19,6 +20,7 @@ HEADERS += \
     ../common/time_mapper.h \
     ../sinyee_replayer/sinyee_replayer.h \
     ../sinyee_replayer/sinyee_tick.h \
+    ../sinyee_replayer/sinyee_bar.h \
     widget.h
 
 INCLUDEPATH += ../ ../common/ ../sinyee_replayer/
