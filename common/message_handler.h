@@ -1,7 +1,7 @@
 #ifndef MESSAGE_HANDLER_H
 #define MESSAGE_HANDLER_H
 
-class QString;
+#include <QString>
 
 QString setupMessageHandler(bool toStdOut, bool toFile, const QString &moduleName);
 void restoreMessageHandler();

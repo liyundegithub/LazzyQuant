@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <QByteArray>
-#include <QString>
 #include <QDateTime>
 #include <QCoreApplication>
 
@@ -8,51 +7,57 @@
 
 static FILE *pLogFile = NULL;
 
-static void messageOut(QtMsgType type, const QMessageLogContext &context, const QByteArray &localMsg, FILE *pFile)
+static inline QByteArray getLocalMsg(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
+    QString typeHeader = "";
     switch (type) {
     case QtDebugMsg:
-        fprintf(pFile, "D: %s\n", localMsg.constData());
+        typeHeader = "D";
         break;
     case QtInfoMsg:
-        fprintf(pFile, "I: %s\n", localMsg.constData());
+        typeHeader = "I";
         break;
     case QtWarningMsg:
-        fprintf(pFile, "W: %s\n", localMsg.constData());
+        typeHeader = "W";
         break;
     case QtCriticalMsg:
-        fprintf(pFile, "Critical: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
+        typeHeader = "C";
         break;
     case QtFatalMsg:
-        fprintf(pFile, "Fatal: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
+        typeHeader = "F";
         break;
     }
+    QString localMsg = typeHeader + QDateTime::currentDateTime().toString(QStringLiteral(": yy-MM-dd hh:mm:ss.zzz ")) + msg;
+#ifdef QT_MESSAGELOGCONTEXT
+    localMsg += QString(" (%1:%2, %3)").arg(context.file).arg(context.line).arg(context.function);
+#endif
+    return localMsg.toLocal8Bit();
 }
 
-void toStdOut(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+static void toStdOut(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
-    QByteArray localMsg = (QDateTime::currentDateTime().toString(QStringLiteral("yy-MM-dd hh:mm:ss.zzz ")) + msg).toLocal8Bit();
-    messageOut(type, context, localMsg, stdout);
+    QByteArray localMsg = getLocalMsg(type, context, msg);
+    fprintf(stdout, "%s\n", localMsg.constData());
     if (type == QtFatalMsg) {
         abort();
     }
 }
 
-void toStdOutAndFile(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+static void toStdOutAndFile(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
-    QByteArray localMsg = (QDateTime::currentDateTime().toString(QStringLiteral("yy-MM-dd hh:mm:ss.zzz ")) + msg).toLocal8Bit();
-    messageOut(type, context, localMsg, stdout);
-    messageOut(type, context, localMsg, pLogFile);
+    QByteArray localMsg = getLocalMsg(type, context, msg);
+    fprintf(stdout, "%s\n", localMsg.constData());
+    fprintf(pLogFile, "%s\n", localMsg.constData());
     if (type == QtFatalMsg) {
         fclose(pLogFile);
         abort();
     }
 }
 
-void toFile(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+static void toFile(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
-    QByteArray localMsg = (QDateTime::currentDateTime().toString(QStringLiteral("yy-MM-dd hh:mm:ss.zzz ")) + msg).toLocal8Bit();
-    messageOut(type, context, localMsg, pLogFile);
+    QByteArray localMsg = getLocalMsg(type, context, msg);
+    fprintf(pLogFile, "%s\n", localMsg.constData());
     if (type == QtFatalMsg) {
         fclose(pLogFile);
         abort();

@@ -2119,7 +2119,7 @@ void CtpExecuter::removeParkedOrder(qulonglong id)
     CHECK_LOGIN_STATE()
 
     TThostFtdcParkedOrderIDType parkedOrderID;
-    sprintf(parkedOrderID, "%llu", id);
+    sprintf(parkedOrderID, "%12llu", id);
     removeParkedOrder(parkedOrderID);
 }
 
@@ -2135,7 +2135,7 @@ void CtpExecuter::removeParkedOrderAction(qulonglong id)
     CHECK_LOGIN_STATE()
 
     TThostFtdcParkedOrderActionIDType parkedOrderActionID;
-    sprintf(parkedOrderActionID, "%llu", id);
+    sprintf(parkedOrderActionID, "%12llu", id);
     removeParkedOrderAction(parkedOrderActionID);
 }
 
