@@ -1,7 +1,21 @@
 <!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN" "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
 <node>
   <interface name="com.lazzyquant.trade_executer">
-    <signal name="dealMade">
+    <signal name="frontConnected">
+    </signal>
+    <signal name="frontDisconnected">
+      <arg name="nReason" type="i" direction="out"/>
+    </signal>
+    <signal name="loggedIn">
+    </signal>
+    <signal name="instrumentStatusChanged">
+      <arg name="exchangeID" type="s" direction="out"/>
+      <arg name="instrument" type="s" direction="out"/>
+      <arg name="enterTime" type="s" direction="out"/>
+      <arg name="isContinous" type="b" direction="out"/>
+      <arg name="isClosed" type="b" direction="out"/>
+    </signal>
+    <signal name="deal">
       <arg name="instrument" type="s" direction="out"/>
       <arg name="volume" type="i" direction="out"/>
     </signal>

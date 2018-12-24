@@ -267,3 +267,18 @@ void CTradeHandler::OnErrRtnForQuoteInsert(CThostFtdcInputForQuoteField *pInputF
 {
     handleSingleRsp<ErrRtnForQuoteInsertEvent>(pInputForQuote, pRspInfo);
 }
+
+void CTradeHandler::OnRtnInstrumentStatus(CThostFtdcInstrumentStatusField *pInstrumentStatus)
+{
+    postToReceiver(new RtnInstrumentStatusEvent(pInstrumentStatus));
+}
+
+void CTradeHandler::OnRtnBulletin(CThostFtdcBulletinField *pBulletin)
+{
+    postToReceiver(new RtnBulletinEvent(pBulletin));
+}
+
+void CTradeHandler::OnRtnTradingNotice(CThostFtdcTradingNoticeInfoField *pTradingNoticeInfo)
+{
+    postToReceiver(new RtnTradingNoticeEvent(pTradingNoticeInfo));
+}

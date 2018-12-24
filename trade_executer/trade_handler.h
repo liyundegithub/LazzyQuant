@@ -42,6 +42,9 @@
 #define ERR_RTN_EXEC_ORDER_INSERT           (QEvent::User + 34)
 #define ERR_RTN_EXEC_ORDER_ACTION           (QEvent::User + 35)
 #define ERR_RTN_FOR_QUOTE_INSERT            (QEvent::User + 36)
+#define RTN_INSTRUMENT_STATUS               (QEvent::User + 37)
+#define RTN_BULLETIN                        (QEvent::User + 38)
+#define RTN_TRADING_NOTICE                  (QEvent::User + 39)
 
 struct RspInfo {
     const int errorID;
@@ -414,6 +417,33 @@ public:
         pInputForQuoteField(*pInputForQuote) {}
 };
 
+class RtnInstrumentStatusEvent : public QEvent {
+public:
+    const CThostFtdcInstrumentStatusField instrumentStatusField;
+
+    explicit RtnInstrumentStatusEvent(CThostFtdcInstrumentStatusField *pInstrumentStatusField) :
+        QEvent(QEvent::Type(RTN_INSTRUMENT_STATUS)),
+        instrumentStatusField(*pInstrumentStatusField) {}
+};
+
+class RtnBulletinEvent : public QEvent {
+public:
+    const CThostFtdcBulletinField bulletinField;
+
+    explicit RtnBulletinEvent(CThostFtdcBulletinField *pBulletinField) :
+        QEvent(QEvent::Type(RTN_BULLETIN)),
+        bulletinField(*pBulletinField) {}
+};
+
+class RtnTradingNoticeEvent : public QEvent {
+public:
+    const CThostFtdcTradingNoticeInfoField tradingNoticeInfoField;
+
+    explicit RtnTradingNoticeEvent(CThostFtdcTradingNoticeInfoField *pTradingNoticeInfoField) :
+        QEvent(QEvent::Type(RTN_TRADING_NOTICE)),
+        tradingNoticeInfoField(*pTradingNoticeInfoField) {}
+};
+
 class CTradeHandler final : public CThostFtdcTraderSpi {
     QObject * const receiver;
 
@@ -489,6 +519,11 @@ public:
     void OnErrRtnExecOrderInsert(CThostFtdcInputExecOrderField *pInputExecOrder, CThostFtdcRspInfoField *pRspInfo);
     void OnErrRtnExecOrderAction(CThostFtdcExecOrderActionField *pExecOrderAction, CThostFtdcRspInfoField *pRspInfo);
     void OnErrRtnForQuoteInsert(CThostFtdcInputForQuoteField *pInputForQuote, CThostFtdcRspInfoField *pRspInfo);
+
+    void OnRtnInstrumentStatus(CThostFtdcInstrumentStatusField *pInstrumentStatus);
+    void OnRtnBulletin(CThostFtdcBulletinField *pBulletin);
+    void OnRtnTradingNotice(CThostFtdcTradingNoticeInfoField *pTradingNoticeInfo);
+
 };
 
 #endif // TRADE_HANDLER_H

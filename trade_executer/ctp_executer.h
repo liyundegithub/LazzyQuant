@@ -111,7 +111,11 @@ private slots:
     bool canUseMarketOrder(const QString &instrument);
 
 signals:
-    void dealMade(const QString& instrument, int volume);
+    void frontConnected();
+    void frontDisconnected(int nReason);
+    void loggedIn();
+    void instrumentStatusChanged(const QString &exchangeID, const QString &instrument, const QString &enterTime, bool isContinous, bool isClosed);
+    void deal(const QString &instrument, int volume);
 
 public slots:
     void setLogin();

@@ -151,13 +151,15 @@ void CtpExecuter::customEvent(QEvent *event)
     switch (int(event->type())) {
     case FRONT_CONNECTED:
         loginStateMachine();
+        emit frontConnected();
         break;
     case FRONT_DISCONNECTED:
     {
         auto *fevent = static_cast<FrontDisconnectedEvent*>(event);
-        qInfo() << "Front Disconnected! reason =" << fevent->getReason();
+        qInfo().nospace().noquote() << "Front Disconnected! nReason = 0x" << QString::number(fevent->getReason(), 16);
         loginState = LOGGED_OUT;
         userCacheReady = false;
+        emit frontDisconnected(fevent->getReason());
     }
         break;
     case RSP_AUTHENTICATE:
@@ -187,6 +189,7 @@ void CtpExecuter::customEvent(QEvent *event)
                 if (!marketCacheReady) {
                     QTimer::singleShot(5000, this, &CtpExecuter::updateInstrumentDataCache);
                 }
+                emit loggedIn();
             }
         } else {
             qWarning() << "UserLogin failed! Error ID =" << uevent->errorID;
@@ -438,7 +441,7 @@ void CtpExecuter::customEvent(QEvent *event)
             break;
         }
 
-        emit dealMade(tevent->tradeField.InstrumentID, tevent->tradeField.Volume * (direction ? 1 : -1));
+        emit deal(tevent->tradeField.InstrumentID, tevent->tradeField.Volume * (direction ? 1 : -1));
     }
         break;
     case RSP_QRY_ORDER:
@@ -555,6 +558,21 @@ void CtpExecuter::customEvent(QEvent *event)
     case ERR_RTN_EXEC_ORDER_ACTION:
         break;
     case ERR_RTN_FOR_QUOTE_INSERT:
+        break;
+    case RTN_INSTRUMENT_STATUS:
+    {
+        auto *isevent = static_cast<RtnInstrumentStatusEvent*>(event);
+        const auto &field = isevent->instrumentStatusField;
+        emit instrumentStatusChanged(field.ExchangeID,
+                                     field.ExchangeInstID,
+                                     field.EnterTime,
+                                     field.InstrumentStatus == THOST_FTDC_IS_Continous,
+                                     field.InstrumentStatus == THOST_FTDC_IS_Closed);
+    }
+        break;
+    case RTN_BULLETIN:
+        break;
+    case RTN_TRADING_NOTICE:
         break;
     default:
         QObject::customEvent(event);
