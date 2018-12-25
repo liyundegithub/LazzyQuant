@@ -31,17 +31,10 @@ bool TradingCalendar::isTradingDay(const QDate &date)
 
 bool TradingCalendar::tradesTonight(const QDate &date)
 {
-    if (!isTradingDay(date)) {
-        return false;
-    } else {
-        QDate day1 = date.addDays(1);
-        QDate day2 = date.addDays(2);
-        QDate day3 = date.addDays(3);
-        if (!isTradingDay(day1) && !isTradingDay(day2) && !isTradingDay(day3)) {
-            return false;
-        }
-    }
-    return true;
+    QDate day1 = date.addDays(1);
+    QDate day2 = date.addDays(2);
+    QDate day3 = date.addDays(3);
+    return isTradingDay(date) && (isTradingDay(day1) || (!isTradingDay(day2) && isTradingDay(day3)));
 }
 
 int TradingCalendar::getTradingDays(const QDate &startDate, const QDate &endDate)
