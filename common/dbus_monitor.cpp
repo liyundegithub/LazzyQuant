@@ -3,7 +3,7 @@
 #include <QTimer>
 #include <QDBusAbstractInterface>
 
-DBusMonitor::DBusMonitor(const QList<QObject*> &dbusObjList, int interval, QObject *parent) :
+DBusMonitor::DBusMonitor(const QObjectList &dbusObjList, int interval, QObject *parent) :
     QObject(parent)
 {
     for (QObject *obj : dbusObjList) {
@@ -13,11 +13,20 @@ DBusMonitor::DBusMonitor(const QList<QObject*> &dbusObjList, int interval, QObje
         }
     }
 
-    QTimer *timer = new QTimer(this);
+    timer = new QTimer(this);
     timer->setInterval(interval);
     timer->setSingleShot(false);
     connect(timer, SIGNAL(timeout()), this, SLOT(onTimer()));
     timer->start();
+}
+
+void DBusMonitor::setEnabled(bool b)
+{
+    if (b) {
+        timer->start();
+    } else {
+        timer->stop();
+    }
 }
 
 void DBusMonitor::onTimer()
