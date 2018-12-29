@@ -21,10 +21,13 @@ int main(int argc, char *argv[])
     parser.addOptions({
         {{"f", "logtofile"},
             QCoreApplication::translate("main", "Save log to a file")},
+        {{"s", "suffix"},
+            QCoreApplication::translate("main", "Suffix for dbus object and service"), "letters or numbers"},
     });
 
     parser.process(a);
     bool log2File = parser.isSet("logtofile");
+    QString suffix = parser.value("suffix");
     setupMessageHandler(true, log2File, "trade_executer");
 
     QList<CtpExecuter*> executerList;
@@ -32,8 +35,8 @@ int main(int argc, char *argv[])
         CtpExecuter *pExecuter = new CtpExecuter(config);
         new Trade_executerAdaptor(pExecuter);
         QDBusConnection dbus = QDBusConnection::sessionBus();
-        dbus.registerObject(config.dbusObject, pExecuter);
-        dbus.registerService(config.dbusService);
+        dbus.registerObject(config.dbusObject + suffix, pExecuter);
+        dbus.registerService(config.dbusService + suffix);
         executerList.append(pExecuter);
     }
 

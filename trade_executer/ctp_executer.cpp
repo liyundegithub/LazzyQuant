@@ -231,8 +231,10 @@ void CtpExecuter::customEvent(QEvent *event)
     case RSP_TRADING_ACCOUNT:
     {
         auto *tevent = static_cast<TradingAccountEvent*>(event);
-        available = tevent->tradingAccount.Available;
-        qInfo() << "available =" << available;
+        const auto field = tevent->tradingAccount;
+        emit tradingAccount(field.BrokerID, field.AccountID, field.Balance, field.Available);
+        available = field.Available;
+        qDebug() << "Available =" << available;
     }
         break;
     case RSP_QRY_INSTRUMENT_MARGIN_RATE:

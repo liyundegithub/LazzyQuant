@@ -8,6 +8,12 @@
     </signal>
     <signal name="loggedIn">
     </signal>
+    <signal name="tradingAccount">
+      <arg name="brokerID" type="s" direction="out"/>
+      <arg name="accountID" type="s" direction="out"/>
+      <arg name="balance" type="d" direction="out"/>
+      <arg name="available" type="d" direction="out"/>
+    </signal>
     <signal name="instrumentStatusChanged">
       <arg name="exchangeID" type="s" direction="out"/>
       <arg name="instrument" type="s" direction="out"/>
