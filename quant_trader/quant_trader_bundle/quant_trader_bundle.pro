@@ -25,6 +25,8 @@ SOURCES += main.cpp \
     ../../trade_executer/ctp_executer.cpp \
     ../../trade_executer/trade_handler.cpp \
     ../../trade_executer/order.cpp \
+    ../../trade_executer/parked_order.cpp \
+    ../../trade_executer/ctp_parked_order.cpp \
     ../bar.cpp \
     ../bar_collector.cpp \
     ../quant_trader.cpp \
@@ -70,6 +72,7 @@ HEADERS += ../../config.h \
     ../../trade_executer/ctp_executer.h \
     ../../trade_executer/trade_handler.h \
     ../../trade_executer/order.h \
+    ../../trade_executer/parked_order.h \
     ../bar.h \
     ../bar_collector.h \
     ../quant_trader.h \

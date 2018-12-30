@@ -12,17 +12,24 @@ SOURCES += main.cpp \
     ../common/message_handler.cpp \
     ctp_executer.cpp \
     trade_handler.cpp \
-    order.cpp
+    order.cpp \
+    parked_order.cpp \
+    ctp_parked_order.cpp \
+    parked_order_dbus.cpp
 
 HEADERS += ../config.h \
     ../common/common_utility.h \
     ../common/message_handler.h \
     ctp_executer.h \
     trade_handler.h \
-    order.h
+    order.h \
+    parked_order.h
 
 INCLUDEPATH += ../ ../common/
-DBUS_ADAPTORS += ../interface/trade_executer.xml
+
+trade_executer_adaptor.files = ../interface/trade_executer.xml
+trade_executer_adaptor.header_flags = -i parked_order.h
+DBUS_ADAPTORS += trade_executer_adaptor
 
 unix:CTP_FOLDER_PREFIX = linux
 win32:CTP_FOLDER_PREFIX = win

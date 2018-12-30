@@ -8,7 +8,7 @@
     </signal>
     <signal name="loggedIn">
     </signal>
-    <signal name="tradingAccount">
+    <signal name="tradingAccountQryRsp">
       <arg name="brokerID" type="s" direction="out"/>
       <arg name="accountID" type="s" direction="out"/>
       <arg name="balance" type="d" direction="out"/>
@@ -20,6 +20,10 @@
       <arg name="enterTime" type="s" direction="out"/>
       <arg name="isContinous" type="b" direction="out"/>
       <arg name="isClosed" type="b" direction="out"/>
+    </signal>
+    <signal name="parkedOrderQryRsp">
+      <arg name="parkedOrderList" type="a(ayisdib)" direction="out"/>
+      <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QList&lt;ParkedOrder&gt;"/>
     </signal>
     <signal name="deal">
       <arg name="instrument" type="s" direction="out"/>

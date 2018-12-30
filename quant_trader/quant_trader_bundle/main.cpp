@@ -7,6 +7,7 @@
 #include "trade_logger.h"
 #include "market_watcher.h"
 #include "sinyee_replayer.h"
+#include "parked_order.h"
 #include "ctp_executer.h"
 #include "quant_trader.h"
 #include "quant_trader_manager_bundle.h"
@@ -22,6 +23,8 @@ int main(int argc, char *argv[])
     QCoreApplication::setOrganizationName(ORGANIZATION);
     QCoreApplication::setApplicationName("quant_trader_bundle");
     QCoreApplication::setApplicationVersion(VERSION_STR);
+
+    qMetaTypeId<ParkedOrder>();
 
     QCommandLineParser parser;
     parser.setApplicationDescription("Quant trader bundled with market watcher, sinyee replayer and trade executer.");

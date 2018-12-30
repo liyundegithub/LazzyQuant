@@ -12,6 +12,7 @@ SOURCES += main.cpp \
     ../common/connection_manager.cpp \
     ../common/message_handler.cpp \
     ../common/strategy_status.cpp \
+    ../trade_executer/parked_order.cpp \
     future_arbitrageur.cpp \
     depth_market.cpp \
     base_strategy.cpp \
@@ -23,11 +24,16 @@ HEADERS += ../config.h \
     ../common/connection_manager.h \
     ../common/message_handler.h \
     ../common/strategy_status.h \
+    ../trade_executer/parked_order.h \
     future_arbitrageur.h \
     depth_market.h \
     base_strategy.h \
     pair_trade.h \
     butterfly.h
 
-INCLUDEPATH += ../ ../common/
-DBUS_INTERFACES += ../interface/sinyee_replayer.xml ../interface/market_watcher.xml ../interface/trade_executer.xml
+INCLUDEPATH += ../ ../common/ ../trade_executer/
+
+trade_executer_interface.files = ../interface/trade_executer.xml
+trade_executer_interface.header_flags = -i parked_order.h
+
+DBUS_INTERFACES += ../interface/sinyee_replayer.xml ../interface/market_watcher.xml trade_executer_interface

@@ -17,6 +17,7 @@ struct CThostFtdcInstrumentField;
 class CThostFtdcTraderApi;
 class CTradeHandler;
 class Order;
+class ParkedOrder;
 struct CONFIG_ITEM;
 
 class CtpExecuter : public QObject
@@ -114,8 +115,9 @@ signals:
     void frontConnected();
     void frontDisconnected(int nReason);
     void loggedIn();
-    void tradingAccount(const QString &brokerID, const QString &accountID, double balance, double available);
+    void tradingAccountQryRsp(const QString &brokerID, const QString &accountID, double balance, double available);
     void instrumentStatusChanged(const QString &exchangeID, const QString &instrument, const QString &enterTime, bool isContinous, bool isClosed);
+    void parkedOrderQryRsp(const QList<ParkedOrder> &parkedOrderList);
     void deal(const QString &instrument, int volume);
 
 public slots:

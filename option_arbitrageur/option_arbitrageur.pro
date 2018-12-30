@@ -13,6 +13,7 @@ SOURCES += main.cpp \
     ../common/connection_manager.cpp \
     ../common/trading_calendar.cpp \
     ../common/message_handler.cpp \
+    ../trade_executer/parked_order.cpp \
     option_arbitrageur.cpp \
     option_pricing.cpp \
     option_helper.cpp \
@@ -22,15 +23,13 @@ SOURCES += main.cpp \
     base_strategy.cpp \
     option_index.cpp
 
-INCLUDEPATH += ../ ../common/
-DBUS_INTERFACES += ../interface/market_watcher.xml ../interface/trade_executer.xml
-
 HEADERS += ../config.h \
     ../common/common_utility.h \
     ../common/multiple_timer.h \
     ../common/connection_manager.h \
     ../common/trading_calendar.h \
     ../common/message_handler.h \
+    ../trade_executer/parked_order.h \
     option_arbitrageur.h \
     option_pricing.h \
     option_helper.h \
@@ -39,3 +38,10 @@ HEADERS += ../config.h \
     depth_market.h \
     base_strategy.h \
     option_index.h
+
+INCLUDEPATH += ../ ../common/ ../trade_executer/
+
+trade_executer_interface.files = ../interface/trade_executer.xml
+trade_executer_interface.header_flags = -i parked_order.h
+
+DBUS_INTERFACES += ../interface/market_watcher.xml trade_executer_interface

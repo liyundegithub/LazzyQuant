@@ -15,6 +15,7 @@ SOURCES += main.cpp \
     ../common/message_handler.cpp \
     ../common/db_helper.cpp \
     ../common/trade_logger.cpp \
+    ../trade_executer/parked_order.cpp \
     quant_trader_manager_dbus.cpp \
     bar.cpp \
     bar_collector.cpp \
@@ -41,10 +42,6 @@ SOURCES += main.cpp \
     strategy/chaos2.cpp \
     strategy/lemon1.cpp
 
-INCLUDEPATH += ../ ../common/
-DBUS_INTERFACES += ../interface/market_watcher.xml ../interface/trade_executer.xml ../interface/sinyee_replayer.xml
-DBUS_ADAPTORS += ../interface/quant_trader.xml
-
 HEADERS += ../config.h \
     ../common/common_utility.h \
     ../common/multiple_timer.h \
@@ -54,6 +51,7 @@ HEADERS += ../config.h \
     ../common/db_helper.h \
     ../common/trade_logger.h \
     ../common/abstract_manager.h \
+    ../trade_executer/parked_order.h \
     quant_trader_manager.h \
     quant_trader_manager_dbus.h \
     bar.h \
@@ -83,3 +81,11 @@ HEADERS += ../config.h \
     strategy/addon_trailingstop.h \
     strategy/chaos2.h \
     strategy/lemon1.h
+
+INCLUDEPATH += ../ ../common/ ../trade_executer/
+
+trade_executer_interface.files = ../interface/trade_executer.xml
+trade_executer_interface.header_flags = -i parked_order.h
+
+DBUS_INTERFACES += ../interface/market_watcher.xml trade_executer_interface ../interface/sinyee_replayer.xml
+DBUS_ADAPTORS += ../interface/quant_trader.xml

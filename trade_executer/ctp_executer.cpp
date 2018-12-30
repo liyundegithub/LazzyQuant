@@ -13,6 +13,7 @@
 #include "ctp_executer.h"
 #include "trade_handler.h"
 #include "order.h"
+#include "parked_order.h"
 
 #ifdef NO_LOGIN_STATE_CHECK
   #define CHECK_LOGIN_STATE()
@@ -69,11 +70,6 @@ const TThostFtdcOffsetFlagType ctpOffsetFlags[] = {
     THOST_FTDC_OF_Close,
     THOST_FTDC_OF_CloseToday,
     THOST_FTDC_OF_CloseYesterday,
-};
-
-const QMap<TThostFtdcDirectionType, QString> directionMap = {
-    {THOST_FTDC_D_Buy,  "Buy"},
-    {THOST_FTDC_D_Sell, "Sell"},
 };
 
 const QMap<TThostFtdcParkedOrderStatusType, QString> parkedOrderStatusMap = {
@@ -232,9 +228,10 @@ void CtpExecuter::customEvent(QEvent *event)
     {
         auto *tevent = static_cast<TradingAccountEvent*>(event);
         const auto field = tevent->tradingAccount;
-        emit tradingAccount(field.BrokerID, field.AccountID, field.Balance, field.Available);
+        emit tradingAccountQryRsp(field.BrokerID, field.AccountID, field.Balance, field.Available);
+        qDebug().nospace() << qSetRealNumberPrecision(8) << "BrokerID = " << field.BrokerID << ", AccountID = "
+                           << field.AccountID << ", Balance = " << field.Balance << ", Available = " << field.Available;
         available = field.Available;
-        qDebug() << "Available =" << available;
     }
         break;
     case RSP_QRY_INSTRUMENT_MARGIN_RATE:
@@ -301,8 +298,7 @@ void CtpExecuter::customEvent(QEvent *event)
     {
         auto *pievent = static_cast<RspParkedOrderInsertEvent*>(event);
         if (pievent->errorID == 0) {
-            qInfo() << "Inserted Parked Order ID =" << pievent->parkedOrderField.ParkedOrderID <<
-                       pievent->parkedOrderField.InstrumentID << directionMap[pievent->parkedOrderField.Direction] << pievent->parkedOrderField.LimitPrice << pievent->parkedOrderField.VolumeTotalOriginal;
+            qDebug() << "Inserted Parked Order:" << ParkedOrder::fromCtp(pievent->parkedOrderField);
         } else {
             qWarning() << "RSP_PARKED_ORDER_INSERT errorID =" << (pievent->errorID);
         }
@@ -466,11 +462,13 @@ void CtpExecuter::customEvent(QEvent *event)
     case RSP_QRY_PARKED_ORDER:
     {
         auto *qpevent = static_cast<QryParkedOrderEvent*>(event);
-        qInfo() << qpevent->parkedOrderList.size() << "parkedOrders";
+        QList<ParkedOrder> parkedOrderList;
         for (const auto &field : qpevent->parkedOrderList) {
-            qInfo().noquote() << field.ParkedOrderID << parkedOrderStatusMap[field.Status] <<
-                                 field.InstrumentID << directionMap[field.Direction] << field.LimitPrice << field.VolumeTotalOriginal;
+            ParkedOrder parkedOrder = ParkedOrder::fromCtp(field);
+            parkedOrderList << parkedOrder;
+            qInfo().noquote() << parkedOrder;
         }
+        emit parkedOrderQryRsp(parkedOrderList);
     }
         break;
     case RSP_QRY_PARKED_ORDER_ACTION:

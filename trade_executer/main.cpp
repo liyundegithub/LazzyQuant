@@ -3,6 +3,7 @@
 
 #include "config.h"
 #include "message_handler.h"
+#include "parked_order.h"
 #include "ctp_executer.h"
 #include "trade_executer_adaptor.h"
 
@@ -12,6 +13,9 @@ int main(int argc, char *argv[])
     QCoreApplication::setOrganizationName(ORGANIZATION);
     QCoreApplication::setApplicationName("trade_executer");
     QCoreApplication::setApplicationVersion(VERSION_STR);
+
+    qDBusRegisterMetaType<ParkedOrder>();
+    qDBusRegisterMetaType<QList<ParkedOrder>>();
 
     QCommandLineParser parser;
     parser.setApplicationDescription("Send trade operations to counter");
