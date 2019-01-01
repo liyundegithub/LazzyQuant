@@ -7,12 +7,10 @@ TEMPLATE = app
 
 SOURCES += main.cpp \
     ../common/dbus_monitor.cpp \
-    ../trade_executer/parked_order.cpp \
     mainwindow.cpp
 
 HEADERS += ../config.h \
     ../common/dbus_monitor.h \
-    ../trade_executer/parked_order.h \
     mainwindow.h
 
 FORMS += \

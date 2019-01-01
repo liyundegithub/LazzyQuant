@@ -12,7 +12,6 @@ SOURCES += main.cpp \
     ../common/connection_manager.cpp \
     ../common/message_handler.cpp \
     ../common/strategy_status.cpp \
-    ../trade_executer/parked_order.cpp \
     future_arbitrageur.cpp \
     depth_market.cpp \
     base_strategy.cpp \
@@ -24,7 +23,6 @@ HEADERS += ../config.h \
     ../common/connection_manager.h \
     ../common/message_handler.h \
     ../common/strategy_status.h \
-    ../trade_executer/parked_order.h \
     future_arbitrageur.h \
     depth_market.h \
     base_strategy.h \

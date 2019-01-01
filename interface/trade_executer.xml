@@ -213,11 +213,11 @@
     </method>
     <method name="cancelOrder">
       <arg name="instrument" type="s" direction="in"/>
-      <arg name="orderRef" type="s" direction="in"/>
+      <arg name="orderRef" type="ay" direction="in"/>
       <arg name="frontID" type="i" direction="in"/>
       <arg name="sessionID" type="i" direction="in"/>
     </method>
-    <method name="cancelOrderI">
+    <method name="cancelOrder">
       <arg name="instrument" type="s" direction="in"/>
       <arg name="orderRefID" type="t" direction="in"/>
       <arg name="frontID" type="i" direction="in"/>
@@ -256,10 +256,16 @@
     <method name="parkOrderCancelAll">
       <arg name="instrument" type="s" direction="in"/>
     </method>
-    <method name="removeParkedOrder">
+    <method name="deleteParkedOrder">
+      <arg name="id" type="ay" direction="in"/>
+    </method>
+    <method name="deleteParkedOrder">
       <arg name="id" type="t" direction="in"/>
     </method>
-    <method name="removeParkedOrderAction">
+    <method name="deleteParkedOrderCancel">
+      <arg name="id" type="ay" direction="in"/>
+    </method>
+    <method name="deleteParkedOrderCancel">
       <arg name="id" type="t" direction="in"/>
     </method>
     <method name="setPosition">

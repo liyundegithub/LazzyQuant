@@ -1105,7 +1105,7 @@ int CtpExecuter::insertParkedOrderAction(const QString &instrument, const char *
  * \param parkedOrderID 预埋报单编号.
  * \return nRequestID
  */
-int CtpExecuter::removeParkedOrder(char *parkedOrderID)
+int CtpExecuter::removeParkedOrder(const char *parkedOrderID)
 {
     CThostFtdcRemoveParkedOrderField removeParkedOrder;
     memset(&removeParkedOrder, 0, sizeof(CThostFtdcRemoveParkedOrderField));
@@ -1128,7 +1128,7 @@ int CtpExecuter::removeParkedOrder(char *parkedOrderID)
  * \param parkedOrderActionID 预埋撤单编号.
  * \return nRequestID
  */
-int CtpExecuter::removeParkedOrderAction(char *parkedOrderActionID)
+int CtpExecuter::removeParkedOrderAction(const char *parkedOrderActionID)
 {
     CThostFtdcRemoveParkedOrderActionField removeParkedOrderAction;
     memset(&removeParkedOrderAction, 0, sizeof(CThostFtdcRemoveParkedOrderActionField));
@@ -1993,18 +1993,18 @@ void CtpExecuter::sellCombine(const QString &instrument1, const QString &instrum
  * \param frontID 前置编号.
  * \param sessionID 会话编号.
  */
-void CtpExecuter::cancelOrder(const QString &instrument, const QString &orderRef, int frontID, int sessionID)
+void CtpExecuter::cancelOrder(const QString &instrument, const QByteArray &orderRef, int frontID, int sessionID)
 {
     qInfo() << __FUNCTION__ << instrument << ", orderRef =" << orderRef << ", frontID =" << frontID << ", sessionID =" << sessionID;
     CHECK_LOGIN_STATE()
 
-    orderAction(instrument, orderRef.toLatin1().constData(), frontID, sessionID);
+    orderAction(instrument, orderRef.constData(), frontID, sessionID);
     orderCancelCountMap[instrument] ++;
     qInfo() << "Cancel order count of" << instrument << ":" << orderCancelCountMap[instrument];
 }
 
 /*!
- * \brief CtpExecuter::cancelOrderI
+ * \brief CtpExecuter::cancelOrder
  * 取消未成交的订单, 此为重载版本, 为了方便输入OrderRefID.
  *
  * \param instrument 合约代码.
@@ -2012,7 +2012,7 @@ void CtpExecuter::cancelOrder(const QString &instrument, const QString &orderRef
  * \param frontID 前置编号.
  * \param sessionID 会话编号.
  */
-void CtpExecuter::cancelOrderI(const QString &instrument, qulonglong orderRefID, int frontID, int sessionID)
+void CtpExecuter::cancelOrder(const QString &instrument, qulonglong orderRefID, int frontID, int sessionID)
 {
     qInfo() << __FUNCTION__ << instrument << ", orderRefID =" << orderRefID << ", frontID =" << frontID << ", sessionID =" << sessionID;
     CHECK_LOGIN_STATE()
@@ -2126,12 +2126,26 @@ void CtpExecuter::parkOrderCancelAll(const QString &instrument)
 }
 
 /*!
- * \brief CtpExecuter::removeParkedOrder
+ * \brief CtpExecuter::deleteParkedOrder
  * 删除预埋报单.
  *
  * \param id 预埋报单编号.
  */
-void CtpExecuter::removeParkedOrder(qulonglong id)
+void CtpExecuter::deleteParkedOrder(const QByteArray &id)
+{
+    qInfo() << __FUNCTION__ << "id =" << id;
+    CHECK_LOGIN_STATE()
+
+    removeParkedOrder(id);
+}
+
+/*!
+ * \brief CtpExecuter::deleteParkedOrder
+ * 删除预埋报单, 此为重载版本, 为了方便输入ParkedOrderID.
+ *
+ * \param id 预埋报单编号.
+ */
+void CtpExecuter::deleteParkedOrder(qulonglong id)
 {
     qInfo() << __FUNCTION__ << "id =" << id;
     CHECK_LOGIN_STATE()
@@ -2142,12 +2156,26 @@ void CtpExecuter::removeParkedOrder(qulonglong id)
 }
 
 /*!
- * \brief CtpExecuter::removeParkedOrderAction
+ * \brief CtpExecuter::deleteParkedOrderCancel
  * 删除预埋撤单.
  *
  * \param id 预埋撤单编号.
  */
-void CtpExecuter::removeParkedOrderAction(qulonglong id)
+void CtpExecuter::deleteParkedOrderCancel(const QByteArray &id)
+{
+    qInfo() << __FUNCTION__ << "id =" << id;
+    CHECK_LOGIN_STATE()
+
+    removeParkedOrderAction(id.data());
+}
+
+/*!
+ * \brief CtpExecuter::deleteParkedOrderCancel
+ * 删除预埋撤单, 此为重载版本, 为了方便输入ParkedOrderActionID.
+ *
+ * \param id 预埋撤单编号.
+ */
+void CtpExecuter::deleteParkedOrderCancel(qulonglong id)
 {
     qInfo() << __FUNCTION__ << "id =" << id;
     CHECK_LOGIN_STATE()

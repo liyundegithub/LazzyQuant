@@ -2,16 +2,6 @@
 
 #include <QDebugStateSaver>
 
-ParkedOrder::ParkedOrder() :
-    id(),
-    status(UNKOWN),
-    instrument(QString()),
-    price(0),
-    volume(0),
-    direction(true)
-{
-}
-
 ParkedOrder::ParkedOrder(QByteArray id,
                          Status status,
                          QString instrument,

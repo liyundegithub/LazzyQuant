@@ -13,7 +13,6 @@ SOURCES += main.cpp \
     ../common/connection_manager.cpp \
     ../common/trading_calendar.cpp \
     ../common/message_handler.cpp \
-    ../trade_executer/parked_order.cpp \
     option_arbitrageur.cpp \
     option_pricing.cpp \
     option_helper.cpp \
@@ -29,7 +28,6 @@ HEADERS += ../config.h \
     ../common/connection_manager.h \
     ../common/trading_calendar.h \
     ../common/message_handler.h \
-    ../trade_executer/parked_order.h \
     option_arbitrageur.h \
     option_pricing.h \
     option_helper.h \

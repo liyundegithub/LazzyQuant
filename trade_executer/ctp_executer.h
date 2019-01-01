@@ -97,8 +97,8 @@ private slots:
     int orderAction(const QString &instrument, const char *orderRef, int frontID, int sessionID);
     int insertParkedLimitOrder(const QString &instrument, int openClose, int volume, double price, bool allOrAny = false, bool gfdOrIoc = true);
     int insertParkedOrderAction(const QString &instrument, const char *exchangeID, const char *orderSysID);
-    int removeParkedOrder(char *parkedOrderID);
-    int removeParkedOrderAction(char *parkedOrderActionID);
+    int removeParkedOrder(const char *parkedOrderID);
+    int removeParkedOrderAction(const char *parkedOrderActionID);
     int qryMaxOrderVolume(const QString &instrument, bool direction, int openClose);
     int qryOrder(const QString &instrument = QString());
     int qryTrade(const QString &instrument = QString());
@@ -158,16 +158,19 @@ public slots:
     void buyCombine(const QString &instrument1, const QString &instrument2, int volume, double price, int orderType = LIMIT_ORDER);
     void sellCombine(const QString &instrument1, const QString &instrument2, int volume, double price, int orderType = LIMIT_ORDER);
 
-    void cancelOrder(const QString &instrument, const QString &orderRef, int frontID, int sessionID);
-    void cancelOrderI(const QString &instrument, qulonglong orderRefID, int frontID, int sessionID);
+    void cancelOrder(const QString &instrument, const QByteArray &orderRef, int frontID, int sessionID);
+    void cancelOrder(const QString &instrument, qulonglong orderRefID, int frontID, int sessionID);
     void cancelAllOrders(const QString &instrument);
 
     void parkBuyLimit(const QString &instrument, int volume, double price, int orderType = LIMIT_ORDER);
     void parkSellLimit(const QString &instrument, int volume, double price, int orderType = LIMIT_ORDER);
     void parkOrderCancel(const QString &instrument, const QString &exchangeID, qulonglong orderSysID);
     void parkOrderCancelAll(const QString &instrument);
-    void removeParkedOrder(qulonglong id);
-    void removeParkedOrderAction(qulonglong id);
+
+    void deleteParkedOrder(const QByteArray &id);
+    void deleteParkedOrder(qulonglong id);
+    void deleteParkedOrderCancel(const QByteArray &id);
+    void deleteParkedOrderCancel(qulonglong id);
 
     void setPosition(const QString &instrument, int newPosition);
     int getPosition(const QString &instrument) const;

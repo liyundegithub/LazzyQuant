@@ -18,7 +18,7 @@ public:
         DELETED,
     };
 
-    ParkedOrder();
+    ParkedOrder() {}
     ParkedOrder(QByteArray id,
                 Status status,
                 QString instrument,
