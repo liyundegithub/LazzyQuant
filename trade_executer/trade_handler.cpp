@@ -31,7 +31,7 @@ void CTradeHandler::handleSingleRsp(F *pField, CThostFtdcRspInfoField *pRspInfo,
 }
 
 template<class EVT, class F>
-void CTradeHandler::handleMultiRsp(QList<F> *pTList, F *pField, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
+void CTradeHandler::handleMultiRsp(QVector<F> *pTList, F *pField, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
     if (nRequestID != lastRequestID) {  // 新Rsp
         lastRequestID = nRequestID;
@@ -281,4 +281,63 @@ void CTradeHandler::OnRtnBulletin(CThostFtdcBulletinField *pBulletin)
 void CTradeHandler::OnRtnTradingNotice(CThostFtdcTradingNoticeInfoField *pTradingNoticeInfo)
 {
     postToReceiver(new RtnTradingNoticeEvent(pTradingNoticeInfo));
+}
+
+void CTradeHandler::OnRspQryContractBank(CThostFtdcContractBankField *pContractBank, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
+{
+    handleMultiRsp<RspQryContractBankEvent>(&contractBankList, pContractBank, pRspInfo, nRequestID, bIsLast);
+}
+
+void CTradeHandler::OnRtnQueryBankBalanceByFuture(CThostFtdcNotifyQueryAccountField *pNotifyQueryAccount)
+{
+    postToReceiver(new RtnQueryBankBalanceByFutureEvent(pNotifyQueryAccount));
+}
+
+void CTradeHandler::OnRspQueryBankAccountMoneyByFuture(CThostFtdcReqQueryAccountField *pReqQueryAccount, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
+{
+    handleMultiRsp<RspQueryBankAccountMoneyByFutureEvent>(&reqQueryAccountList, pReqQueryAccount, pRspInfo, nRequestID, bIsLast);
+}
+
+void CTradeHandler::OnErrRtnQueryBankBalanceByFuture(CThostFtdcReqQueryAccountField *pReqQueryAccount, CThostFtdcRspInfoField *pRspInfo)
+{
+    puts(__FUNCTION__);
+    puts(pRspInfo->ErrorMsg);
+}
+
+void CTradeHandler::OnRtnFromBankToFutureByFuture(CThostFtdcRspTransferField *pRspTransfer)
+{
+    puts(__FUNCTION__);
+    puts(pRspTransfer->ErrorMsg);
+}
+
+void CTradeHandler::OnRtnFromFutureToBankByFuture(CThostFtdcRspTransferField *pRspTransfer)
+{
+    puts(__FUNCTION__);
+    puts(pRspTransfer->ErrorMsg);
+}
+
+void CTradeHandler::OnRspFromBankToFutureByFuture(CThostFtdcReqTransferField *pReqTransfer, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
+{
+    puts(__FUNCTION__);
+    puts(pRspInfo->ErrorMsg);
+    printf("%d %d\n", nRequestID, bIsLast);
+}
+
+void CTradeHandler::OnRspFromFutureToBankByFuture(CThostFtdcReqTransferField *pReqTransfer, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
+{
+    puts(__FUNCTION__);
+    puts(pRspInfo->ErrorMsg);
+    printf("%d %d\n", nRequestID, bIsLast);
+}
+
+void CTradeHandler::OnErrRtnBankToFutureByFuture(CThostFtdcReqTransferField *pReqTransfer, CThostFtdcRspInfoField *pRspInfo)
+{
+    puts(__FUNCTION__);
+    puts(pRspInfo->ErrorMsg);
+}
+
+void CTradeHandler::OnErrRtnFutureToBankByFuture(CThostFtdcReqTransferField *pReqTransfer, CThostFtdcRspInfoField *pRspInfo)
+{
+    puts(__FUNCTION__);
+    puts(pRspInfo->ErrorMsg);
 }

@@ -283,6 +283,12 @@
     <method name="quote">
       <arg name="instrument" type="s" direction="in"/>
     </method>
+    <method name="deposite">
+      <arg name="amount" type="d" direction="in"/>
+    </method>
+    <method name="withdraw">
+      <arg name="amount" type="d" direction="in"/>
+    </method>
     <method name="quit">
     </method>
   </interface>

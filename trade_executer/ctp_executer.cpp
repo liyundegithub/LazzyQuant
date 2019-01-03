@@ -107,6 +107,7 @@ CtpExecuter::CtpExecuter(const CONFIG_ITEM &config, QObject *parent) :
     orderCancelLimit = settings->value("OrderCancelLimit", 300).toInt();
 
     settings->beginGroup("AccountInfo");
+    bankID = settings->value("BankID").toByteArray();
     brokerID = settings->value("BrokerID").toByteArray();
     userID = settings->value("UserID").toByteArray();
     password = settings->value("Password").toByteArray();
@@ -351,13 +352,13 @@ void CtpExecuter::customEvent(QEvent *event)
     case ERR_RTN_ORDER_INSERT:
     {
         auto *eievent = static_cast<ErrRtnOrderInsertEvent*>(event);
-        qWarning() << "Order insert failed! errorID =" << eievent->errorID;
+        qCritical() << "Order insert failed! errorID =" << eievent->errorID;
     }
         break;
     case ERR_RTN_ORDER_ACTION:
     {
         auto *eaevent = static_cast<ErrRtnOrderActionEvent*>(event);
-        qWarning() << "Order cancel failed! errorID =" << eaevent->errorID;
+        qCritical() << "Order cancel failed! errorID =" << eaevent->errorID;
     }
         break;
     case RTN_ORDER:
@@ -573,6 +574,47 @@ void CtpExecuter::customEvent(QEvent *event)
     case RTN_BULLETIN:
         break;
     case RTN_TRADING_NOTICE:
+        break;
+    case RSP_QRY_CONTRACT_BANK:
+    {
+        auto *cbevent = static_cast<RspQryContractBankEvent*>(event);
+        for (const auto &item : cbevent->contractBankList) {
+            qDebug().noquote().nospace() << item.BankID << "\t" << QTextCodec::codecForName("GBK")->toUnicode(item.BankName);
+        }
+    }
+        break;
+    case RTN_QUERY_BANK_BALANCE_BY_FUTURE:
+    {
+        auto *bbevent = static_cast<RtnQueryBankBalanceByFutureEvent*>(event);
+        const auto &field = bbevent->notifyQueryAccount;
+        if (field.ErrorID == 0) {
+            qDebug().noquote() << field.BankAccount << field.BankUseAmount << field.BankFetchAmount << field.CurrencyID;
+        } else {
+            qWarning().noquote() << QTextCodec::codecForName("GBK")->toUnicode(field.ErrorMsg);
+        }
+    }
+        break;
+    case RSP_QUERY_BANK_ACCOUNT_MONEY_BY_FUTURE:
+    {
+        auto *baevent = static_cast<RspQueryBankAccountMoneyByFutureEvent*>(event);
+        if (baevent->errorID != 0) {
+            qWarning() << "RSP_QUERY_BANK_ACCOUNT_MONEY_BY_FUTURE errorID =" << baevent->errorID;
+        }
+    }
+        break;
+    case ERR_RTN_QUERY_BANK_BALANCE_BY_FUTURE:
+        break;
+    case RTN_FROM_BANK_TO_FUTURE_BY_FUTURE:
+        break;
+    case RTN_FROM_FUTURE_TO_BANK_BY_FUTURE:
+        break;
+    case RSP_FROM_BANK_TO_FUTURE_BY_FUTURE:
+        break;
+    case RSP_FROM_FUTURE_TO_BANK_BY_FUTURE:
+        break;
+    case ERR_RTN_BANK_TO_FUTURE_BY_FUTURE:
+        break;
+    case ERR_RTN_FUTURE_TO_BANK_BY_FUTURE:
         break;
     default:
         QObject::customEvent(event);
@@ -1295,6 +1337,98 @@ int CtpExecuter::insertQuote(const QString &instrument)
     int id = nRequestID.fetchAndAddRelaxed(1);
     traderApiMutex.lock();
     int ret = pUserApi->ReqForQuoteInsert(&quote, id);
+    traderApiMutex.unlock();
+    Q_UNUSED(ret);
+    return id;
+}
+
+/*!
+ * \brief CtpExecuter::qryContractBank
+ * 发送查询签约银行请求.
+ *
+ * \return nRequestID
+ */
+int CtpExecuter::qryContractBank()
+{
+    auto *pField = (CThostFtdcQryContractBankField*) malloc(sizeof(CThostFtdcQryContractBankField));
+    memset(pField, 0, sizeof(CThostFtdcQryContractBankField));
+    strcpy(pField->BrokerID, brokerID);
+
+    return callTraderApi(&CThostFtdcTraderApi::ReqQryContractBank, pField);
+}
+
+/*!
+ * \brief CtpExecuter::fromBankToFuture
+ * 发送银行资金转期货请求.
+ *
+ * \return nRequestID
+ */
+int CtpExecuter::fromBankToFuture(double amount)
+{
+    CThostFtdcReqTransferField reqTransfer;
+    memset(&reqTransfer, 0, sizeof(CThostFtdcReqTransferField));
+    strcpy(reqTransfer.BankID, bankID);
+    strcpy(reqTransfer.BankBranchID, "0000");
+    strcpy(reqTransfer.BrokerID, brokerID);
+    strcpy(reqTransfer.AccountID, userID);
+    strcpy(reqTransfer.Password, password);
+    strcpy(reqTransfer.CurrencyID, "CNY");
+    reqTransfer.TradeAmount = amount;
+
+    int id = nRequestID.fetchAndAddRelaxed(1);
+    traderApiMutex.lock();
+    int ret = pUserApi->ReqFromBankToFutureByFuture(&reqTransfer, id);
+    traderApiMutex.unlock();
+    Q_UNUSED(ret);
+    return id;
+}
+
+/*!
+ * \brief CtpExecuter::fromFutureToBank
+ * 发送期货资金转银行请求.
+ *
+ * \return nRequestID
+ */
+int CtpExecuter::fromFutureToBank(double amount)
+{
+    CThostFtdcReqTransferField reqTransfer;
+    memset(&reqTransfer, 0, sizeof(CThostFtdcReqTransferField));
+    strcpy(reqTransfer.BankID, bankID);
+    strcpy(reqTransfer.BankBranchID, "0000");
+    strcpy(reqTransfer.BrokerID, brokerID);
+    strcpy(reqTransfer.AccountID, userID);
+    strcpy(reqTransfer.Password, password);
+    strcpy(reqTransfer.CurrencyID, "CNY");
+    reqTransfer.TradeAmount = amount;
+
+    int id = nRequestID.fetchAndAddRelaxed(1);
+    traderApiMutex.lock();
+    int ret = pUserApi->ReqFromFutureToBankByFuture(&reqTransfer, id);
+    traderApiMutex.unlock();
+    Q_UNUSED(ret);
+    return id;
+}
+
+/*!
+ * \brief CtpExecuter::queryBankAccountMoney
+ * 发送查询银行余额请求.
+ *
+ * \return nRequestID
+ */
+int CtpExecuter::queryBankAccountMoney()
+{
+    CThostFtdcReqQueryAccountField reqQueryAccount;
+    memset(&reqQueryAccount, 0, sizeof(CThostFtdcReqQueryAccountField));
+    strcpy(reqQueryAccount.BankID, bankID);
+    strcpy(reqQueryAccount.BankBranchID, "0000");
+    strcpy(reqQueryAccount.BrokerID, brokerID);
+    strcpy(reqQueryAccount.AccountID, userID);
+    strcpy(reqQueryAccount.Password, password);
+    strcpy(reqQueryAccount.CurrencyID, "CNY");
+
+    int id = nRequestID.fetchAndAddRelaxed(1);
+    traderApiMutex.lock();
+    int ret = pUserApi->ReqQueryBankAccountMoneyByFuture(&reqQueryAccount, id);
     traderApiMutex.unlock();
     Q_UNUSED(ret);
     return id;
@@ -2267,6 +2401,34 @@ void CtpExecuter::quote(const QString &instrument)
     CHECK_LOGIN_STATE()
 
     insertQuote(instrument);
+}
+
+/*!
+ * \brief CtpExecuter::deposite
+ * 入金.
+ *
+ * \param amount 金额.
+ */
+void CtpExecuter::deposite(double amount)
+{
+    qInfo() << __FUNCTION__ << amount;
+    CHECK_LOGIN_STATE()
+
+    fromBankToFuture(amount);
+}
+
+/*!
+ * \brief CtpExecuter::withdraw
+ * 出金.
+ *
+ * \param amount 金额.
+ */
+void CtpExecuter::withdraw(double amount)
+{
+    qInfo() << __FUNCTION__ << amount;
+    CHECK_LOGIN_STATE()
+
+    fromFutureToBank(amount);
 }
 
 /*!

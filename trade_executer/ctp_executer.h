@@ -49,6 +49,7 @@ protected:
     QMap<QString, int> orderCancelCountMap;
     QMultiMap<QString, Order> orderMap;
 
+    QByteArray bankID;
     QByteArray brokerID;
     QByteArray userID;
     QByteArray password;
@@ -106,6 +107,10 @@ private slots:
     int qryPositionDetail(const QString &instrument = QString());
     int insertExecOrder(const QString &instrument, OPTION_TYPE type, int volume);
     int insertQuote(const QString &instrument);
+    int qryContractBank();
+    int fromBankToFuture(double amount);
+    int fromFutureToBank(double amount);
+    int queryBankAccountMoney();
 
     bool checkLimitOrder(const QString &instrument, double price, bool direction, int orderType);
     bool distinguishYdTd(const QString &instrument);
@@ -177,6 +182,9 @@ public slots:
 
     void execOption(const QString &instrument, int volume);
     void quote(const QString &instrument);
+
+    void deposite(double amount);
+    void withdraw(double amount);
 
     void quit();
 };

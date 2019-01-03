@@ -1,50 +1,61 @@
 #ifndef TRADE_HANDLER_H
 #define TRADE_HANDLER_H
 
+#include <QVector>
 #include <QEvent>
 
 #include "ThostFtdcTraderApi.h"
 
-#define FRONT_CONNECTED                     (QEvent::User + 0)
-#define FRONT_DISCONNECTED                  (QEvent::User + 1)
-#define RSP_AUTHENTICATE                    (QEvent::User + 2)
-#define RSP_USER_LOGIN                      (QEvent::User + 3)
-#define RSP_USER_LOGOUT                     (QEvent::User + 4)
-#define RSP_ERROR                           (QEvent::User + 5)
-#define RSP_SETTLEMENT_INFO                 (QEvent::User + 6)
-#define RSP_SETTLEMENT_CONFIRM              (QEvent::User + 7)
-#define RSP_TRADING_ACCOUNT                 (QEvent::User + 8)
-#define RSP_QRY_INSTRUMENT_MARGIN_RATE      (QEvent::User + 9)
-#define RSP_QRY_INSTRUMENT_COMMISSION_RATE  (QEvent::User + 10)
-#define RSP_QRY_INSTRUMENT                  (QEvent::User + 11)
-#define RSP_DEPTH_MARKET_DATA               (QEvent::User + 12)
-#define RSP_ORDER_INSERT                    (QEvent::User + 13)
-#define RSP_ORDER_ACTION                    (QEvent::User + 14)
-#define RSP_PARKED_ORDER_INSERT             (QEvent::User + 15)
-#define RSP_PARKED_ORDER_ACTION             (QEvent::User + 16)
-#define RSP_REMOVE_PARKED_ORDER             (QEvent::User + 17)
-#define RSP_REMOVE_PARKED_ORDER_ACTION      (QEvent::User + 18)
-#define ERR_RTN_ORDER_INSERT                (QEvent::User + 19)
-#define ERR_RTN_ORDER_ACTION                (QEvent::User + 20)
-#define RTN_ORDER                           (QEvent::User + 21)
-#define RTN_TRADE                           (QEvent::User + 22)
-#define RSP_QRY_ORDER                       (QEvent::User + 23)
-#define RSP_QRY_TRADE                       (QEvent::User + 24)
-#define RSP_QRY_PARKED_ORDER                (QEvent::User + 25)
-#define RSP_QRY_PARKED_ORDER_ACTION         (QEvent::User + 26)
-#define RSP_QRY_POSITION                    (QEvent::User + 27)
-#define RSP_QRY_POSITION_DETAIL             (QEvent::User + 28)
-#define RSP_QRY_MAX_ORDER_VOL               (QEvent::User + 29)
-#define RSP_EXEC_ORDER_INSERT               (QEvent::User + 30)
-#define RSP_EXEC_ORDER_ACTION               (QEvent::User + 31)
-#define RSP_FOR_QUOTE_INSERT                (QEvent::User + 32)
-#define RTN_EXEC_ORDER                      (QEvent::User + 33)
-#define ERR_RTN_EXEC_ORDER_INSERT           (QEvent::User + 34)
-#define ERR_RTN_EXEC_ORDER_ACTION           (QEvent::User + 35)
-#define ERR_RTN_FOR_QUOTE_INSERT            (QEvent::User + 36)
-#define RTN_INSTRUMENT_STATUS               (QEvent::User + 37)
-#define RTN_BULLETIN                        (QEvent::User + 38)
-#define RTN_TRADING_NOTICE                  (QEvent::User + 39)
+#define FRONT_CONNECTED                         (QEvent::User + 0)
+#define FRONT_DISCONNECTED                      (QEvent::User + 1)
+#define RSP_AUTHENTICATE                        (QEvent::User + 2)
+#define RSP_USER_LOGIN                          (QEvent::User + 3)
+#define RSP_USER_LOGOUT                         (QEvent::User + 4)
+#define RSP_ERROR                               (QEvent::User + 5)
+#define RSP_SETTLEMENT_INFO                     (QEvent::User + 6)
+#define RSP_SETTLEMENT_CONFIRM                  (QEvent::User + 7)
+#define RSP_TRADING_ACCOUNT                     (QEvent::User + 8)
+#define RSP_QRY_INSTRUMENT_MARGIN_RATE          (QEvent::User + 9)
+#define RSP_QRY_INSTRUMENT_COMMISSION_RATE      (QEvent::User + 10)
+#define RSP_QRY_INSTRUMENT                      (QEvent::User + 11)
+#define RSP_DEPTH_MARKET_DATA                   (QEvent::User + 12)
+#define RSP_ORDER_INSERT                        (QEvent::User + 13)
+#define RSP_ORDER_ACTION                        (QEvent::User + 14)
+#define RSP_PARKED_ORDER_INSERT                 (QEvent::User + 15)
+#define RSP_PARKED_ORDER_ACTION                 (QEvent::User + 16)
+#define RSP_REMOVE_PARKED_ORDER                 (QEvent::User + 17)
+#define RSP_REMOVE_PARKED_ORDER_ACTION          (QEvent::User + 18)
+#define ERR_RTN_ORDER_INSERT                    (QEvent::User + 19)
+#define ERR_RTN_ORDER_ACTION                    (QEvent::User + 20)
+#define RTN_ORDER                               (QEvent::User + 21)
+#define RTN_TRADE                               (QEvent::User + 22)
+#define RSP_QRY_ORDER                           (QEvent::User + 23)
+#define RSP_QRY_TRADE                           (QEvent::User + 24)
+#define RSP_QRY_PARKED_ORDER                    (QEvent::User + 25)
+#define RSP_QRY_PARKED_ORDER_ACTION             (QEvent::User + 26)
+#define RSP_QRY_POSITION                        (QEvent::User + 27)
+#define RSP_QRY_POSITION_DETAIL                 (QEvent::User + 28)
+#define RSP_QRY_MAX_ORDER_VOL                   (QEvent::User + 29)
+#define RSP_EXEC_ORDER_INSERT                   (QEvent::User + 30)
+#define RSP_EXEC_ORDER_ACTION                   (QEvent::User + 31)
+#define RSP_FOR_QUOTE_INSERT                    (QEvent::User + 32)
+#define RTN_EXEC_ORDER                          (QEvent::User + 33)
+#define ERR_RTN_EXEC_ORDER_INSERT               (QEvent::User + 34)
+#define ERR_RTN_EXEC_ORDER_ACTION               (QEvent::User + 35)
+#define ERR_RTN_FOR_QUOTE_INSERT                (QEvent::User + 36)
+#define RTN_INSTRUMENT_STATUS                   (QEvent::User + 37)
+#define RTN_BULLETIN                            (QEvent::User + 38)
+#define RTN_TRADING_NOTICE                      (QEvent::User + 39)
+#define RSP_QRY_CONTRACT_BANK                   (QEvent::User + 40)
+#define RTN_QUERY_BANK_BALANCE_BY_FUTURE        (QEvent::User + 41)
+#define RSP_QUERY_BANK_ACCOUNT_MONEY_BY_FUTURE  (QEvent::User + 42)
+#define ERR_RTN_QUERY_BANK_BALANCE_BY_FUTURE    (QEvent::User + 43)
+#define RTN_FROM_BANK_TO_FUTURE_BY_FUTURE       (QEvent::User + 44)
+#define RTN_FROM_FUTURE_TO_BANK_BY_FUTURE       (QEvent::User + 45)
+#define RSP_FROM_BANK_TO_FUTURE_BY_FUTURE       (QEvent::User + 46)
+#define RSP_FROM_FUTURE_TO_BANK_BY_FUTURE       (QEvent::User + 47)
+#define ERR_RTN_BANK_TO_FUTURE_BY_FUTURE        (QEvent::User + 48)
+#define ERR_RTN_FUTURE_TO_BANK_BY_FUTURE        (QEvent::User + 49)
 
 struct RspInfo {
     const int errorID;
@@ -112,9 +123,9 @@ public:
 
 class SettlementInfoEvent : public QEvent, public RspInfo {
 public:
-    const QList<CThostFtdcSettlementInfoField> settlementInfoList;
+    const QVector<CThostFtdcSettlementInfoField> settlementInfoList;
 
-    SettlementInfoEvent(const QList<CThostFtdcSettlementInfoField> &list, int err, int id) :
+    SettlementInfoEvent(const QVector<CThostFtdcSettlementInfoField> &list, int err, int id) :
         QEvent(QEvent::Type(RSP_SETTLEMENT_INFO)),
         RspInfo(err, id),
         settlementInfoList(list) {}
@@ -142,9 +153,9 @@ public:
 
 class RspQryInstrumentMarginRateEvent : public QEvent, public RspInfo {
 public:
-    const QList<CThostFtdcInstrumentMarginRateField> instrumentMarginRateList;
+    const QVector<CThostFtdcInstrumentMarginRateField> instrumentMarginRateList;
 
-    RspQryInstrumentMarginRateEvent(const QList<CThostFtdcInstrumentMarginRateField> &list, int err, int id) :
+    RspQryInstrumentMarginRateEvent(const QVector<CThostFtdcInstrumentMarginRateField> &list, int err, int id) :
         QEvent(QEvent::Type(RSP_QRY_INSTRUMENT_MARGIN_RATE)),
         RspInfo(err, id),
         instrumentMarginRateList(list) {}
@@ -152,9 +163,9 @@ public:
 
 class RspQryInstrumentCommissionRateEvent : public QEvent, public RspInfo {
 public:
-    const QList<CThostFtdcInstrumentCommissionRateField> instrumentCommissionRateList;
+    const QVector<CThostFtdcInstrumentCommissionRateField> instrumentCommissionRateList;
 
-    RspQryInstrumentCommissionRateEvent(const QList<CThostFtdcInstrumentCommissionRateField> &list, int err, int id) :
+    RspQryInstrumentCommissionRateEvent(const QVector<CThostFtdcInstrumentCommissionRateField> &list, int err, int id) :
         QEvent(QEvent::Type(RSP_QRY_INSTRUMENT_COMMISSION_RATE)),
         RspInfo(err, id),
         instrumentCommissionRateList(list) {}
@@ -162,9 +173,9 @@ public:
 
 class RspQryInstrumentEvent : public QEvent, public RspInfo {
 public:
-    const QList<CThostFtdcInstrumentField> instrumentList;
+    const QVector<CThostFtdcInstrumentField> instrumentList;
 
-    RspQryInstrumentEvent(const QList<CThostFtdcInstrumentField> &list, int err, int id) :
+    RspQryInstrumentEvent(const QVector<CThostFtdcInstrumentField> &list, int err, int id) :
         QEvent(QEvent::Type(RSP_QRY_INSTRUMENT)),
         RspInfo(err, id),
         instrumentList(list) {}
@@ -172,9 +183,9 @@ public:
 
 class DepthMarketDataEvent : public QEvent, public RspInfo {
 public:
-    const QList<CThostFtdcDepthMarketDataField> depthMarketDataList;
+    const QVector<CThostFtdcDepthMarketDataField> depthMarketDataList;
 
-    DepthMarketDataEvent(const QList<CThostFtdcDepthMarketDataField> &list, int err, int id) :
+    DepthMarketDataEvent(const QVector<CThostFtdcDepthMarketDataField> &list, int err, int id) :
         QEvent(QEvent::Type(RSP_DEPTH_MARKET_DATA)),
         RspInfo(err, id),
         depthMarketDataList(list) {}
@@ -280,9 +291,9 @@ public:
 
 class QryOrderEvent : public QEvent, public RspInfo {
 public:
-    const QList<CThostFtdcOrderField> orderList;
+    const QVector<CThostFtdcOrderField> orderList;
 
-    QryOrderEvent(const QList<CThostFtdcOrderField> &list, int err, int id) :
+    QryOrderEvent(const QVector<CThostFtdcOrderField> &list, int err, int id) :
         QEvent(QEvent::Type(RSP_QRY_ORDER)),
         RspInfo(err, id),
         orderList(list) {}
@@ -290,9 +301,9 @@ public:
 
 class QryTradeEvent : public QEvent, public RspInfo {
 public:
-    const QList<CThostFtdcTradeField> tradeList;
+    const QVector<CThostFtdcTradeField> tradeList;
 
-    QryTradeEvent(const QList<CThostFtdcTradeField> &list, int err, int id) :
+    QryTradeEvent(const QVector<CThostFtdcTradeField> &list, int err, int id) :
         QEvent(QEvent::Type(RSP_QRY_TRADE)),
         RspInfo(err, id),
         tradeList(list) {}
@@ -300,9 +311,9 @@ public:
 
 class QryParkedOrderEvent : public QEvent, public RspInfo {
 public:
-    const QList<CThostFtdcParkedOrderField> parkedOrderList;
+    const QVector<CThostFtdcParkedOrderField> parkedOrderList;
 
-    QryParkedOrderEvent(const QList<CThostFtdcParkedOrderField> &list, int err, int id) :
+    QryParkedOrderEvent(const QVector<CThostFtdcParkedOrderField> &list, int err, int id) :
         QEvent(QEvent::Type(RSP_QRY_PARKED_ORDER)),
         RspInfo(err, id),
         parkedOrderList(list) {}
@@ -310,9 +321,9 @@ public:
 
 class QryParkedOrderActionEvent : public QEvent, public RspInfo {
 public:
-    const QList<CThostFtdcParkedOrderActionField> parkedOrderActionList;
+    const QVector<CThostFtdcParkedOrderActionField> parkedOrderActionList;
 
-    QryParkedOrderActionEvent(const QList<CThostFtdcParkedOrderActionField> &list, int err, int id) :
+    QryParkedOrderActionEvent(const QVector<CThostFtdcParkedOrderActionField> &list, int err, int id) :
         QEvent(QEvent::Type(RSP_QRY_PARKED_ORDER_ACTION)),
         RspInfo(err, id),
         parkedOrderActionList(list) {}
@@ -320,9 +331,9 @@ public:
 
 class PositionEvent : public QEvent, public RspInfo {
 public:
-    const QList<CThostFtdcInvestorPositionField> positionList;
+    const QVector<CThostFtdcInvestorPositionField> positionList;
 
-    PositionEvent(const QList<CThostFtdcInvestorPositionField> &list, int err, int id) :
+    PositionEvent(const QVector<CThostFtdcInvestorPositionField> &list, int err, int id) :
         QEvent(QEvent::Type(RSP_QRY_POSITION)),
         RspInfo(err, id),
         positionList(list) {}
@@ -330,9 +341,9 @@ public:
 
 class PositionDetailEvent : public QEvent, public RspInfo {
 public:
-    const QList<CThostFtdcInvestorPositionDetailField> positionDetailList;
+    const QVector<CThostFtdcInvestorPositionDetailField> positionDetailList;
 
-    PositionDetailEvent(const QList<CThostFtdcInvestorPositionDetailField> &list, int err, int id) :
+    PositionDetailEvent(const QVector<CThostFtdcInvestorPositionDetailField> &list, int err, int id) :
         QEvent(QEvent::Type(RSP_QRY_POSITION_DETAIL)),
         RspInfo(err, id),
         positionDetailList(list) {}
@@ -444,21 +455,52 @@ public:
         tradingNoticeInfoField(*pTradingNoticeInfoField) {}
 };
 
+class RspQryContractBankEvent : public QEvent, public RspInfo {
+public:
+    const QVector<CThostFtdcContractBankField> contractBankList;
+
+    explicit RspQryContractBankEvent(const QVector<CThostFtdcContractBankField> &list, int err, int id) :
+        QEvent(QEvent::Type(RSP_QRY_CONTRACT_BANK)),
+        RspInfo(err, id),
+        contractBankList(list) {}
+};
+
+class RspQueryBankAccountMoneyByFutureEvent : public QEvent, public RspInfo {
+public:
+    const QVector<CThostFtdcReqQueryAccountField> reqQueryAccountList;
+
+    explicit RspQueryBankAccountMoneyByFutureEvent(const QVector<CThostFtdcReqQueryAccountField> &list, int err, int id) :
+        QEvent(QEvent::Type(RSP_QUERY_BANK_ACCOUNT_MONEY_BY_FUTURE)),
+        RspInfo(err, id),
+        reqQueryAccountList(list) {}
+};
+
+class RtnQueryBankBalanceByFutureEvent : public QEvent {
+public:
+    const CThostFtdcNotifyQueryAccountField notifyQueryAccount;
+
+    explicit RtnQueryBankBalanceByFutureEvent(CThostFtdcNotifyQueryAccountField *pNotifyQueryAccount) :
+        QEvent(QEvent::Type(RTN_QUERY_BANK_BALANCE_BY_FUTURE)),
+        notifyQueryAccount(*pNotifyQueryAccount) {}
+};
+
 class CTradeHandler final : public CThostFtdcTraderSpi {
     QObject * const receiver;
 
     int lastRequestID;
-    QList<CThostFtdcSettlementInfoField> settlementInfoList;
-    QList<CThostFtdcInstrumentMarginRateField> instrumentMarginRateList;
-    QList<CThostFtdcInstrumentCommissionRateField> instrumentCommissionRateList;
-    QList<CThostFtdcInstrumentField> instrumentList;
-    QList<CThostFtdcDepthMarketDataField> depthMarketDataList;
-    QList<CThostFtdcOrderField> orderList;
-    QList<CThostFtdcTradeField> tradeList;
-    QList<CThostFtdcParkedOrderField> parkedOrderList;
-    QList<CThostFtdcParkedOrderActionField> parkedOrderActionList;
-    QList<CThostFtdcInvestorPositionField> positionList;
-    QList<CThostFtdcInvestorPositionDetailField> positionDetailList;
+    QVector<CThostFtdcSettlementInfoField> settlementInfoList;
+    QVector<CThostFtdcInstrumentMarginRateField> instrumentMarginRateList;
+    QVector<CThostFtdcInstrumentCommissionRateField> instrumentCommissionRateList;
+    QVector<CThostFtdcInstrumentField> instrumentList;
+    QVector<CThostFtdcDepthMarketDataField> depthMarketDataList;
+    QVector<CThostFtdcOrderField> orderList;
+    QVector<CThostFtdcTradeField> tradeList;
+    QVector<CThostFtdcParkedOrderField> parkedOrderList;
+    QVector<CThostFtdcParkedOrderActionField> parkedOrderActionList;
+    QVector<CThostFtdcInvestorPositionField> positionList;
+    QVector<CThostFtdcInvestorPositionDetailField> positionDetailList;
+    QVector<CThostFtdcContractBankField> contractBankList;
+    QVector<CThostFtdcReqQueryAccountField> reqQueryAccountList;
 
 public:
     explicit CTradeHandler(QObject *obj);
@@ -470,7 +512,7 @@ public:
     void handleSingleRsp(F *pField, CThostFtdcRspInfoField *pRspInfo, int nRequestID = -1);
 
     template<class EVT, class F>
-    void handleMultiRsp(QList<F> *pTList, F *pField, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
+    void handleMultiRsp(QVector<F> *pTList, F *pField, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
 
     void OnFrontConnected();
     void OnFrontDisconnected(int nReason);
@@ -524,6 +566,17 @@ public:
     void OnRtnBulletin(CThostFtdcBulletinField *pBulletin);
     void OnRtnTradingNotice(CThostFtdcTradingNoticeInfoField *pTradingNoticeInfo);
 
+    void OnRspQryContractBank(CThostFtdcContractBankField *pContractBank, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
+    void OnRtnQueryBankBalanceByFuture(CThostFtdcNotifyQueryAccountField *pNotifyQueryAccount);
+    void OnRspQueryBankAccountMoneyByFuture(CThostFtdcReqQueryAccountField *pReqQueryAccount, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
+    void OnErrRtnQueryBankBalanceByFuture(CThostFtdcReqQueryAccountField *pReqQueryAccount, CThostFtdcRspInfoField *pRspInfo);
+
+    void OnRtnFromBankToFutureByFuture(CThostFtdcRspTransferField *pRspTransfer);
+    void OnRtnFromFutureToBankByFuture(CThostFtdcRspTransferField *pRspTransfer);
+    void OnRspFromBankToFutureByFuture(CThostFtdcReqTransferField *pReqTransfer, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
+    void OnRspFromFutureToBankByFuture(CThostFtdcReqTransferField *pReqTransfer, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast);
+    void OnErrRtnBankToFutureByFuture(CThostFtdcReqTransferField *pReqTransfer, CThostFtdcRspInfoField *pRspInfo);
+    void OnErrRtnFutureToBankByFuture(CThostFtdcReqTransferField *pReqTransfer, CThostFtdcRspInfoField *pRspInfo);
 };
 
 #endif // TRADE_HANDLER_H
