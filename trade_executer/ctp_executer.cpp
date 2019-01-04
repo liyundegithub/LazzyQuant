@@ -146,6 +146,13 @@ void CtpExecuter::customEvent(QEvent *event)
 {
     qDebug() << "customEvent:" << int(event->type());
     switch (int(event->type())) {
+    case ERROR_ID_MSG:
+    {
+        auto *emevent = static_cast<ErrorIdMsgEvent*>(event);
+        qCritical().noquote() << emevent->functionName << "ErrorID =" << emevent->rspInfo.ErrorID
+                              << QTextCodec::codecForName("GBK")->toUnicode(emevent->rspInfo.ErrorMsg);
+    }
+        break;
     case FRONT_CONNECTED:
         loginStateMachine();
         emit frontConnected();
@@ -349,18 +356,6 @@ void CtpExecuter::customEvent(QEvent *event)
         }
     }
         break;
-    case ERR_RTN_ORDER_INSERT:
-    {
-        auto *eievent = static_cast<ErrRtnOrderInsertEvent*>(event);
-        qCritical() << "Order insert failed! errorID =" << eievent->errorID;
-    }
-        break;
-    case ERR_RTN_ORDER_ACTION:
-    {
-        auto *eaevent = static_cast<ErrRtnOrderActionEvent*>(event);
-        qCritical() << "Order cancel failed! errorID =" << eaevent->errorID;
-    }
-        break;
     case RTN_ORDER:
     {
         auto *revent = static_cast<RtnOrderEvent*>(event);
@@ -554,12 +549,6 @@ void CtpExecuter::customEvent(QEvent *event)
         break;
     case RTN_EXEC_ORDER:
         break;
-    case ERR_RTN_EXEC_ORDER_INSERT:
-        break;
-    case ERR_RTN_EXEC_ORDER_ACTION:
-        break;
-    case ERR_RTN_FOR_QUOTE_INSERT:
-        break;
     case RTN_INSTRUMENT_STATUS:
     {
         auto *isevent = static_cast<RtnInstrumentStatusEvent*>(event);
@@ -602,19 +591,29 @@ void CtpExecuter::customEvent(QEvent *event)
         }
     }
         break;
-    case ERR_RTN_QUERY_BANK_BALANCE_BY_FUTURE:
-        break;
     case RTN_FROM_BANK_TO_FUTURE_BY_FUTURE:
+    {
+        auto *bfevent = static_cast<RtnFromBankToFutureByFutureEvent*>(event);
+        const auto &field = bfevent->rspTransfer;
+        if (field.ErrorID == 0) {
+            emit transfered(field.TradeAmount);
+        } else {
+            qWarning().noquote() << "RTN_FROM_BANK_TO_FUTURE_BY_FUTURE errorID =" << field.ErrorID
+                                 << QTextCodec::codecForName("GBK")->toUnicode(field.ErrorMsg);
+        }
+    }
         break;
     case RTN_FROM_FUTURE_TO_BANK_BY_FUTURE:
-        break;
-    case RSP_FROM_BANK_TO_FUTURE_BY_FUTURE:
-        break;
-    case RSP_FROM_FUTURE_TO_BANK_BY_FUTURE:
-        break;
-    case ERR_RTN_BANK_TO_FUTURE_BY_FUTURE:
-        break;
-    case ERR_RTN_FUTURE_TO_BANK_BY_FUTURE:
+    {
+        auto *fbevent = static_cast<RtnFromFutureToBankByFutureEvent*>(event);
+        const auto &field = fbevent->rspTransfer;
+        if (field.ErrorID == 0) {
+            emit transfered(-field.TradeAmount);
+        } else {
+            qWarning().noquote() << "RTN_FROM_FUTURE_TO_BANK_BY_FUTURE errorID =" << field.ErrorID
+                                 << QTextCodec::codecForName("GBK")->toUnicode(field.ErrorMsg);
+        }
+    }
         break;
     default:
         QObject::customEvent(event);

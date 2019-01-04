@@ -17,6 +17,13 @@ inline void CTradeHandler::postToReceiver(QEvent *event)
     QCoreApplication::postEvent(receiver, event);
 }
 
+inline void CTradeHandler::handleError(const char *functionName, CThostFtdcRspInfoField *pRspInfo)
+{
+    if (pRspInfo) {
+        postToReceiver(new ErrorIdMsgEvent(functionName, pRspInfo));
+    }
+}
+
 template<class EVT, class F>
 void CTradeHandler::handleSingleRsp(F *pField, CThostFtdcRspInfoField *pRspInfo, int nRequestID)
 {
@@ -165,12 +172,12 @@ void CTradeHandler::OnRspRemoveParkedOrderAction(CThostFtdcRemoveParkedOrderActi
 
 void CTradeHandler::OnErrRtnOrderInsert(CThostFtdcInputOrderField *pInputOrder, CThostFtdcRspInfoField *pRspInfo)
 {
-    handleSingleRsp<ErrRtnOrderInsertEvent>(pInputOrder, pRspInfo);
+    handleError(__func__, pRspInfo);
 }
 
 void CTradeHandler::OnErrRtnOrderAction(CThostFtdcOrderActionField *pOrderAction, CThostFtdcRspInfoField *pRspInfo)
 {
-    handleSingleRsp<ErrRtnOrderActionEvent>(pOrderAction, pRspInfo);
+    handleError(__func__, pRspInfo);
 }
 
 void CTradeHandler::OnRspError(CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
@@ -255,17 +262,17 @@ void CTradeHandler::OnRtnExecOrder(CThostFtdcExecOrderField *pExecOrder)
 
 void CTradeHandler::OnErrRtnExecOrderInsert(CThostFtdcInputExecOrderField *pInputExecOrder, CThostFtdcRspInfoField *pRspInfo)
 {
-    handleSingleRsp<ErrRtnExecOrderInsertEvent>(pInputExecOrder, pRspInfo);
+    handleError(__func__, pRspInfo);
 }
 
 void CTradeHandler::OnErrRtnExecOrderAction(CThostFtdcExecOrderActionField *pExecOrderAction, CThostFtdcRspInfoField *pRspInfo)
 {
-    handleSingleRsp<ErrRtnExecOrderActionEvent>(pExecOrderAction, pRspInfo);
+    handleError(__func__, pRspInfo);
 }
 
 void CTradeHandler::OnErrRtnForQuoteInsert(CThostFtdcInputForQuoteField *pInputForQuote, CThostFtdcRspInfoField *pRspInfo)
 {
-    handleSingleRsp<ErrRtnForQuoteInsertEvent>(pInputForQuote, pRspInfo);
+    handleError(__func__, pRspInfo);
 }
 
 void CTradeHandler::OnRtnInstrumentStatus(CThostFtdcInstrumentStatusField *pInstrumentStatus)
@@ -300,44 +307,35 @@ void CTradeHandler::OnRspQueryBankAccountMoneyByFuture(CThostFtdcReqQueryAccount
 
 void CTradeHandler::OnErrRtnQueryBankBalanceByFuture(CThostFtdcReqQueryAccountField *pReqQueryAccount, CThostFtdcRspInfoField *pRspInfo)
 {
-    puts(__FUNCTION__);
-    puts(pRspInfo->ErrorMsg);
+    handleError(__func__, pRspInfo);
 }
 
 void CTradeHandler::OnRtnFromBankToFutureByFuture(CThostFtdcRspTransferField *pRspTransfer)
 {
-    puts(__FUNCTION__);
-    puts(pRspTransfer->ErrorMsg);
+    postToReceiver(new RtnFromBankToFutureByFutureEvent(pRspTransfer));
 }
 
 void CTradeHandler::OnRtnFromFutureToBankByFuture(CThostFtdcRspTransferField *pRspTransfer)
 {
-    puts(__FUNCTION__);
-    puts(pRspTransfer->ErrorMsg);
+    postToReceiver(new RtnFromFutureToBankByFutureEvent(pRspTransfer));
 }
 
 void CTradeHandler::OnRspFromBankToFutureByFuture(CThostFtdcReqTransferField *pReqTransfer, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
-    puts(__FUNCTION__);
-    puts(pRspInfo->ErrorMsg);
-    printf("%d %d\n", nRequestID, bIsLast);
+    handleError(__func__, pRspInfo);
 }
 
 void CTradeHandler::OnRspFromFutureToBankByFuture(CThostFtdcReqTransferField *pReqTransfer, CThostFtdcRspInfoField *pRspInfo, int nRequestID, bool bIsLast)
 {
-    puts(__FUNCTION__);
-    puts(pRspInfo->ErrorMsg);
-    printf("%d %d\n", nRequestID, bIsLast);
+    handleError(__func__, pRspInfo);
 }
 
 void CTradeHandler::OnErrRtnBankToFutureByFuture(CThostFtdcReqTransferField *pReqTransfer, CThostFtdcRspInfoField *pRspInfo)
 {
-    puts(__FUNCTION__);
-    puts(pRspInfo->ErrorMsg);
+    handleError(__func__, pRspInfo);
 }
 
 void CTradeHandler::OnErrRtnFutureToBankByFuture(CThostFtdcReqTransferField *pReqTransfer, CThostFtdcRspInfoField *pRspInfo)
 {
-    puts(__FUNCTION__);
-    puts(pRspInfo->ErrorMsg);
+    handleError(__func__, pRspInfo);
 }

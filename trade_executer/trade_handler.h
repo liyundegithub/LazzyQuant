@@ -6,6 +6,7 @@
 
 #include "ThostFtdcTraderApi.h"
 
+#define ERROR_ID_MSG                            (QEvent::MaxUser)
 #define FRONT_CONNECTED                         (QEvent::User + 0)
 #define FRONT_DISCONNECTED                      (QEvent::User + 1)
 #define RSP_AUTHENTICATE                        (QEvent::User + 2)
@@ -25,8 +26,6 @@
 #define RSP_PARKED_ORDER_ACTION                 (QEvent::User + 16)
 #define RSP_REMOVE_PARKED_ORDER                 (QEvent::User + 17)
 #define RSP_REMOVE_PARKED_ORDER_ACTION          (QEvent::User + 18)
-#define ERR_RTN_ORDER_INSERT                    (QEvent::User + 19)
-#define ERR_RTN_ORDER_ACTION                    (QEvent::User + 20)
 #define RTN_ORDER                               (QEvent::User + 21)
 #define RTN_TRADE                               (QEvent::User + 22)
 #define RSP_QRY_ORDER                           (QEvent::User + 23)
@@ -40,22 +39,14 @@
 #define RSP_EXEC_ORDER_ACTION                   (QEvent::User + 31)
 #define RSP_FOR_QUOTE_INSERT                    (QEvent::User + 32)
 #define RTN_EXEC_ORDER                          (QEvent::User + 33)
-#define ERR_RTN_EXEC_ORDER_INSERT               (QEvent::User + 34)
-#define ERR_RTN_EXEC_ORDER_ACTION               (QEvent::User + 35)
-#define ERR_RTN_FOR_QUOTE_INSERT                (QEvent::User + 36)
 #define RTN_INSTRUMENT_STATUS                   (QEvent::User + 37)
 #define RTN_BULLETIN                            (QEvent::User + 38)
 #define RTN_TRADING_NOTICE                      (QEvent::User + 39)
 #define RSP_QRY_CONTRACT_BANK                   (QEvent::User + 40)
 #define RTN_QUERY_BANK_BALANCE_BY_FUTURE        (QEvent::User + 41)
 #define RSP_QUERY_BANK_ACCOUNT_MONEY_BY_FUTURE  (QEvent::User + 42)
-#define ERR_RTN_QUERY_BANK_BALANCE_BY_FUTURE    (QEvent::User + 43)
 #define RTN_FROM_BANK_TO_FUTURE_BY_FUTURE       (QEvent::User + 44)
 #define RTN_FROM_FUTURE_TO_BANK_BY_FUTURE       (QEvent::User + 45)
-#define RSP_FROM_BANK_TO_FUTURE_BY_FUTURE       (QEvent::User + 46)
-#define RSP_FROM_FUTURE_TO_BANK_BY_FUTURE       (QEvent::User + 47)
-#define ERR_RTN_BANK_TO_FUTURE_BY_FUTURE        (QEvent::User + 48)
-#define ERR_RTN_FUTURE_TO_BANK_BY_FUTURE        (QEvent::User + 49)
 
 struct RspInfo {
     const int errorID;
@@ -63,6 +54,17 @@ struct RspInfo {
 
     RspInfo(int err, int id)
         : errorID(err), nRequestID(id) {}
+};
+
+class ErrorIdMsgEvent : public QEvent {
+public:
+    const QString functionName;
+    const CThostFtdcRspInfoField rspInfo;
+
+    ErrorIdMsgEvent(const QString &functionName, CThostFtdcRspInfoField *pRspInfo) :
+        QEvent(QEvent::Type(ERROR_ID_MSG)),
+        functionName(functionName),
+        rspInfo(*pRspInfo) {}
 };
 
 class FrontConnectedEvent : public QEvent {
@@ -251,26 +253,6 @@ public:
         removeParkedOrderActionField(*pRemoveParkedOrderAction) {}
 };
 
-class ErrRtnOrderInsertEvent: public QEvent, public RspInfo {
-public:
-    const CThostFtdcInputOrderField inputOrderField;
-
-    ErrRtnOrderInsertEvent(CThostFtdcInputOrderField *pInputOrder, int err, int id) :
-        QEvent(QEvent::Type(ERR_RTN_ORDER_INSERT)),
-        RspInfo(err, id),
-        inputOrderField(*pInputOrder) {}
-};
-
-class ErrRtnOrderActionEvent: public QEvent, public RspInfo {
-public:
-    const CThostFtdcOrderActionField inputOrderField;
-
-    ErrRtnOrderActionEvent(CThostFtdcOrderActionField *pOrderAction, int err, int id) :
-        QEvent(QEvent::Type(ERR_RTN_ORDER_ACTION)),
-        RspInfo(err, id),
-        inputOrderField(*pOrderAction) {}
-};
-
 class RtnOrderEvent : public QEvent {
 public:
     const CThostFtdcOrderField orderField;
@@ -398,36 +380,6 @@ public:
         execOrderField(*pExecOrderField) {}
 };
 
-class ErrRtnExecOrderInsertEvent : public QEvent, public RspInfo {
-public:
-    const CThostFtdcInputExecOrderField pInputExecOrderField;
-
-    ErrRtnExecOrderInsertEvent(CThostFtdcInputExecOrderField *pInputExecOrder, int err, int id) :
-        QEvent(QEvent::Type(ERR_RTN_EXEC_ORDER_INSERT)),
-        RspInfo(err, id),
-        pInputExecOrderField(*pInputExecOrder) {}
-};
-
-class ErrRtnExecOrderActionEvent : public QEvent, public RspInfo {
-public:
-    const CThostFtdcExecOrderActionField pExecOrderActionField;
-
-    ErrRtnExecOrderActionEvent(CThostFtdcExecOrderActionField *pExecOrderAction, int err, int id) :
-        QEvent(QEvent::Type(ERR_RTN_EXEC_ORDER_ACTION)),
-        RspInfo(err, id),
-        pExecOrderActionField(*pExecOrderAction) {}
-};
-
-class ErrRtnForQuoteInsertEvent : public QEvent, public RspInfo {
-public:
-    const CThostFtdcInputForQuoteField pInputForQuoteField;
-
-    ErrRtnForQuoteInsertEvent(CThostFtdcInputForQuoteField *pInputForQuote, int err, int id) :
-        QEvent(QEvent::Type(ERR_RTN_FOR_QUOTE_INSERT)),
-        RspInfo(err, id),
-        pInputForQuoteField(*pInputForQuote) {}
-};
-
 class RtnInstrumentStatusEvent : public QEvent {
 public:
     const CThostFtdcInstrumentStatusField instrumentStatusField;
@@ -484,6 +436,24 @@ public:
         notifyQueryAccount(*pNotifyQueryAccount) {}
 };
 
+class RtnFromBankToFutureByFutureEvent : public QEvent {
+public:
+    const CThostFtdcRspTransferField rspTransfer;
+
+    explicit RtnFromBankToFutureByFutureEvent(CThostFtdcRspTransferField *pReqTransfer) :
+        QEvent(QEvent::Type(RTN_FROM_BANK_TO_FUTURE_BY_FUTURE)),
+        rspTransfer(*pReqTransfer) {}
+};
+
+class RtnFromFutureToBankByFutureEvent : public QEvent {
+public:
+    const CThostFtdcRspTransferField rspTransfer;
+
+    explicit RtnFromFutureToBankByFutureEvent(CThostFtdcRspTransferField *pReqTransfer) :
+        QEvent(QEvent::Type(RTN_FROM_FUTURE_TO_BANK_BY_FUTURE)),
+        rspTransfer(*pReqTransfer) {}
+};
+
 class CTradeHandler final : public CThostFtdcTraderSpi {
     QObject * const receiver;
 
@@ -507,6 +477,8 @@ public:
     ~CTradeHandler();
 
     void postToReceiver(QEvent *event);
+
+    void handleError(const char *functionName, CThostFtdcRspInfoField *pRspInfo);
 
     template<class EVT, class F>
     void handleSingleRsp(F *pField, CThostFtdcRspInfoField *pRspInfo, int nRequestID = -1);

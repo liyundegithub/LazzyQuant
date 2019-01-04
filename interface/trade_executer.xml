@@ -29,6 +29,9 @@
       <arg name="instrument" type="s" direction="out"/>
       <arg name="volume" type="i" direction="out"/>
     </signal>
+    <signal name="transfered">
+      <arg name="amount" type="d" direction="out"/>
+    </signal>
     <method name="setLogin">
     </method>
     <method name="setLogout">

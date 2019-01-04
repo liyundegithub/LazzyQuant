@@ -124,6 +124,7 @@ signals:
     void instrumentStatusChanged(const QString &exchangeID, const QString &instrument, const QString &enterTime, bool isContinous, bool isClosed);
     void parkedOrderQryRsp(const QList<ParkedOrder> &parkedOrderList);
     void deal(const QString &instrument, int volume);
+    void transfered(double amount); // amount > 0 bank_to_future, amount < 0 future_to_bank
 
 public slots:
     void setLogin();
