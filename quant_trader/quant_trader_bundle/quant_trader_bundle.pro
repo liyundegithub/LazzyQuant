@@ -1,4 +1,4 @@
-QT += core sql xml concurrent
+QT += core sql xml
 QT -= gui
 
 TARGET = quant_trader_bundle

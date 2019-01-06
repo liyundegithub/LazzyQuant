@@ -4,7 +4,6 @@
 
 #include <cfloat>
 #include <QSettings>
-#include <QtConcurrentRun>
 #include <QTimer>
 #include <QTextCodec>
 #include <QCoreApplication>
@@ -77,26 +76,6 @@ const QMap<TThostFtdcParkedOrderStatusType, QString> parkedOrderStatusMap = {
     {THOST_FTDC_PAOS_Send,    "Send"},
     {THOST_FTDC_PAOS_Deleted, "Deleted"},
 };
-
-#ifdef Q_OS_WIN
-#include <Windows.h>
-#endif
-
-/*!
- * \brief _sleep
- * 暂停当前线程. 代码参考QTestLib模块, 不要在主线程中调用.
- *
- * \param ms 暂停时长(<932毫秒)
- */
-static inline void _sleep(int ms)
-{
-#ifdef Q_OS_WIN
-    Sleep(uint(ms));
-#else
-    struct timespec ts = { 0, (ms % 1024) * 1024 * 1024 };
-    nanosleep(&ts, NULL);
-#endif
-}
 
 CtpExecuter::CtpExecuter(const CONFIG_ITEM &config, QObject *parent) :
     QObject(parent)
@@ -621,42 +600,45 @@ void CtpExecuter::customEvent(QEvent *event)
     }
 }
 
+void CtpExecuter::timerEvent(QTimerEvent *event)
+{
+    Q_UNUSED(event)
+    if (!queuedQueries.isEmpty()) {
+        auto ctpQry = queuedQueries.dequeue();
+        int ret = ctpQry->trySendQryReq();
+        if (ret == 0) {
+            delete ctpQry;
+            if (queuedQueries.isEmpty()) {
+                killTimer(queueTimerId);
+            }
+        } else {
+            queuedQueries.enqueue(ctpQry);
+        }
+    }
+}
+
 /*!
  * \brief CtpExecuter::callTraderApi
- * 尝试调用pTraderApi, 如果失败(返回值不是0),
- * 就在一个新线程里反复调用pTraderApi, 直至成功.
+ * 尝试调用pTraderApi, 如果失败(返回值不是0), 就将其放在队列中.
  *
  * \param pTraderApi CThostFtdcTraderApi类的成员函数指针.
- * \param pField pTraderApi函数的第一个参数，成功调用pTraderApi或超时之后释放.
+ * \param pField pTraderApi函数的第一个参数，成功调用pTraderApi后释放.
  */
 template<typename T>
 int CtpExecuter::callTraderApi(int (CThostFtdcTraderApi::* pTraderApi)(T *,int), T * pField)
 {
     int id = nRequestID.fetchAndAddRelaxed(1);
-
-    if (traderApiMutex.tryLock()) {
+    if (queuedQueries.isEmpty()) {
         int ret = (pUserApi->*pTraderApi)(pField, id);
-        traderApiMutex.unlock();
         if (ret == 0) {
             free(pField);
             return id;
+        } else {
+            queueTimerId = startTimer(1001);
         }
     }
-
-    QtConcurrent::run([=]() -> void {
-        int count_down = 100;
-        while (count_down-- > 0) {
-            _sleep(400 - count_down * 2);   // TODO 改进退避算法.
-            traderApiMutex.lock();
-            int ret = (pUserApi->*pTraderApi)(pField, id);
-            traderApiMutex.unlock();
-            if (ret == 0) {
-                break;
-            }
-        }
-        free(pField);
-    });
-
+    AbstractQuery *pQry = new CtpQuery<T>(pUserApi, pTraderApi, pField, id);
+    queuedQueries.enqueue(pQry);
     return id;
 }
 
@@ -710,9 +692,7 @@ int CtpExecuter::authenticate()
     strcpy(reqAuthenticate.AuthCode, authenticateCode);
 
     int id = nRequestID.fetchAndAddRelaxed(1);
-    traderApiMutex.lock();
     int ret = pUserApi->ReqAuthenticate(&reqAuthenticate, id);
-    traderApiMutex.unlock();
     Q_UNUSED(ret);
     return id;
 }
@@ -733,9 +713,7 @@ int CtpExecuter::userLogin()
     strcpy(reqUserLogin.UserProductInfo, userProductInfo);
 
     int id = nRequestID.fetchAndAddRelaxed(1);
-    traderApiMutex.lock();
     int ret = pUserApi->ReqUserLogin(&reqUserLogin, id);
-    traderApiMutex.unlock();
     Q_UNUSED(ret);
     return id;
 }
@@ -754,9 +732,7 @@ int CtpExecuter::userLogout()
     strcpy(userLogout.UserID, userID);
 
     int id = nRequestID.fetchAndAddRelaxed(1);
-    traderApiMutex.lock();
     int ret = pUserApi->ReqUserLogout(&userLogout, id);
-    traderApiMutex.unlock();
     Q_UNUSED(ret);
     return id;
 }
@@ -791,9 +767,7 @@ int CtpExecuter::settlementInfoConfirm()
     strcpy(confirmField.InvestorID, userID);
 
     int id = nRequestID.fetchAndAddRelaxed(1);
-    traderApiMutex.lock();
     int ret = pUserApi->ReqSettlementInfoConfirm(&confirmField, id);
-    traderApiMutex.unlock();
     Q_UNUSED(ret);
     return id;
 }
@@ -938,9 +912,7 @@ int CtpExecuter::insertLimitOrder(const QString &instrument, int openClose, int 
     inputOrder.TimeCondition = gfdOrIoc ? THOST_FTDC_TC_GFD : THOST_FTDC_TC_IOC;
 
     int id = nRequestID.fetchAndAddRelaxed(1);
-    traderApiMutex.lock();
     int ret = pUserApi->ReqOrderInsert(&inputOrder, id);
-    traderApiMutex.unlock();
     Q_UNUSED(ret);
     return id;
 }
@@ -980,9 +952,7 @@ int CtpExecuter::insertMarketOrder(const QString &instrument, int openClose, int
     inputOrder.TimeCondition = THOST_FTDC_TC_IOC;
 
     int id = nRequestID.fetchAndAddRelaxed(1);
-    traderApiMutex.lock();
     int ret = pUserApi->ReqOrderInsert(&inputOrder, id);
-    traderApiMutex.unlock();
     Q_UNUSED(ret);
     return id;
 }
@@ -1028,9 +998,7 @@ int CtpExecuter::insertCombineOrder(const QString &instrument, int openClose1, i
     inputOrder.TimeCondition = gfdOrIoc ? THOST_FTDC_TC_GFD : THOST_FTDC_TC_IOC;
 
     int id = nRequestID.fetchAndAddRelaxed(1);
-    traderApiMutex.lock();
     int ret = pUserApi->ReqOrderInsert(&inputOrder, id);
-    traderApiMutex.unlock();
     Q_UNUSED(ret);
     return id;
 }
@@ -1058,9 +1026,7 @@ int CtpExecuter::orderAction(const QString &instrument, const char *orderRef, in
     orderAction.ActionFlag = THOST_FTDC_AF_Delete;
 
     int id = nRequestID.fetchAndAddRelaxed(1);
-    traderApiMutex.lock();
     int ret = pUserApi->ReqOrderAction(&orderAction, id);
-    traderApiMutex.unlock();
     Q_UNUSED(ret);
     return id;
 }
@@ -1103,9 +1069,7 @@ int CtpExecuter::insertParkedLimitOrder(const QString &instrument, int openClose
     parkedOrder.TimeCondition = gfdOrIoc ? THOST_FTDC_TC_GFD : THOST_FTDC_TC_IOC;
 
     int id = nRequestID.fetchAndAddRelaxed(1);
-    traderApiMutex.lock();
     int ret = pUserApi->ReqParkedOrderInsert(&parkedOrder, id);
-    traderApiMutex.unlock();
     Q_UNUSED(ret);
     return id;
 }
@@ -1132,9 +1096,7 @@ int CtpExecuter::insertParkedOrderAction(const QString &instrument, const char *
     parkedOrderAction.ActionFlag = THOST_FTDC_AF_Delete;
 
     int id = nRequestID.fetchAndAddRelaxed(1);
-    traderApiMutex.lock();
     int ret = pUserApi->ReqParkedOrderAction(&parkedOrderAction, id);
-    traderApiMutex.unlock();
     Q_UNUSED(ret);
     return id;
 }
@@ -1155,9 +1117,7 @@ int CtpExecuter::removeParkedOrder(const char *parkedOrderID)
     memcpy(removeParkedOrder.ParkedOrderID, parkedOrderID, sizeof(TThostFtdcParkedOrderIDType));
 
     int id = nRequestID.fetchAndAddRelaxed(1);
-    traderApiMutex.lock();
     int ret = pUserApi->ReqRemoveParkedOrder(&removeParkedOrder, id);
-    traderApiMutex.unlock();
     Q_UNUSED(ret);
     return id;
 }
@@ -1178,9 +1138,7 @@ int CtpExecuter::removeParkedOrderAction(const char *parkedOrderActionID)
     memcpy(removeParkedOrderAction.ParkedOrderActionID, parkedOrderActionID, sizeof(TThostFtdcParkedOrderActionIDType));
 
     int id = nRequestID.fetchAndAddRelaxed(1);
-    traderApiMutex.lock();
     int ret = pUserApi->ReqRemoveParkedOrderAction(&removeParkedOrderAction, id);
-    traderApiMutex.unlock();
     Q_UNUSED(ret);
     return id;
 }
@@ -1310,9 +1268,7 @@ int CtpExecuter::insertExecOrder(const QString &instrument, OPTION_TYPE type, in
     exc.CloseFlag = THOST_FTDC_EOCF_NotToClose;
 
     int id = nRequestID.fetchAndAddRelaxed(1);
-    traderApiMutex.lock();
     int ret = pUserApi->ReqExecOrderInsert(&exc, id);
-    traderApiMutex.unlock();
     Q_UNUSED(ret);
     return id;
 }
@@ -1334,9 +1290,7 @@ int CtpExecuter::insertQuote(const QString &instrument)
     //memcpy(quote.ForQuoteRef, )
 
     int id = nRequestID.fetchAndAddRelaxed(1);
-    traderApiMutex.lock();
     int ret = pUserApi->ReqForQuoteInsert(&quote, id);
-    traderApiMutex.unlock();
     Q_UNUSED(ret);
     return id;
 }
@@ -1375,9 +1329,7 @@ int CtpExecuter::fromBankToFuture(double amount)
     reqTransfer.TradeAmount = amount;
 
     int id = nRequestID.fetchAndAddRelaxed(1);
-    traderApiMutex.lock();
     int ret = pUserApi->ReqFromBankToFutureByFuture(&reqTransfer, id);
-    traderApiMutex.unlock();
     Q_UNUSED(ret);
     return id;
 }
@@ -1401,9 +1353,7 @@ int CtpExecuter::fromFutureToBank(double amount)
     reqTransfer.TradeAmount = amount;
 
     int id = nRequestID.fetchAndAddRelaxed(1);
-    traderApiMutex.lock();
     int ret = pUserApi->ReqFromFutureToBankByFuture(&reqTransfer, id);
-    traderApiMutex.unlock();
     Q_UNUSED(ret);
     return id;
 }
@@ -1426,9 +1376,7 @@ int CtpExecuter::queryBankAccountMoney()
     strcpy(reqQueryAccount.CurrencyID, "CNY");
 
     int id = nRequestID.fetchAndAddRelaxed(1);
-    traderApiMutex.lock();
     int ret = pUserApi->ReqQueryBankAccountMoneyByFuture(&reqQueryAccount, id);
-    traderApiMutex.unlock();
     Q_UNUSED(ret);
     return id;
 }

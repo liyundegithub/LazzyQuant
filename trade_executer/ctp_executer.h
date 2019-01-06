@@ -5,7 +5,7 @@
 #include <QAtomicInt>
 #include <QByteArray>
 #include <QMap>
-#include <QMutex>
+#include <QQueue>
 #include <QPair>
 
 #include "common_utility.h"
@@ -19,6 +19,31 @@ class CTradeHandler;
 class Order;
 class ParkedOrder;
 struct CONFIG_ITEM;
+
+class AbstractQuery {
+public:
+    virtual ~AbstractQuery() {}
+    virtual int trySendQryReq() = 0;
+};
+
+template<class T>
+class CtpQuery : public AbstractQuery {
+    CThostFtdcTraderApi *pUserApi;
+    int (CThostFtdcTraderApi::* pTraderApi)(T *,int);
+    T *pField;
+    int id;
+
+public:
+    CtpQuery(CThostFtdcTraderApi *pUserApi, int (CThostFtdcTraderApi::* pTraderApi)(T *,int), T *pField, int id) :
+        pUserApi(pUserApi), pTraderApi(pTraderApi), pField(pField), id(id) {}
+    ~CtpQuery() override {
+        free(pField);
+    }
+
+    int trySendQryReq() override {
+        return (pUserApi->*pTraderApi)(pField, id);
+    }
+};
 
 class CtpExecuter : public QObject
 {
@@ -40,7 +65,8 @@ public:
 
 protected:
     QAtomicInt nRequestID = 0;
-    QMutex traderApiMutex;
+    int queueTimerId;
+    QQueue<AbstractQuery*> queuedQueries;
     CThostFtdcTraderApi *pUserApi;
     CTradeHandler *pHandler;
 
@@ -69,6 +95,7 @@ protected:
     QStringList combineInstruments;
 
     void customEvent(QEvent *event) override;
+    void timerEvent(QTimerEvent *event) override;
 
     template<typename T>
     int callTraderApi(int (CThostFtdcTraderApi::* pTraderApi)(T *,int), T * pField);

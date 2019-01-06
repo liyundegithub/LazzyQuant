@@ -1,4 +1,4 @@
-QT += core dbus concurrent
+QT += core dbus
 QT -= gui
 
 TARGET = ctp_executer
