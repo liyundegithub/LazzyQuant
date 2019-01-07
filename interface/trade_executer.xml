@@ -283,7 +283,7 @@
       <arg name="instrument" type="s" direction="in"/>
       <arg name="volume" type="i" direction="in"/>
     </method>
-    <method name="quote">
+    <method name="reqForQuote">
       <arg name="instrument" type="s" direction="in"/>
     </method>
     <method name="deposite">

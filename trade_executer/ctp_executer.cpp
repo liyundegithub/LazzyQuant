@@ -603,17 +603,21 @@ void CtpExecuter::customEvent(QEvent *event)
 void CtpExecuter::timerEvent(QTimerEvent *event)
 {
     Q_UNUSED(event)
-    if (!queuedQueries.isEmpty()) {
-        auto ctpQry = queuedQueries.dequeue();
-        int ret = ctpQry->trySendQryReq();
-        if (ret == 0) {
-            delete ctpQry;
-            if (queuedQueries.isEmpty()) {
-                killTimer(queueTimerId);
+    if (event->timerId() == queueTimerId) {
+        if (!queuedQueries.isEmpty()) {
+            auto ctpQry = queuedQueries.dequeue();
+            int ret = ctpQry->trySendQryReq();
+            if (ret == 0) {
+                delete ctpQry;
+                if (queuedQueries.isEmpty()) {
+                    killTimer(queueTimerId);
+                }
+            } else {
+                queuedQueries.enqueue(ctpQry);
             }
-        } else {
-            queuedQueries.enqueue(ctpQry);
         }
+    } else {
+        QObject::timerEvent(event);
     }
 }
 
@@ -1274,20 +1278,19 @@ int CtpExecuter::insertExecOrder(const QString &instrument, OPTION_TYPE type, in
 }
 
 /*!
- * \brief CtpExecuter::insertQuote
+ * \brief CtpExecuter::insertReqForQuote
  * 发送询价指令.
  *
  * \param instrument 合约代码.
  * \return nRequestID
  */
-int CtpExecuter::insertQuote(const QString &instrument)
+int CtpExecuter::insertReqForQuote(const QString &instrument)
 {
     CThostFtdcInputForQuoteField quote;
     memset(&quote, 0, sizeof(CThostFtdcInputForQuoteField));
     strcpy(quote.BrokerID, brokerID);
     strcpy(quote.InvestorID, userID);
     strcpy(quote.InstrumentID, instrument.toLatin1().constData());
-    //memcpy(quote.ForQuoteRef, )
 
     int id = nRequestID.fetchAndAddRelaxed(1);
     int ret = pUserApi->ReqForQuoteInsert(&quote, id);
@@ -2337,17 +2340,17 @@ void CtpExecuter::execOption(const QString &instrument, int volume)
 }
 
 /*!
- * \brief CtpExecuter::quote
+ * \brief CtpExecuter::reqForQuote
  * 询价.
  *
  * \param instrument 合约代码.
  */
-void CtpExecuter::quote(const QString &instrument)
+void CtpExecuter::reqForQuote(const QString &instrument)
 {
     qInfo() << __FUNCTION__ << instrument;
     CHECK_LOGIN_STATE()
 
-    insertQuote(instrument);
+    insertReqForQuote(instrument);
 }
 
 /*!

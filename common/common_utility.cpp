@@ -6,7 +6,7 @@
 #include <QCoreApplication>
 
 /*!
- * \brief getInstrumentName
+ * \brief getCode
  * 从期货或期权合约代码里提取交易代码.
  * 比如 cu1703 --> cu, i1705 --> i, CF705 --> CF
  *      m1707-C-2700 --> m
@@ -79,12 +79,13 @@ bool parseOptionID(const QString &optionID, QString &futureID, OPTION_TYPE &type
  */
 QString makeOptionID(const QString &futureID, const OPTION_TYPE type, const int exercisePrice)
 {
-    static const QMap<QString, QString> optionIdPatternMap =  {
+    static const QMap<QString, QString> optionIdPatternMap = {
         {"m", "%1-%2-%3"},
         {"SR", "%1%2%3"},
+        {"cu", "%1%2%3"},
     };
 
-    QString middle = (type == CALL_OPT) ? "C" : "P";
+    QChar middle = (type == CALL_OPT) ? 'C' : 'P';
     return optionIdPatternMap[getCode(futureID)].arg(futureID).arg(middle).arg(exercisePrice);
 }
 

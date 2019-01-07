@@ -49,9 +49,9 @@ bool ParkedOrder::getDirection() const
 }
 
 const QMap<ParkedOrder::Status, QString> statusStringMap = {
-    {ParkedOrder::UNKOWN,  "Unkown"},
+    {ParkedOrder::UNKOWN,  " Unkown"},
     {ParkedOrder::NOTSEND, "NotSend"},
-    {ParkedOrder::SENT,    "Send"},
+    {ParkedOrder::SENT,    "   Send"},
     {ParkedOrder::DELETED, "Deleted"},
 };
 
@@ -59,7 +59,7 @@ QDebug operator<<(QDebug dbg, const ParkedOrder &order)
 {
     QDebugStateSaver saver(dbg);
     dbg.noquote().space() << order.id << statusStringMap[order.status]
-                          << order.instrument << (order.direction ? "Buy" : "Sell")
+                          << order.instrument << (order.direction ? " Buy" : "Sell")
                           << order.price << order.volume;
     return dbg;
 }

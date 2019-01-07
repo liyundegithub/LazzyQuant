@@ -133,7 +133,7 @@ private slots:
     int qryPosition(const QString &instrument = QString());
     int qryPositionDetail(const QString &instrument = QString());
     int insertExecOrder(const QString &instrument, OPTION_TYPE type, int volume);
-    int insertQuote(const QString &instrument);
+    int insertReqForQuote(const QString &instrument);
     int qryContractBank();
     int fromBankToFuture(double amount);
     int fromFutureToBank(double amount);
@@ -209,7 +209,7 @@ public slots:
     int getPosition(const QString &instrument) const;
 
     void execOption(const QString &instrument, int volume);
-    void quote(const QString &instrument);
+    void reqForQuote(const QString &instrument);
 
     void deposite(double amount);
     void withdraw(double amount);
