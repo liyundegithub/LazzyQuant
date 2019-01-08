@@ -27,7 +27,7 @@ static inline QByteArray getLocalMsg(QtMsgType type, const QMessageLogContext &c
         typeHeader = "F";
         break;
     }
-    QString localMsg = typeHeader + QDateTime::currentDateTime().toString(QStringLiteral(": yy-MM-dd hh:mm:ss.zzz ")) + msg;
+    QString localMsg = typeHeader + QDateTime::currentDateTime().toString(QStringLiteral(": yy-MM-dd HH:mm:ss.zzz ")) + msg;
 #ifdef QT_MESSAGELOGCONTEXT
     localMsg += QString(" (%1:%2, %3)").arg(context.file).arg(context.line).arg(context.function);
 #endif
@@ -68,7 +68,7 @@ QString setupMessageHandler(bool logtoStdout, bool logtoFile, const QString &mod
 {
     if (logtoFile) {
         QString fullFileName = QCoreApplication::applicationDirPath() + "/" + moduleName;
-        fullFileName += QDateTime::currentDateTime().toString(QStringLiteral("_yyyyMMdd_hhmmss"));
+        fullFileName += QDateTime::currentDateTime().toString(QStringLiteral("_yyyyMMdd_HHmmss"));
         fullFileName.append(".txt");
         pLogFile = fopen(qPrintable(fullFileName), "a");
         if (pLogFile) {

@@ -7,13 +7,13 @@
 #include <QString>
 #include <QDateTime>
 
-#define DATE_TIME (QDateTime::currentDateTime().toString(QStringLiteral("yyyy-MM-dd hh:mm:ss.zzz")))
+#define DATE_TIME (QDateTime::currentDateTime().toString(QStringLiteral("yyyy-MM-dd HH:mm:ss.zzz")))
 #define INVALID_DATE_STRING QStringLiteral("00000000")
 
 #define TM1 \
-    QTime t1 = QTime::currentTime();
+    QTime _tempt; _tempt.start();
 #define TM2 \
-    qWarning() << t1.msecsTo(QTime::currentTime()) << "ms";
+    qWarning() << _tempt.elapsed() << "ms";
 
 static inline bool isTimeCloseEnouogh(uint time1, uint time2, uint diff)
 {
@@ -64,7 +64,7 @@ static inline quint8 charToDigit(const char ten, const char one)
     return quint8(10 * (ten - '0') + one - '0');
 }
 
-// Convert string with format hh:mm:ss into seconds
+// Convert string with format HH:mm:ss into seconds
 static inline int hhmmssToSec(const char *hhmmss)
 {
     quint8 hour, minute, second;
