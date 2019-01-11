@@ -40,6 +40,16 @@ protected:
     QList<AbstractIndicator*> dependIndicators;
     void addDepend(AbstractIndicator* indicator);
 
+    MQL5Indicator*  iAMA(
+       string              symbol,             // symbol name
+       ENUM_TIMEFRAMES     period,             // period
+       int                 ama_period,         // average period for AMA
+       int                 fast_ma_period,     // fast MA period
+       int                 slow_ma_period,     // slow MA period
+       int                 ama_shift,          // horizontal shift of the indicator
+       ENUM_APPLIED_PRICE  applied_price       // type of the price or handle
+       );
+
     MQL5Indicator*  iAO(
        string           symbol,     // symbol name
        ENUM_TIMEFRAMES  period      // period

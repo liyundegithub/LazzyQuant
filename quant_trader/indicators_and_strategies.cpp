@@ -1,6 +1,7 @@
 #include "indicators_and_strategies.h"
 
 #include "indicator/ma.h"
+#include "indicator/ama.h"
 #include "indicator/macd.h"
 #include "indicator/parabolicsar.h"
 #include "indicator/bollinger_band.h"
@@ -17,6 +18,7 @@
 
 const QMap<QString, const QMetaObject*> indicatorMetaObjects = {
     {"MA", &MA::staticMetaObject},
+    {"AMA", &AMA::staticMetaObject},
     {"MACD", &Macd::staticMetaObject},
     {"ParabolicSAR", &ParabolicSAR::staticMetaObject},
     {"BollingerBand", &BollingerBand::staticMetaObject},

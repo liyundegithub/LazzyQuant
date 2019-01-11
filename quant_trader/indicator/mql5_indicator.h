@@ -45,12 +45,12 @@ enum ENUM_PLOT_PROPERTY_DOUBLE {
     PLOT_EMPTY_VALUE,
 };
 
-inline bool IndicatorSetDouble (...) { return true; }
-inline bool IndicatorSetInteger(...) { return true; }
-inline bool IndicatorSetString (...) { return true; }
-inline bool PlotIndexSetDouble (...) { return true; }
-inline bool PlotIndexSetString (...) { return true; }
-inline int  PlotIndexGetInteger(...) { return 0; }
+template<typename... Params> bool IndicatorSetDouble (Params...) { return true; }
+template<typename... Params> bool IndicatorSetInteger(Params...) { return true; }
+template<typename... Params> bool IndicatorSetString (Params...) { return true; }
+template<typename... Params> bool PlotIndexSetDouble (Params...) { return true; }
+template<typename... Params> bool PlotIndexSetString (Params...) { return true; }
+template<typename... Params> int  PlotIndexGetInteger(Params...) { return 0; }
 
 template<typename T>
 class IndicatorBuffer : public _VectorProxy<T> {

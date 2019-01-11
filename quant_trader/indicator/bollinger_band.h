@@ -34,9 +34,6 @@ protected:
                      ) override;
 };
 
-template<class T>
-double SimpleMA(const int position,const int period,const T &price);
-
 template<class T, class U>
 double StdDev_Func(int position, const T &price, const U &MAprice, int period);
 

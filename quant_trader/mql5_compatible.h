@@ -10,7 +10,25 @@
 #define INVALID_HANDLE  -1
 
 typedef QString string;
-#define DoubleToString(x, y) QString::number(x, 'f', y)
+
+inline
+string  DoubleToString(
+   double  value,      // number
+   int     digits=8    // number of digits after decimal point
+   )
+{
+    return QString::number(value, 'f', digits);
+}
+
+inline
+string  IntegerToString(
+   qlonglong    number,              // number
+   int          str_len=0,           // length of result string
+   char         fill_symbol=' '      // filler
+   )
+{
+    return QString("%1").arg(number, str_len, 10, QChar(fill_symbol));
+}
 
 #ifdef MQL5_PRINT_SUPPORT
 #include <QDebug>

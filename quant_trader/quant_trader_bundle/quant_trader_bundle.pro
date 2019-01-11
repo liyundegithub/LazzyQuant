@@ -36,6 +36,7 @@ SOURCES += main.cpp \
     ../indicator/indicator_functions.cpp \
     ../indicator/mql5_indicator.cpp \
     ../indicator/ma.cpp \
+    ../indicator/ama.cpp \
     ../indicator/macd.cpp \
     ../indicator/parabolicsar.cpp \
     ../indicator/bollinger_band.cpp \
@@ -84,6 +85,7 @@ HEADERS += ../../config.h \
     ../indicator/indicator_functions.h \
     ../indicator/mql5_indicator.h \
     ../indicator/ma.h \
+    ../indicator/ama.h \
     ../indicator/macd.h \
     ../indicator/parabolicsar.h \
     ../indicator/bollinger_band.h \

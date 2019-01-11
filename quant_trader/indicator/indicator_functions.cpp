@@ -18,6 +18,24 @@ void IndicatorFunctions::addDepend(AbstractIndicator* indicator)
     dependIndicators.append(indicator);
 }
 
+MQL5Indicator*  IndicatorFunctions::iAMA(
+   string              symbol,             // symbol name
+   ENUM_TIMEFRAMES     period,             // period
+   int                 ama_period,         // average period for AMA
+   int                 fast_ma_period,     // fast MA period
+   int                 slow_ma_period,     // slow MA period
+   int                 ama_shift,          // horizontal shift of the indicator
+   ENUM_APPLIED_PRICE  applied_price       // type of the price or handle
+   )
+{
+    auto pIndicator = static_cast<MQL5Indicator*>(
+                pTrader->registerIndicator(
+                    symbol, period, "AMA", ama_period, fast_ma_period, slow_ma_period, ama_shift, applied_price
+                ));
+    addDepend(pIndicator);
+    return pIndicator;
+}
+
 MQL5Indicator*  IndicatorFunctions::iAO(
    string           symbol,     // symbol name
    ENUM_TIMEFRAMES  period      // period
