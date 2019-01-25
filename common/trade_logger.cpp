@@ -9,7 +9,7 @@ TradeLogger::TradeLogger(const QString &name):
     name(name)
 {
     createDbIfNotExist("tradelog");
-    createTablesIfNotExist("tradelog", {name}, " (time BIGINT NULL, instrument VARCHAR(45) NULL, price FLOAT NULL, volume INT NULL, direction BOOLEAN NULL, opencloseflag BOOLEAN NULL)");
+    createTablesIfNotExist("tradelog", {name}, " (id INT UNSIGNED NOT NULL AUTO_INCREMENT, time BIGINT NULL, instrument VARCHAR(45) NULL, price FLOAT NULL, volume INT NULL, direction BOOLEAN NULL, opencloseflag BOOLEAN NULL, label INT NULL, note VARCHAR(255) NULL, PRIMARY KEY (id)) character set = utf8");
 }
 
 void TradeLogger::positionChanged(qint64 actionTime, const QString &instrumentID, int newPosition, double price)
@@ -66,14 +66,15 @@ void TradeLogger::saveActionToDB(qint64 actionTime, const QString &instrumentID,
     QSqlDatabase sqlDB = QSqlDatabase();
     QSqlQuery qry(sqlDB);
     QString tableOfDB = QString("tradelog.%1").arg(name);
-    qry.prepare("INSERT INTO " + tableOfDB + " (time, instrument, price, volume, direction, opencloseflag) "
-                                             "VALUES (?, ?, ?, ?, ?, ?)");
+    qry.prepare("INSERT INTO " + tableOfDB + " (time, instrument, price, volume, direction, opencloseflag, label) "
+                                             "VALUES (?, ?, ?, ?, ?, ?, ?)");
     qry.bindValue(0, actionTime);
     qry.bindValue(1, instrumentID);
     qry.bindValue(2, price);
     qry.bindValue(3, volume);
     qry.bindValue(4, direction);
     qry.bindValue(5, openCloseFlag);
+    qry.bindValue(6, 0);
     bool ok = qry.exec();
     if (!ok) {
         qCritical().noquote() << "Insert action into" << tableOfDB << "failed!";
