@@ -15,7 +15,7 @@ class Widget : public QWidget
     Q_OBJECT
 
 public:
-    explicit Widget(SinYeeReplayer *replayer, QWidget *parent = 0);
+    explicit Widget(SinYeeReplayer *replayer, QWidget *parent = nullptr);
     ~Widget();
 
     void onTimer();

@@ -64,7 +64,7 @@ bool parseOptionID(const QString &optionID, QString &futureID, OPTION_TYPE &type
             break;
         }
     }
-    exercisePrice = optionID.right(len - i).toInt();
+    exercisePrice = optionID.rightRef(len - i).toInt();
     return true;    // TODO successfull or not
 }
 

@@ -116,5 +116,5 @@ void Widget::on_stopButton_clicked()
 
 void Widget::on_speedSlider_valueChanged(int value)
 {
-    timer->setInterval(2000.0 / value);
+    timer->setInterval(2000 / value);
 }
