@@ -4,7 +4,7 @@
 #include <QWidget>
 
 class QTimer;
-class SinYeeReplayer;
+class CommonReplayer;
 
 namespace Ui {
 class Widget;
@@ -15,7 +15,7 @@ class Widget : public QWidget
     Q_OBJECT
 
 public:
-    explicit Widget(SinYeeReplayer *replayer, QWidget *parent = nullptr);
+    explicit Widget(CommonReplayer *replayer, QWidget *parent = nullptr);
     ~Widget();
 
     void onTimer();
@@ -29,7 +29,7 @@ private slots:
 
 private:
     Ui::Widget *ui;
-    SinYeeReplayer *replayer;
+    CommonReplayer *replayer;
     QTimer *timer;
     int startTime;
     int endTime;

@@ -3,9 +3,9 @@
 
 #include "widget.h"
 #include "ui_widget.h"
-#include "sinyee_replayer.h"
+#include "common_replayer.h"
 
-Widget::Widget(SinYeeReplayer *replayer, QWidget *parent) :
+Widget::Widget(CommonReplayer *replayer, QWidget *parent) :
     QWidget(parent),
     ui(new Ui::Widget),
     replayer(replayer)

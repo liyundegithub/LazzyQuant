@@ -11,17 +11,20 @@ SOURCES += main.cpp \
     ../common/common_utility.cpp \
     ../common/trading_calendar.cpp \
     ../common/time_mapper.cpp \
-    sinyee_replayer.cpp \
+    common_replayer.cpp \
     sinyee_tick.cpp \
-    sinyee_bar.cpp
+    sinyee_bar.cpp \
+    sinyee_replayer.cpp
 
 HEADERS += \
     ../common/common_utility.h \
     ../common/trading_calendar.h \
     ../common/time_mapper.h \
-    sinyee_replayer.h \
+    common_tick.h \
+    common_replayer.h \
     sinyee_tick.h \
-    sinyee_bar.h
+    sinyee_bar.h \
+    sinyee_replayer.h
 
 INCLUDEPATH += ../ ../common/
 DBUS_ADAPTORS += ../interface/sinyee_replayer.xml

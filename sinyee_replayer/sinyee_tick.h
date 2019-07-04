@@ -5,6 +5,8 @@
 
 class QDataStream;
 
+struct CommonTick;
+
 struct SinYeeTick
 {
     int time;
@@ -17,6 +19,8 @@ struct SinYeeTick
     float askVolume;
     float openInterest;
     quint8 direction;
+
+    operator CommonTick();
 
     static QStringList getAvailableContracts(QDataStream& tickStream);
     static QList<SinYeeTick> readTicks(QDataStream& tickStream, int num);

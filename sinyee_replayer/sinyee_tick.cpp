@@ -1,8 +1,22 @@
+#include "common_tick.h"
 #include "sinyee_tick.h"
 
 #include <QTime>
 #include <QDataStream>
 #include <QDebugStateSaver>
+
+SinYeeTick::operator CommonTick()
+{
+    CommonTick commonTick;
+    commonTick.setTimeStamp(time, msec);
+    commonTick.price = price;
+    commonTick.askPrice = askPrice;
+    commonTick.bidPrice = bidPrice;
+    commonTick.volume = volume;
+    commonTick.askVolume = askVolume;
+    commonTick.bidVolume = bidVolume;
+    return commonTick;
+}
 
 QStringList SinYeeTick::getAvailableContracts(QDataStream& tickStream)
 {
