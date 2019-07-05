@@ -2,7 +2,7 @@
 
 #include "config.h"
 #include "sinyee_replayer.h"
-#include "sinyee_replayer_adaptor.h"
+#include "tick_replayer_adaptor.h"
 #include "widget.h"
 
 int main(int argc, char *argv[])
@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
     Widget w(&replayer);
     w.show();
 
-    new Sinyee_replayerAdaptor(&replayer);
+    new Tick_replayerAdaptor(&replayer);
     QDBusConnection dbus = QDBusConnection::sessionBus();
     dbus.registerObject(replayerConfigs[0].dbusObject, &replayer);
     dbus.registerService(replayerConfigs[0].dbusService);

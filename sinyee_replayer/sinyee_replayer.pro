@@ -27,4 +27,4 @@ HEADERS += \
     sinyee_replayer.h
 
 INCLUDEPATH += ../ ../common/
-DBUS_ADAPTORS += ../interface/sinyee_replayer.xml
+DBUS_ADAPTORS += ../interface/tick_replayer.xml

@@ -4,7 +4,7 @@
 #include <QMainWindow>
 
 class ComLazzyquantMarket_watcherInterface;
-class ComLazzyquantSinyee_replayerInterface;
+class ComLazzyquantTick_replayerInterface;
 class ComLazzyquantTrade_executerInterface;
 class ComLazzyquantQuant_traderInterface;
 class DBusMonitor;
@@ -18,7 +18,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
     ComLazzyquantMarket_watcherInterface *pWatcher = nullptr;
-    ComLazzyquantSinyee_replayerInterface *pReplayer = nullptr;
+    ComLazzyquantTick_replayerInterface *pReplayer = nullptr;
     ComLazzyquantTrade_executerInterface *pExecuter = nullptr;
     ComLazzyquantQuant_traderInterface *pTrader = nullptr;
     DBusMonitor *monitor = nullptr;

@@ -63,17 +63,17 @@ QDebug operator<<(QDebug dbg, const SinYeeTick &tick)
     return dbg;
 }
 
-QDataStream& operator>>(QDataStream& s, SinYeeTick& dataTick)
+QDataStream& operator>>(QDataStream& s, SinYeeTick& tick)
 {
-    s >> dataTick.time;
-    s >> dataTick.msec;
-    s >> dataTick.price;
-    s >> dataTick.volume;
-    s >> dataTick.bidPrice;
-    s >> dataTick.bidVolume;
-    s >> dataTick.askPrice;
-    s >> dataTick.askVolume;
-    s >> dataTick.openInterest;
-    s >> dataTick.direction;
+    s >> tick.time;
+    s >> tick.msec;
+    s >> tick.price;
+    s >> tick.volume;
+    s >> tick.bidPrice;
+    s >> tick.bidVolume;
+    s >> tick.askPrice;
+    s >> tick.askVolume;
+    s >> tick.openInterest;
+    s >> tick.direction;
     return s;
 }

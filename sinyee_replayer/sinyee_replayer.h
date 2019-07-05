@@ -8,7 +8,7 @@ struct CONFIG_ITEM;
 class SinYeeReplayer : public CommonReplayer
 {
     Q_OBJECT
-    Q_CLASSINFO("D-Bus Interface", "com.lazzyquant.sinyee_replayer")
+    Q_CLASSINFO("D-Bus Interface", "com.lazzyquant.tick_replayer")
 
     QString sinYeeDataPath;
 

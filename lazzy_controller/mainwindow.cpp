@@ -4,7 +4,7 @@
 #include "ui_mainwindow.h"
 
 #include "market_watcher_interface.h"
-#include "sinyee_replayer_interface.h"
+#include "tick_replayer_interface.h"
 #include "trade_executer_interface.h"
 #include "quant_trader_interface.h"
 
@@ -13,7 +13,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     pWatcher = new com::lazzyquant::market_watcher(WATCHER_DBUS_SERVICE, WATCHER_DBUS_OBJECT, QDBusConnection::sessionBus(), this);
-    pReplayer = new com::lazzyquant::sinyee_replayer(REPLAYER_DBUS_SERVICE, REPLAYER_DBUS_OBJECT, QDBusConnection::sessionBus(), this);
+    pReplayer = new com::lazzyquant::tick_replayer(REPLAYER_DBUS_SERVICE, REPLAYER_DBUS_OBJECT, QDBusConnection::sessionBus(), this);
     pTrader = new com::lazzyquant::quant_trader(TRADER_DBUS_SERVICE, TRADER_DBUS_OBJECT, QDBusConnection::sessionBus(), this);
     pExecuter = new com::lazzyquant::trade_executer(EXECUTER_DBUS_SERVICE, EXECUTER_DBUS_OBJECT, QDBusConnection::sessionBus(), this);
 

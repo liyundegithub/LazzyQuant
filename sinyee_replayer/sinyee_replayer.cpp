@@ -17,7 +17,7 @@ const int date_diff_int = data_date_base.secsTo(real_date_base);
 SinYeeReplayer::SinYeeReplayer(const CONFIG_ITEM &config, QObject *parent) :
     CommonReplayer(parent)
 {
-    auto settings = getSettingsSmart(config.organization, config.name, this);
+    auto settings = getSettingsSmart(config.organization, "sinyee_replayer", this);
 
     sinYeeDataPath = settings->value("SinYeeDataPath").toString();
 

@@ -27,6 +27,6 @@ struct SinYeeTick
 };
 
 QDebug operator<<(QDebug dbg, const SinYeeTick &tick);
-QDataStream& operator>>(QDataStream& s, SinYeeTick& dataTick);
+QDataStream& operator>>(QDataStream& s, SinYeeTick& tick);
 
 #endif // SINYEE_TICK_H

@@ -4,7 +4,7 @@
 #include "quant_trader_manager_dbus.h"
 
 #include "market_watcher_interface.h"
-#include "sinyee_replayer_interface.h"
+#include "tick_replayer_interface.h"
 #include "trade_executer_interface.h"
 
 using namespace com::lazzyquant;
@@ -19,10 +19,10 @@ QuantTraderManagerDbus::QuantTraderManagerDbus(QuantTrader *pTrader,
         QString endDay = replayRange.second;
         bool autoStartReplay = !startDay.isEmpty() && !endDay.isEmpty();
 
-        auto pReplayer = new sinyee_replayer(REPLAYER_DBUS_SERVICE, REPLAYER_DBUS_OBJECT, QDBusConnection::sessionBus());
+        auto pReplayer = new tick_replayer(REPLAYER_DBUS_SERVICE, REPLAYER_DBUS_OBJECT, QDBusConnection::sessionBus());
         if (source == SINYEE_REPLAYER || (pReplayer->isValid() && source == AUTO_SELECT)) {
             marketSource = SINYEE_REPLAYER;
-            auto manager = new QuantTraderManagerReplay<sinyee_replayer, QuantTrader, trade_executer>(pReplayer, pTrader, nullptr);
+            auto manager = new QuantTraderManagerReplay<tick_replayer, QuantTrader, trade_executer>(pReplayer, pTrader, nullptr);
             if (autoStartReplay) {
                 manager->setAutoReplayDate(startDay, endDay);
             }

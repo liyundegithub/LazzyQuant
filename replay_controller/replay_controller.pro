@@ -27,7 +27,7 @@ HEADERS += \
     widget.h
 
 INCLUDEPATH += ../ ../common/ ../sinyee_replayer/
-DBUS_ADAPTORS += ../interface/sinyee_replayer.xml
+DBUS_ADAPTORS += ../interface/tick_replayer.xml
 
 FORMS += \
     widget.ui

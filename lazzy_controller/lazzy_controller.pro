@@ -24,5 +24,5 @@ trade_executer_interface.header_flags = -i parked_order.h
 DBUS_INTERFACES += \
     ../interface/market_watcher.xml \
     trade_executer_interface \
-    ../interface/sinyee_replayer.xml \
+    ../interface/tick_replayer.xml \
     ../interface/quant_trader.xml
