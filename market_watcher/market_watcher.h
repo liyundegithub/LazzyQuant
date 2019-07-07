@@ -8,7 +8,6 @@
 #include <QMap>
 #include <QTime>
 
-#include "trading_calendar.h"
 #include "time_mapper.h"
 
 class QSettings;
@@ -27,7 +26,6 @@ public:
     ~MarketWatcher() override;
 
 protected:
-    TradingCalendar tradingCalendar;
     TimeMapper mapTime;
 
     const QString name;

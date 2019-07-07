@@ -11,6 +11,7 @@
 
 #include "config_struct.h"
 #include "market.h"
+#include "trading_calendar.h"
 #include "common_utility.h"
 #include "multiple_timer.h"
 #include "market_watcher.h"
@@ -171,8 +172,8 @@ void MarketWatcher::timesUp(int index)
 {
     const auto today = QDate::currentDate();
 
-    if (!tradingCalendar.isTradingDay(today)) {
-        if (!tradingCalendar.tradesTonight(today.addDays(-1))) {
+    if (!TradingCalendar::getInstance()->isTradingDay(today)) {
+        if (!TradingCalendar::getInstance()->tradesTonight(today.addDays(-1))) {
             depthMarketDataListMap.clear();
         } else {
             if (QTime::currentTime() > QTime(5, 0)) {

@@ -1,3 +1,4 @@
+#include "trading_calendar.h"
 #include "option_helper.h"
 #include "depth_market.h"
 
@@ -46,7 +47,7 @@ QDate OptionHelper::getExpireDate(const QString &instrumentID)
 
         int sum = 0;
         for (QDate date = lastDayOfPrev2Month; date > firstDayOfPrev2Month; date = date.addDays(-1)) {
-            if (tradingCalendar.isTradingDay(date)) {
+            if (TradingCalendar::getInstance()->isTradingDay(date)) {
                 sum ++;
                 if (sum == 5) {
                     return date;
@@ -64,7 +65,7 @@ QDate OptionHelper::getExpireDate(const QString &instrumentID)
 
         int sum = 0;
         for (QDate date = firstDayOfPrevMonth; date < firstDayOfLastMonth; date = date.addDays(1)) {
-            if (tradingCalendar.isTradingDay(date)) {
+            if (TradingCalendar::getInstance()->isTradingDay(date)) {
                 sum ++;
                 if (sum == 5) {
                     return date;
@@ -81,7 +82,7 @@ int OptionHelper::getOptionTradingDays(const QString &instrumentID, const QDate 
 {
     // FIXME 应该获取期权而非期货的ExpireDate
     const auto endDate = getExpireDate(instrumentID);
-    return tradingCalendar.getTradingDays(startDate, endDate);
+    return TradingCalendar::getInstance()->getTradingDays(startDate, endDate);
 }
 
 /*!

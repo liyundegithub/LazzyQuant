@@ -3,18 +3,15 @@
 
 #include <QtGlobal>
 
-class TradingCalendar;
-
 class TimeMapper
 {
-    TradingCalendar *pTradingCalendar;
     qint64 lastNightBase = 0;
     qint64 morningBase = 0;
     qint64 tradingDayBase = 0;
 
 public:
-    TimeMapper();
-    ~TimeMapper();
+    TimeMapper() = default;
+    ~TimeMapper() = default;
 
     void setTradingDay(const QString &tradingDay);
     qint64 mapTime(int inTime) const;

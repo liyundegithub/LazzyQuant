@@ -5,14 +5,12 @@
 #include <QObject>
 
 #include "common_utility.h"
-#include "trading_calendar.h"
 #include "trade_executer_interface.h"
 
 class DepthMarket;
 
 class OptionHelper {
     QObject *pExecuter;
-    TradingCalendar tradingCalendar;
 
 public:
     explicit OptionHelper(QObject *pExecuter);

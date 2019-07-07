@@ -5,16 +5,6 @@
 #include <QDateTime>
 #include <QTimeZone>
 
-TimeMapper::TimeMapper()
-{
-    pTradingCalendar = new TradingCalendar;
-}
-
-TimeMapper::~TimeMapper()
-{
-    delete pTradingCalendar;
-}
-
 void TimeMapper::setTradingDay(const QString &tradingDay)
 {
     auto tradingDateTime = QDateTime::fromString(tradingDay, QStringLiteral("yyyyMMdd"));
@@ -26,7 +16,7 @@ void TimeMapper::setTradingDay(const QString &tradingDay)
         QDate date = tradingDateTime.date();
         do {
             date = date.addDays(-1);
-        } while (!pTradingCalendar->isTradingDay(date));
+        } while (!TradingCalendar::getInstance()->isTradingDay(date));
 
         QDateTime lastTradingDateTime(date);
         lastTradingDateTime.setTimeZone(QTimeZone::utc());

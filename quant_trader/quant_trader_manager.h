@@ -149,12 +149,11 @@ void QuantTraderManagerReplay<R, T, E>::init()
     QObject::connect(this->pSource, SIGNAL(endOfReplay(QString)), this->pTrader, SLOT(onMarketClose()));
 
     if (autoStartReplay) {
-        TradingCalendar tc;
         QStringList replayDates;
         QDate startDate = QDate::fromString(startDay, QStringLiteral("yyyyMMdd"));
         QDate endDate = QDate::fromString(endDay, QStringLiteral("yyyyMMdd"));
         for (QDate date = startDate; date <= endDate; date = date.addDays(1)) {
-            if (tc.isTradingDay(date)) {
+            if (TradingCalendar::getInstance()->isTradingDay(date)) {
                 replayDates << date.toString(QStringLiteral("yyyyMMdd"));
             }
         }
