@@ -1,22 +1,9 @@
 #include "common_tick.h"
 #include "sinyee_tick.h"
 
-#include <QTime>
+#include <QDateTime>
 #include <QDataStream>
 #include <QDebugStateSaver>
-
-SinYeeTick::operator CommonTick()
-{
-    CommonTick commonTick;
-    commonTick.setTimeStamp(time, msec);
-    commonTick.price = price;
-    commonTick.askPrice = askPrice;
-    commonTick.bidPrice = bidPrice;
-    commonTick.volume = volume;
-    commonTick.askVolume = askVolume;
-    commonTick.bidVolume = bidVolume;
-    return commonTick;
-}
 
 QStringList SinYeeTick::getAvailableContracts(QDataStream& tickStream)
 {
@@ -57,9 +44,10 @@ QList<SinYeeTick> SinYeeTick::readTicks(QDataStream& tickStream, int num)
 QDebug operator<<(QDebug dbg, const SinYeeTick &tick)
 {
     QDebugStateSaver saver(dbg);
-    dbg.nospace() << "Ask 1:\t" << tick.askPrice << '\t' << tick.askVolume << '\n'
-                  << " ------ " << QTime(0, 0).addSecs(tick.time).toString() <<  " lastPrice:" << tick.price << " ------ " << '\n'
-                  << "Bid 1:\t" << tick.bidPrice << '\t' << tick.bidVolume;
+    dbg.nospace().noquote()
+            << "Ask 1:\t" << tick.askPrice << '\t' << tick.askVolume << '\n'
+            << " ------ " << QDateTime::fromSecsSinceEpoch(tick.time).toString(QStringLiteral("yyyy-MM-dd HH:mm:ss")) <<  " price:" << tick.price << " ------ \n"
+            << "Bid 1:\t" << tick.bidPrice << '\t' << tick.bidVolume;
     return dbg;
 }
 

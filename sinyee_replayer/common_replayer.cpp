@@ -67,7 +67,6 @@ bool CommonReplayer::prepareReplay(const QString &date, const QStringList &instr
     sortTickPairList();
     if (tickCnt > 0) {
         emit tradingDayChanged(date);
-        mapTime.setTradingDay(date);
     }
     return tickCnt > 0;
 }
@@ -80,17 +79,9 @@ bool CommonReplayer::replayTo(int time)
             const auto &item = tickPairList[replayIdx];
             const auto &tick = item.second;
             if (time >= tick.getTime()) {
-                int emitTime = tick.getTime() % 86400;
                 sumVol[item.first] += tick.volume;
-                auto hour = emitTime / 3600;
-                if (hour < 8) {
-                    emitTime -= (4 * 3600);
-                    if (emitTime < 0) {
-                        emitTime += 86400;
-                    }
-                }
                 emit newMarketData(item.first,
-                                   mapTime(emitTime),
+                                   tick.getTime(),
                                    tick.price,
                                    sumVol[item.first],
                                    tick.askPrice,

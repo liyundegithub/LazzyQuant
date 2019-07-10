@@ -1,6 +1,6 @@
 #include "sinyee_bar.h"
 
-#include <QTime>
+#include <QDateTime>
 #include <QDataStream>
 #include <QDebugStateSaver>
 
@@ -50,14 +50,15 @@ QList<SinYeeBar> SinYeeBar::readBars(QDataStream& barStream, int num)
 QDebug operator<<(QDebug dbg, const SinYeeBar &bar)
 {
     QDebugStateSaver saver(dbg);
-    dbg.nospace() << QTime(0, 0).addSecs(bar.time).toString()
-                  << ", open = " << bar.open
-                  << ", high = " << bar.high
-                  << ", low = " << bar.low
-                  << ", close = " << bar.close
-                  << ", settlement = " << bar.settlement
-                  << ", volume = " << bar.volume
-                  << ", openInterest = " << bar.openInterest;
+    dbg.nospace().noquote()
+            << QDateTime::fromSecsSinceEpoch(bar.time).toString(QStringLiteral("yyyy-MM-dd HH:mm:ss"))
+            << ", open = " << bar.open
+            << ", high = " << bar.high
+            << ", low = " << bar.low
+            << ", close = " << bar.close
+            << ", settlement = " << bar.settlement
+            << ", volume = " << bar.volume
+            << ", openInterest = " << bar.openInterest;
     return dbg;
 }
 

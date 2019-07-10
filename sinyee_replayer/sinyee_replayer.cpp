@@ -10,10 +10,6 @@
 #include "sinyee_bar.h"
 #include "sinyee_replayer.h"
 
-const QDateTime data_date_base = QDateTime::fromString("1988-01-01 00:00:00", "yyyy-MM-dd HH:mm:ss");
-const QDateTime real_date_base = QDateTime::fromString("2008-01-01 00:00:00", "yyyy-MM-dd HH:mm:ss");
-const int date_diff_int = data_date_base.secsTo(real_date_base);
-
 SinYeeReplayer::SinYeeReplayer(const CONFIG_ITEM &config, QObject *parent) :
     CommonReplayer(parent)
 {
@@ -65,6 +61,7 @@ void SinYeeReplayer::appendTicksToList(const QString &date, const QString &instr
     const auto contractOffsetNum = SinYeeBar::getAvailableContracts(barStream);
     barStream.rollbackTransaction();
 
+    mapTime.setTradingDay(date);
     for (const auto &contractName : contractNames) {
         QList<SinYeeBar> oneMinuteBars;     // 用于检查某个时间是否是在交易时段内.
         auto isValidTime = [&oneMinuteBars](int tickTime) -> bool {
@@ -109,17 +106,28 @@ void SinYeeReplayer::appendTicksToList(const QString &date, const QString &instr
 
         const auto tickList = SinYeeTick::readTicks(tickStream, num);
         if (!contractName.endsWith("99")) {
-            for (const auto &tick : tickList) {
-                if (isValidTime(tick.time)) {
-                    tickPairList << qMakePair(contractName, tick);
+            for (const auto &sinYeeTick : tickList) {
+                if (isValidTime(sinYeeTick.time)) {
+                    CommonTick commonTick = {0,
+                                             sinYeeTick.price,
+                                             sinYeeTick.askPrice,
+                                             sinYeeTick.bidPrice,
+                                             (int)sinYeeTick.volume,
+                                             (int)sinYeeTick.askVolume,
+                                             (int)sinYeeTick.bidVolume};
+                    int hhmmssTime = sinYeeTick.time % 86400;
+                    auto hour = hhmmssTime / 3600;
+                    if (hour < 8) {
+                        hhmmssTime -= (4 * 3600);
+                        if (hhmmssTime < 0) {
+                            hhmmssTime += 86400;
+                        }
+                    }
+                    commonTick.setTimeStamp(mapTime(hhmmssTime), sinYeeTick.msec);
+                    tickPairList << qMakePair(contractName, commonTick);
                 }
             }
         }
     }
     tickFile.close();
-}
-
-bool SinYeeReplayer::replayTo(int time)
-{
-    return CommonReplayer::replayTo(time - date_diff_int);
 }

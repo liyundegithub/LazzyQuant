@@ -20,8 +20,6 @@ struct SinYeeTick
     float openInterest;
     quint8 direction;
 
-    operator CommonTick();
-
     static QStringList getAvailableContracts(QDataStream& tickStream);
     static QList<SinYeeTick> readTicks(QDataStream& tickStream, int num);
 };

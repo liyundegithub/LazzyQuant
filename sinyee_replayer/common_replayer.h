@@ -6,7 +6,6 @@
 #include <QMap>
 
 #include "common_tick.h"
-#include "time_mapper.h"
 
 class CommonReplayer : public QObject
 {
@@ -14,7 +13,6 @@ class CommonReplayer : public QObject
 
 protected:
     QStringList replayList;
-    TimeMapper mapTime;
     QList<QPair<QString, CommonTick>> tickPairList;
     int tickCnt = 0;
     int replayIdx = 0;
@@ -41,7 +39,7 @@ public slots:
 
     bool prepareReplay(const QString &date);
     bool prepareReplay(const QString &date, const QStringList &instruments);
-    virtual bool replayTo(int time);
+    bool replayTo(int time);
 
 };
 
