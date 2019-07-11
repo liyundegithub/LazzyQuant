@@ -63,16 +63,7 @@ void SinYeeReplayer::appendTicksToList(const QString &date, const QString &instr
 
     mapTime.setTradingDay(date);
     for (const auto &contractName : contractNames) {
-        QList<SinYeeBar> oneMinuteBars;     // 用于检查某个时间是否是在交易时段内.
-        auto isValidTime = [&oneMinuteBars](int tickTime) -> bool {
-            auto tickMinute = tickTime / 60 * 60;
-            for (const auto &bar : qAsConst(oneMinuteBars)) {
-                if (bar.time == tickMinute) {
-                    return true;
-                }
-            }
-            return false;
-        };
+        QSet<int> minutes;  // 用于检查某个时间是否是在交易时段内.
 
         const auto offsetNums = contractOffsetNum.values(contractName);
         if (!offsetNums.isEmpty()) {
@@ -80,22 +71,26 @@ void SinYeeReplayer::appendTicksToList(const QString &date, const QString &instr
             auto num = offsetNums[0].second;
             barStream.startTransaction();
             barStream.skipRawData(offset);
-            oneMinuteBars = SinYeeBar::readBars(barStream, num);
+            auto oneMinuteBars = SinYeeBar::readBars(barStream, num);
             barStream.rollbackTransaction();
-        }
 
-        // 由于数据源的质量问题，可能需要把夜盘最后一分钟不属于交易时段的Bar去除.
-        int i = 0;
-        int size = oneMinuteBars.size();
-        for (; i < size; i++) {
-            QTime barTime = QTime(0, 0).addSecs(oneMinuteBars[i].time);
-            if (barTime == QTime(9, 0)) {
-                break;
+            // 由于数据源的质量问题，可能需要把夜盘最后一分钟不属于交易时段的Bar去除.
+            int i = 0;
+            int size = oneMinuteBars.size();
+            for (; i < size; i++) {
+                QTime barTime = QTime(0, 0).addSecs(oneMinuteBars[i].time);
+                if (barTime == QTime(9, 0)) {
+                    break;
+                }
             }
-        }
-        if (i > 0 && i != size) {
-            if (i % 5 == 1) {
-                oneMinuteBars.removeAt(i - 1);
+            if (i > 0 && i != size) {
+                if (i % 5 == 1) {
+                    oneMinuteBars.removeAt(i - 1);
+                }
+            }
+
+            for (const auto &bar : qAsConst(oneMinuteBars)) {
+                minutes << bar.time / 60;
             }
         }
 
@@ -106,8 +101,13 @@ void SinYeeReplayer::appendTicksToList(const QString &date, const QString &instr
 
         const auto tickList = SinYeeTick::readTicks(tickStream, num);
         if (!contractName.endsWith("99")) {
+            QString normalizedContractName = contractName;
+            if (instrument.startsWith("SQ") || instrument.startsWith("DL")) {
+                // 上期所和大商所的合约代码为小写.
+                normalizedContractName.replace(0, 2, contractName.left(2).toLower());
+            }
             for (const auto &sinYeeTick : tickList) {
-                if (isValidTime(sinYeeTick.time)) {
+                if (minutes.contains(sinYeeTick.time / 60)) {
                     CommonTick commonTick = {0,
                                              sinYeeTick.price,
                                              sinYeeTick.askPrice,
@@ -124,7 +124,7 @@ void SinYeeReplayer::appendTicksToList(const QString &date, const QString &instr
                         }
                     }
                     commonTick.setTimeStamp(mapTime(hhmmssTime), sinYeeTick.msec);
-                    tickPairList << qMakePair(contractName, commonTick);
+                    tickPairList << qMakePair(normalizedContractName, commonTick);
                 }
             }
         }
