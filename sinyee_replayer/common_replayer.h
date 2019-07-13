@@ -3,7 +3,6 @@
 
 #include <QObject>
 #include <QStringList>
-#include <QMap>
 
 #include "common_tick.h"
 
@@ -16,7 +15,6 @@ protected:
     QList<QPair<QString, CommonTick>> tickPairList;
     int tickCnt = 0;
     int replayIdx = 0;
-    QMap<QString, int> sumVol;
     QString replayDate;
 
 public:

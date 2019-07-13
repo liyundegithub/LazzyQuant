@@ -44,7 +44,7 @@ bool createTablesIfNotExist(const QString &dbName, const QStringList &tableNames
     const auto existTables = sqlDB.tables();
     for (const auto &tableToCreate : tableNames) {
         if (!existTables.contains(tableToCreate, Qt::CaseInsensitive)) {
-            bool ok = qry.exec(QString("CREATE TABLE %1.%2 %3").arg(dbName).arg(tableToCreate).arg(format));
+            bool ok = qry.exec(QString("CREATE TABLE %1.%2 %3").arg(dbName, tableToCreate, format));
             if (!ok) {
                 ret = false;
                 qCritical().noquote().nospace() << "Create table " << dbName << "." << tableToCreate << " failed!";

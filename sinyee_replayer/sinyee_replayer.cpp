@@ -106,13 +106,15 @@ void SinYeeReplayer::appendTicksToList(const QString &date, const QString &instr
                 // 上期所和大商所的合约代码为小写.
                 normalizedContractName.replace(0, 2, contractName.left(2).toLower());
             }
+            int sumVol = 0;
             for (const auto &sinYeeTick : tickList) {
                 if (minutes.contains(sinYeeTick.time / 60)) {
+                    sumVol += sinYeeTick.volume;
                     CommonTick commonTick = {0,
                                              sinYeeTick.price,
                                              sinYeeTick.askPrice,
                                              sinYeeTick.bidPrice,
-                                             (int)sinYeeTick.volume,
+                                             sumVol,
                                              (int)sinYeeTick.askVolume,
                                              (int)sinYeeTick.bidVolume};
                     int hhmmssTime = sinYeeTick.time % 86400;

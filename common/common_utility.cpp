@@ -77,7 +77,7 @@ bool parseOptionID(const QString &optionID, QString &futureID, OPTION_TYPE &type
  * \param exercisePrice 执行价格.
  * \return 期权合约代码.
  */
-QString makeOptionID(const QString &futureID, const OPTION_TYPE type, const int exercisePrice)
+QString makeOptionID(const QString &futureID, OPTION_TYPE type, int exercisePrice)
 {
     static const QMap<QString, QString> optionIdPatternMap = {
         {"m", "%1-%2-%3"},

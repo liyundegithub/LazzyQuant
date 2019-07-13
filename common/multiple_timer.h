@@ -12,8 +12,8 @@ class MultipleTimer : public QObject
     Q_OBJECT
 
 public:
-    explicit MultipleTimer(QObject *parent = 0);
-    explicit MultipleTimer(const QList<QTime> &timeList, QObject *parent = 0);
+    explicit MultipleTimer(QObject *parent = nullptr);
+    explicit MultipleTimer(const QList<QTime> &timeList, QObject *parent = nullptr);
     ~MultipleTimer();
 
     QList<QTime> getTimePoints();

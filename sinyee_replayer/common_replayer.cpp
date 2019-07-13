@@ -60,7 +60,6 @@ bool CommonReplayer::prepareReplay(const QString &date, const QStringList &instr
 {
     replayDate = date;
     tickPairList.clear();
-    sumVol.clear();
     for (const auto &instrument : instruments) {
         appendTicksToList(date, instrument);
     }
@@ -79,11 +78,10 @@ bool CommonReplayer::replayTo(int time)
             const auto &item = tickPairList[replayIdx];
             const auto &tick = item.second;
             if (time >= tick.getTime()) {
-                sumVol[item.first] += tick.volume;
                 emit newMarketData(item.first,
                                    tick.getTime(),
                                    tick.price,
-                                   sumVol[item.first],
+                                   tick.volume,
                                    tick.askPrice,
                                    tick.askVolume,
                                    tick.bidPrice,
