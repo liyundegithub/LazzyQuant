@@ -1,5 +1,5 @@
-#ifndef EDITABLE_SEGMENT_H
-#define EDITABLE_SEGMENT_H
+#ifndef SEGMENT_H
+#define SEGMENT_H
 
 #include "../mql5_indicator.h"
 #include "../../editable.h"
@@ -33,4 +33,4 @@ protected:
                      ) override;
 };
 
-#endif // EDITABLE_SEGMENT_H
+#endif // SEGMENT_H

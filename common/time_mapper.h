@@ -1,5 +1,5 @@
-#ifndef DATETIME_MAPPING_H
-#define DATETIME_MAPPING_H
+#ifndef TIME_MAPPER_H
+#define TIME_MAPPER_H
 
 #include <QtGlobal>
 
@@ -19,4 +19,4 @@ public:
 
 };
 
-#endif // DATETIME_MAPPING_H
+#endif // TIME_MAPPER_H

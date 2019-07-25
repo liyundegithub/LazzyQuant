@@ -22,7 +22,7 @@ struct CONFIG_ITEM;
 
 class AbstractQuery {
 public:
-    virtual ~AbstractQuery() {}
+    virtual ~AbstractQuery() = default;
     virtual int trySendQryReq() = 0;
 };
 
