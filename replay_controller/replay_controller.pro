@@ -13,6 +13,7 @@ SOURCES += main2.cpp \
     ../sinyee_replayer/sinyee_tick.cpp \
     ../sinyee_replayer/sinyee_bar.cpp \
     ../sinyee_replayer/sinyee_replayer.cpp \
+    replay_controller.cpp \
     widget.cpp
 
 HEADERS += \
@@ -24,6 +25,7 @@ HEADERS += \
     ../sinyee_replayer/sinyee_tick.h \
     ../sinyee_replayer/sinyee_bar.h \
     ../sinyee_replayer/sinyee_replayer.h \
+    replay_controller.h \
     widget.h
 
 INCLUDEPATH += ../ ../common/ ../sinyee_replayer/

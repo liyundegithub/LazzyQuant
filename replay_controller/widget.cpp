@@ -24,6 +24,17 @@ Widget::~Widget()
     delete ui;
 }
 
+void Widget::setStart(const QDateTime &startDateTime)
+{
+    ui->startDateTimeEdit->setDateTime(startDateTime);
+    ui->currentDateTimeEdit->setDateTime(startDateTime);
+}
+
+void Widget::setStop(const QDateTime &stopDateTime)
+{
+    ui->stopDateTimeEdit->setDateTime(stopDateTime);
+}
+
 void Widget::onTimer()
 {
     bool haveData1 = false;

@@ -18,6 +18,8 @@ public:
     explicit Widget(CommonReplayer *replayer, QWidget *parent = nullptr);
     ~Widget();
 
+    void setStart(const QDateTime &startDateTime);
+    void setStop(const QDateTime &stopDateTime);
     void onTimer();
 
 private slots:

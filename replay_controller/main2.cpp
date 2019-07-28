@@ -1,9 +1,9 @@
 #include <QApplication>
+#include <QCommandLineParser>
 
 #include "config.h"
 #include "sinyee_replayer.h"
-#include "tick_replayer_adaptor.h"
-#include "widget.h"
+#include "replay_controller.h"
 
 int main(int argc, char *argv[])
 {
@@ -12,14 +12,18 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationName("sinyee_replayer");
     QCoreApplication::setApplicationVersion(VERSION_STR);
 
-    SinYeeReplayer replayer(replayerConfigs[0]);
-    Widget w(&replayer);
-    w.show();
+    QCommandLineParser parser;
+    parser.setApplicationDescription("Replay controller.");
+    parser.addHelpOption();
+    parser.addVersionOption();
 
-    new Tick_replayerAdaptor(&replayer);
-    QDBusConnection dbus = QDBusConnection::sessionBus();
-    dbus.registerObject(replayerConfigs[0].dbusObject, &replayer);
-    dbus.registerService(replayerConfigs[0].dbusService);
+    parser.addOptions(replayRangeOptions);
+    parser.process(a);
+
+    CommonReplayer *replayer = new SinYeeReplayer(replayerConfigs[0]);  // Will be deleted in ~ReplayController
+    ReplayController controller(replayer);
+    controller.setupReplayRange(parser);
+    controller.setupDbus(replayerConfigs[0]);
 
     return a.exec();
 }
