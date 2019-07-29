@@ -19,7 +19,7 @@ SOURCES += main.cpp \
     ../../common/trade_logger.cpp \
     ../../market_watcher/market_watcher.cpp \
     ../../market_watcher/tick_receiver.cpp \
-    ../../sinyee_replayer/common_replayer.cpp \
+    ../../replay/common_replayer.cpp \
     ../../sinyee_replayer/sinyee_tick.cpp \
     ../../sinyee_replayer/sinyee_bar.cpp \
     ../../sinyee_replayer/sinyee_replayer.cpp \
@@ -68,8 +68,8 @@ HEADERS += ../../config.h \
     ../../common/abstract_manager.h \
     ../../market_watcher/market_watcher.h \
     ../../market_watcher/tick_receiver.h \
-    ../../sinyee_replayer/common_tick.h \
-    ../../sinyee_replayer/common_replayer.h \
+    ../../replay/common_tick.h \
+    ../../replay/common_replayer.h \
     ../../sinyee_replayer/sinyee_tick.h \
     ../../sinyee_replayer/sinyee_bar.h \
     ../../sinyee_replayer/sinyee_replayer.h \
@@ -112,6 +112,7 @@ INCLUDEPATH += \
     ../ \
     ../../ \
     ../../common/ \
+    ../../replay/ \
     ../../market_watcher/ \
     ../../sinyee_replayer/ \
     ../../trade_executer/

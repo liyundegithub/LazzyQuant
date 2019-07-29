@@ -1,13 +1,13 @@
 #include <QTimer>
 #include <QCoreApplication>
 
-#include "widget.h"
-#include "ui_widget.h"
+#include "control_widget.h"
+#include "ui_control_widget.h"
 #include "common_replayer.h"
 
-Widget::Widget(CommonReplayer *replayer, QWidget *parent) :
+ControlWidget::ControlWidget(CommonReplayer *replayer, QWidget *parent) :
     QWidget(parent),
-    ui(new Ui::Widget),
+    ui(new Ui::ControlWidget),
     replayer(replayer)
 {
     ui->setupUi(this);
@@ -16,26 +16,26 @@ Widget::Widget(CommonReplayer *replayer, QWidget *parent) :
     timer->setInterval(2000);
     timer->setSingleShot(false);
     timer->setTimerType(Qt::PreciseTimer);
-    connect(timer, &QTimer::timeout, this, &Widget::onTimer);
+    connect(timer, &QTimer::timeout, this, &ControlWidget::onTimer);
 }
 
-Widget::~Widget()
+ControlWidget::~ControlWidget()
 {
     delete ui;
 }
 
-void Widget::setStart(const QDateTime &startDateTime)
+void ControlWidget::setStart(const QDateTime &startDateTime)
 {
     ui->startDateTimeEdit->setDateTime(startDateTime);
     ui->currentDateTimeEdit->setDateTime(startDateTime);
 }
 
-void Widget::setStop(const QDateTime &stopDateTime)
+void ControlWidget::setStop(const QDateTime &stopDateTime)
 {
     ui->stopDateTimeEdit->setDateTime(stopDateTime);
 }
 
-void Widget::onTimer()
+void ControlWidget::onTimer()
 {
     bool haveData1 = false;
     bool haveData2 = false;
@@ -70,7 +70,7 @@ void Widget::onTimer()
     }
 }
 
-void Widget::on_playButton_clicked()
+void ControlWidget::on_playButton_clicked()
 {
     if (ui->startDateTimeEdit->isEnabled()) {
         startTime = ui->startDateTimeEdit->dateTime().toSecsSinceEpoch();
@@ -109,14 +109,14 @@ void Widget::on_playButton_clicked()
     timer->start();
 }
 
-void Widget::on_pauseButton_clicked()
+void ControlWidget::on_pauseButton_clicked()
 {
     timer->stop();
     ui->periodBox->setEnabled(true);
     forcePause = true;
 }
 
-void Widget::on_stopButton_clicked()
+void ControlWidget::on_stopButton_clicked()
 {
     timer->stop();
     ui->startDateTimeEdit->setEnabled(true);
@@ -125,7 +125,7 @@ void Widget::on_stopButton_clicked()
     forceStop = true;
 }
 
-void Widget::on_speedSlider_valueChanged(int value)
+void ControlWidget::on_speedSlider_valueChanged(int value)
 {
     timer->setInterval(2000 / value);
 }

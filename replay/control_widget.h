@@ -1,5 +1,5 @@
-#ifndef WIDGET_H
-#define WIDGET_H
+#ifndef CONTROL_WIDGET_H
+#define CONTROL_WIDGET_H
 
 #include <QWidget>
 
@@ -7,16 +7,16 @@ class QTimer;
 class CommonReplayer;
 
 namespace Ui {
-class Widget;
+class ControlWidget;
 }
 
-class Widget : public QWidget
+class ControlWidget : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit Widget(CommonReplayer *replayer, QWidget *parent = nullptr);
-    ~Widget();
+    explicit ControlWidget(CommonReplayer *replayer, QWidget *parent = nullptr);
+    ~ControlWidget();
 
     void setStart(const QDateTime &startDateTime);
     void setStop(const QDateTime &stopDateTime);
@@ -30,7 +30,7 @@ private slots:
     void on_speedSlider_valueChanged(int value);
 
 private:
-    Ui::Widget *ui;
+    Ui::ControlWidget *ui;
     CommonReplayer *replayer;
     QTimer *timer;
     int startTime;
@@ -42,4 +42,4 @@ private:
     bool forceStop = false;
 };
 
-#endif // WIDGET_H
+#endif // CONTROL_WIDGET_H

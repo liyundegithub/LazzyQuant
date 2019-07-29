@@ -1,6 +1,6 @@
 #include "config_struct.h"
 #include "common_replayer.h"
-#include "widget.h"
+#include "control_widget.h"
 #include "replay_controller.h"
 
 #include "tick_replayer_adaptor.h"
@@ -10,14 +10,14 @@
 
 ReplayController::ReplayController(CommonReplayer *replayer)
 {
-    widget = new Widget(replayer);
-    widget->show();
+    controlWidget = new ControlWidget(replayer);
+    controlWidget->show();
     this->replayerObj = replayer;
 }
 
 ReplayController::~ReplayController()
 {
-    delete widget;
+    delete controlWidget;
     delete replayerObj;
 }
 
@@ -27,10 +27,10 @@ void ReplayController::setupReplayRange(QCommandLineParser &parser)
     auto replayStopTime = getReplayDateTime(parser, "stop");
 
     if (replayStartTime.isValid()) {
-        widget->setStart(replayStartTime);
+        controlWidget->setStart(replayStartTime);
     }
     if (replayStopTime.isValid()) {
-        widget->setStop(replayStopTime);
+        controlWidget->setStop(replayStopTime);
     }
 }
 

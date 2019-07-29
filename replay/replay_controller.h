@@ -8,12 +8,12 @@
 class QCommandLineParser;
 
 class CommonReplayer;
-class Widget;
+class ControlWidget;
 struct CONFIG_ITEM;
 
 class ReplayController {
     QObject *replayerObj;
-    Widget *widget;
+    ControlWidget *controlWidget;
 
 public:
     explicit ReplayController(CommonReplayer *replayer);
