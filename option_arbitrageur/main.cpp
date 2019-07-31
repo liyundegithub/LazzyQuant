@@ -17,7 +17,7 @@ using std::placeholders::_2;
 using std::placeholders::_3;
 using std::placeholders::_4;
 
-typedef QDBusPendingReply<> (com::lazzyquant::trade_executer::*BUY_SELL_LIMIT_4_PARAM) (const QString&, int, double, int);
+using BUY_SELL_LIMIT_4_PARAM = QDBusPendingReply<> (com::lazzyquant::trade_executer::*)(const QString &, int, double, int);
 
 std::function<void(const QString&, int, double, int)>  buyLimit = [](auto, auto, auto, auto) -> void {};
 std::function<void(const QString&, int, double, int)> sellLimit = [](auto, auto, auto, auto) -> void {};
@@ -132,10 +132,8 @@ int main(int argc, char *argv[])
         marketOpenTimer->disconnect();
         delete marketOpenTimer;
     }
-    if (pConnManager)
-        delete pConnManager;
-    if (pExecuter)
-        delete pExecuter;
+    delete pConnManager;
+    delete pExecuter;
     delete pWatcher;
     restoreMessageHandler();
     return ret;

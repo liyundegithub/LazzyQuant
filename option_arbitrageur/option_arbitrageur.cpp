@@ -36,12 +36,9 @@ OptionArbitrageur::~OptionArbitrageur()
 {
     qDebug() << "~OptionArbitrageur";
 
-    if (pPricingEngine != nullptr)
-        delete pPricingEngine;
-    if (pDepthMarkets != nullptr)
-        delete pDepthMarkets;
-    if (pStrategy != nullptr)
-        delete pStrategy;
+    delete pPricingEngine;
+    delete pDepthMarkets;
+    delete pStrategy;
 }
 
 void OptionArbitrageur::loadOptionArbitrageurSettings()

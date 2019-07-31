@@ -1,7 +1,7 @@
 #ifndef TRADING_CALENDAR_H
 #define TRADING_CALENDAR_H
 
-#include <QList>
+#include <QSet>
 #include <QDate>
 
 class TradingCalendar
@@ -19,7 +19,7 @@ public:
 
 protected:
     static TradingCalendar *instance;
-    QList<QDate> nonTradingDays; // Mon ~ Fri but market close
+    QSet<QDate> nonTradingDays; // Mon ~ Fri but market close
 
 };
 

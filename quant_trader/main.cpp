@@ -92,12 +92,8 @@ int main(int argc, char *argv[])
     dbus.registerService(traderConfigs[0].dbusService);
 
     int ret = a.exec();
-    if (pLogger) {
-        delete pLogger;
-    }
-    if (pExecuter) {
-        delete pExecuter;
-    }
+    delete pLogger;
+    delete pExecuter;
     restoreMessageHandler();
     return ret;
 }

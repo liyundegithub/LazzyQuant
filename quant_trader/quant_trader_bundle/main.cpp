@@ -128,12 +128,8 @@ int main(int argc, char *argv[])
     }
 
     int ret = a.exec();
-    if (pLogger) {
-        delete pLogger;
-    }
-    if (manager) {
-        delete manager;
-    }
+    delete pLogger;
+    delete manager;
     restoreMessageHandler();
     return ret;
 }
