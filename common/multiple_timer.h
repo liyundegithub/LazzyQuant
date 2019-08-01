@@ -5,37 +5,31 @@
 
 template <typename T> class QList;
 class QTime;
-class QTimer;
 
 class MultipleTimer : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit MultipleTimer(QObject *parent = nullptr);
     explicit MultipleTimer(const QList<QTime> &timeList, QObject *parent = nullptr);
-    ~MultipleTimer();
+    ~MultipleTimer() override = default;
 
-    QList<QTime> getTimePoints();
-
-    // TODO void addTimePoint(const QTime &timePoint);
-    // TODO void removeTimePoint(const QTime &timePoint);
+    QList<QTime> getTimePoints() const;
 
 protected:
-    QTimer *busyTimer;
     QList<QTime> timePoints;
-    int timeIndex;
+    int timeIndex = -1;
+    int timerId = 0;
 
     void setNextTimePoint();
+    void timerEvent(QTimerEvent *) override;
 
 signals:
     void timesUp(int);
 
-private slots:
-    void onBusyTimer();
-
 public slots:
     void stop();
+
 };
 
 #endif // MULTIPLE_TIMER_H

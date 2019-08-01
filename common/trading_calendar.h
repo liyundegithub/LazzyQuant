@@ -9,16 +9,20 @@ class TradingCalendar
     TradingCalendar();
 
 public:
+    TradingCalendar(const TradingCalendar& arg) = delete; // Copy constructor
+    TradingCalendar(const TradingCalendar&& arg) = delete;  // Move constructor
+    TradingCalendar& operator=(const TradingCalendar& arg) = delete; // Assignment operator
+    TradingCalendar& operator=(const TradingCalendar&& arg) = delete; // Move operator
+
     static TradingCalendar *getInstance();
 
-    bool isTradingDay(const QDate &date = QDate::currentDate());
-    bool tradesTonight(const QDate &date = QDate::currentDate());
-    QDate getOpenDay(const QDate &date = QDate::currentDate());
+    bool isTradingDay(const QDate &date = QDate::currentDate()) const;
+    bool tradesTonight(const QDate &date = QDate::currentDate()) const;
+    QDate getOpenDay(const QDate &date = QDate::currentDate()) const;
 
-    int getTradingDays(const QDate &startDate, const QDate &endDate);
+    int getTradingDays(const QDate &startDate, const QDate &endDate) const;
 
 protected:
-    static TradingCalendar *instance;
     QSet<QDate> nonTradingDays; // Mon ~ Fri but market close
 
 };

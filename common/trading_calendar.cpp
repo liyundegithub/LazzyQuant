@@ -4,8 +4,6 @@
 
 #include <QSettings>
 
-TradingCalendar *TradingCalendar::instance = nullptr;
-
 TradingCalendar::TradingCalendar()
 {
     auto settings = getSettingsSmart(ORGANIZATION, "trading_calander");
@@ -20,13 +18,11 @@ TradingCalendar::TradingCalendar()
 
 TradingCalendar *TradingCalendar::getInstance()
 {
-    if (!TradingCalendar::instance) {
-        TradingCalendar::instance = new TradingCalendar();
-    }
-    return TradingCalendar::instance;
+    static TradingCalendar tradingCalendar;
+    return &tradingCalendar;
 }
 
-bool TradingCalendar::isTradingDay(const QDate &date)
+bool TradingCalendar::isTradingDay(const QDate &date) const
 {
     const int day = date.dayOfWeek();
     if (day == 0 || day == 6 || day == 7) {
@@ -39,7 +35,7 @@ bool TradingCalendar::isTradingDay(const QDate &date)
     return true;
 }
 
-bool TradingCalendar::tradesTonight(const QDate &date)
+bool TradingCalendar::tradesTonight(const QDate &date) const
 {
     QDate day1 = date.addDays(1);
     QDate day2 = date.addDays(2);
@@ -47,7 +43,7 @@ bool TradingCalendar::tradesTonight(const QDate &date)
     return isTradingDay(date) && (isTradingDay(day1) || (!isTradingDay(day2) && isTradingDay(day3)));
 }
 
-QDate TradingCalendar::getOpenDay(const QDate &date)
+QDate TradingCalendar::getOpenDay(const QDate &date) const
 {
     QDate day1 = date.addDays(-1);
     QDate day2 = date.addDays(-2);
@@ -68,7 +64,7 @@ QDate TradingCalendar::getOpenDay(const QDate &date)
     }
 }
 
-int TradingCalendar::getTradingDays(const QDate &startDate, const QDate &endDate)
+int TradingCalendar::getTradingDays(const QDate &startDate, const QDate &endDate) const
 {
     int sum = 0;
     for (QDate date = startDate; date <= endDate; date = date.addDays(1)) {
