@@ -99,7 +99,6 @@ MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, bool replayMode, QObject
         }
     }
 
-    multiTimer = nullptr;
     setupTimers();
 
     loggedIn = false;
@@ -115,8 +114,7 @@ MarketWatcher::~MarketWatcher()
         pUserApi->Release();
         delete pReceiver;
     }
-    if (multiTimer)
-        delete multiTimer;
+    delete multiTimer;
     delete settings;
 }
 

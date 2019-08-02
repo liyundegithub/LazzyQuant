@@ -46,9 +46,7 @@ int main(int argc, char *argv[])
 
     int ret = a.exec();
 
-    for (auto pWatcher : qAsConst(watcherList)) {
-        delete pWatcher;
-    }
+    qDeleteAll(watcherList);
     restoreMessageHandler();
     return ret;
 }

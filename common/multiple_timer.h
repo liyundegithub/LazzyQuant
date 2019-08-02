@@ -3,8 +3,8 @@
 
 #include <QObject>
 
-template <typename T> class QList;
-class QTime;
+#include <QList>
+#include <QTime>
 
 class MultipleTimer : public QObject
 {
@@ -22,7 +22,7 @@ protected:
     int timerId = 0;
 
     void setNextTimePoint();
-    void timerEvent(QTimerEvent *) override;
+    void timerEvent(QTimerEvent *event) override;
 
 signals:
     void timesUp(int);

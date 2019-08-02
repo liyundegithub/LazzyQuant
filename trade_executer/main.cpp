@@ -46,9 +46,7 @@ int main(int argc, char *argv[])
 
     int ret = a.exec();
 
-    for (auto pExecuter : executerList) {
-        delete pExecuter;
-    }
+    qDeleteAll(executerList);
     restoreMessageHandler();
     return ret;
 }

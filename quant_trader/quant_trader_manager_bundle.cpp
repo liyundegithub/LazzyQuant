@@ -52,11 +52,7 @@ QuantTraderManagerBundle::~QuantTraderManagerBundle()
         auto *pSource = d->getSource();
         auto *pExecuter = d->getExecuter();
         delete d;
-        if (pSource) {
-            delete pSource;
-        }
-        if (pExecuter) {
-            delete pExecuter;
-        }
+        delete pSource;
+        delete pExecuter;
     }
 }

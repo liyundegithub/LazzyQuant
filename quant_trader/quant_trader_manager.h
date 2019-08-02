@@ -41,8 +41,7 @@ QuantTraderManager<S, T, E>::QuantTraderManager(S *pSource, T *pTrader, E *pExec
 template<class S, class T, class E>
 QuantTraderManager<S, T, E>::~QuantTraderManager()
 {
-    if (pConnManager)
-        delete pConnManager;
+    delete pConnManager;
 }
 
 template<class S, class T, class E>
@@ -74,10 +73,8 @@ QuantTraderManagerReal<W, T, E>::QuantTraderManagerReal(W *pWatcher, T *pTrader,
 template<class W, class T, class E>
 QuantTraderManagerReal<W, T, E>::~QuantTraderManagerReal()
 {
-    if (marketOpenTimer )
-        delete marketOpenTimer ;
-    if (marketCloseTimer)
-        delete marketCloseTimer;
+    delete marketOpenTimer ;
+    delete marketCloseTimer;
 }
 
 template<class W, class T, class E>

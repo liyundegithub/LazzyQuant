@@ -46,7 +46,7 @@ protected:
     QTime localTime;    // 用来在保存行情数据时生成一个本地的时间戳, 以记录行情到达的先后顺序.
     QMap<QString, QList<CThostFtdcDepthMarketDataField>> depthMarketDataListMap;
 
-    MultipleTimer *multiTimer;
+    MultipleTimer *multiTimer = nullptr;
     QList<QStringList> instrumentsToProcess;
     void setupTimers();
     void timesUp(int index);

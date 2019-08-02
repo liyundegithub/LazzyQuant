@@ -1,7 +1,5 @@
 #include "multiple_timer.h"
 
-#include <QList>
-#include <QTime>
 #include <QTimerEvent>
 
 MultipleTimer::MultipleTimer(const QList<QTime> &timeList, QObject *parent)
@@ -41,7 +39,7 @@ void MultipleTimer::setNextTimePoint()
     }
 }
 
-void MultipleTimer::timerEvent(QTimerEvent * event)
+void MultipleTimer::timerEvent(QTimerEvent *event)
 {
     killTimer(event->timerId());
     emit timesUp(timeIndex);
