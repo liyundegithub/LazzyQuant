@@ -44,10 +44,10 @@ void QuantTrader::loadQuantTraderSettings(const CONFIG_ITEM &config)
     settings->endGroup();
 
     settings->beginGroup("Database");
-    dbDriver = settings->value("driver").toString();
-    dbHostName = settings->value("hostname").toString();
-    dbUserName = settings->value("username").toString();
-    dbPassword = settings->value("password").toString();
+    auto dbDriver = settings->value("driver").toString();
+    auto dbHostName = settings->value("hostname").toString();
+    auto dbUserName = settings->value("username").toString();
+    auto dbPassword = settings->value("password").toString();
     settings->endGroup();
 
     QSqlDatabase sqlDB = QSqlDatabase::addDatabase(dbDriver);
@@ -542,36 +542,6 @@ void QuantTrader::onMarketClose()
     }
 }
 
-/*!
- * \brief QuantTrader::checkDataBaseStatus
- * 检查数据库连接状态, 如果连接已经失效, 断开重连.
- *
- * \return 数据库连接状态, true正常, false不正常.
- */
-bool QuantTrader::checkDataBaseStatus()
-{
-    QSqlDatabase sqlDB = QSqlDatabase::database();
-    QSqlQuery qry(sqlDB);
-    bool ret = qry.exec("SHOW PROCESSLIST");
-    if (!ret) {
-        qWarning().noquote() << "Execute query failed! Will re-open database!";
-        qWarning().noquote() << qry.lastError();
-        sqlDB.close();
-        if (sqlDB.open()) {
-            ret = qry.exec("SHOW PROCESSLIST");
-        } else {
-            qCritical().noquote() << "Re-open database failed!";
-            qCritical().noquote() << qry.lastError();
-        }
-    }
-    if (ret) {
-        while (qry.next()) {
-            qInfo() << qry.value(0).toLongLong() << qry.value(1).toString();
-        }
-    }
-    return ret;
-}
-
 void QuantTrader::onModified(const QString &name)
 {
     auto *editable = editableMap.value(name.toLower(), nullptr);
@@ -637,11 +607,7 @@ QStringList QuantTrader::getStrategyId(const QString &instrument) const
 bool QuantTrader::getStrategyEnabled(const QString &id) const
 {
     auto pStrategy = strategyIdMap.value(id);
-    if (pStrategy) {
-        return pStrategy->isEnabled();
-    } else {
-        return false;
-    }
+    return pStrategy && pStrategy->isEnabled();
 }
 
 void QuantTrader::setStrategyEnabled(const QString &id, bool state)

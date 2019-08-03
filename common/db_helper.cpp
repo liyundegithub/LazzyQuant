@@ -6,6 +6,36 @@
 #include <QSqlError>
 #include <QDebug>
 
+/*!
+ * \brief checkAndReopenDbIfNotAlive
+ * 检查数据库连接状态, 如果连接已经失效, 断开重连.
+ *
+ * \return 数据库连接状态, true正常, false不正常.
+ */
+bool checkAndReopenDbIfNotAlive()
+{
+    QSqlDatabase sqlDB = QSqlDatabase::database();
+    QSqlQuery qry(sqlDB);
+    bool ret = qry.exec("SHOW PROCESSLIST");
+    if (!ret) {
+        qWarning().noquote() << "Execute query failed! Will re-open database!";
+        qWarning().noquote() << qry.lastError();
+        sqlDB.close();
+        if (sqlDB.open()) {
+            ret = qry.exec("SHOW PROCESSLIST");
+        } else {
+            qCritical().noquote() << "Re-open database failed!";
+            qCritical().noquote() << qry.lastError();
+        }
+    }
+    if (ret) {
+        while (qry.next()) {
+            qDebug() << qry.value(0).toLongLong() << qry.value(1).toString();
+        }
+    }
+    return ret;
+}
+
 bool createDbIfNotExist(const QString &dbName)
 {
     QSqlDatabase sqlDB = QSqlDatabase::database();

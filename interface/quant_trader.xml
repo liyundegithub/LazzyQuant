@@ -22,9 +22,6 @@
     </method>
     <method name="onMarketClose">
     </method>
-    <method name="checkDataBaseStatus">
-      <arg type="b" direction="out"/>
-    </method>
     <method name="onModified">
       <arg name="name" type="s" direction="in"/>
     </method>

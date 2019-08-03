@@ -34,10 +34,6 @@ protected:
 
     QString kt_export_dir;
     bool saveBarsToDB;
-    QString dbDriver;
-    QString dbHostName;
-    QString dbUserName;
-    QString dbPassword;
 
     void loadQuantTraderSettings(const CONFIG_ITEM &config);
     void loadTradeStrategySettings(const CONFIG_ITEM &config);
@@ -69,7 +65,6 @@ public slots:
                       double askPrice1, int askVolume1, double bidPrice1, int bidVolume1);
     void onMarketPause();
     void onMarketClose();
-    bool checkDataBaseStatus();
 
     // Indicator or strategy has been modified.
     void onModified(const QString &name);

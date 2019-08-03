@@ -3,6 +3,7 @@
 
 #include "trading_calendar.h"
 #include "multiple_timer.h"
+#include "db_helper.h"
 #include "connection_manager.h"
 #include "abstract_manager.h"
 
@@ -91,7 +92,7 @@ void QuantTraderManagerReal<W, T, E>::init()
                          } else {
                              qWarning() << "Market Watcher Not Ready!";
                          }
-                         this->pTrader->checkDataBaseStatus();
+                         checkAndReopenDbIfNotAlive();
                      });
 
     QList<QTime> timePoints({{2, 35}, {11, 35}, {15, 5}});
