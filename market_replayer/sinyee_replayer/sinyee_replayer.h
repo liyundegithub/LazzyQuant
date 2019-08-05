@@ -12,7 +12,6 @@ class SinYeeReplayer : public CommonReplayer
     Q_CLASSINFO("D-Bus Interface", "com.lazzyquant.tick_replayer")
 
     QString sinYeeDataPath;
-    TimeMapper mapTime;
 
 public:
     explicit SinYeeReplayer(const CONFIG_ITEM &config, QObject *parent = nullptr);

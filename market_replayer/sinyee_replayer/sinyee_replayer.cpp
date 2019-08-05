@@ -14,18 +14,8 @@ SinYeeReplayer::SinYeeReplayer(const CONFIG_ITEM &config, QObject *parent) :
     CommonReplayer(parent)
 {
     auto settings = getSettingsSmart(config.organization, "sinyee_replayer", this);
-
     sinYeeDataPath = settings->value("SinYeeDataPath").toString();
-
-    settings->beginGroup("ReplayList");
-    const auto replayListTmp = settings->childKeys();
-    for (const auto &key : replayListTmp) {
-        if (settings->value(key).toBool()) {
-            replayList.append(key);
-        }
-    }
-    settings->endGroup();
-    replayList.removeDuplicates();
+    this->replayList = getSettingItemList(settings.get(), "ReplayList");
 }
 
 void SinYeeReplayer::appendTicksToList(const QString &date, const QString &instrument)
@@ -61,6 +51,7 @@ void SinYeeReplayer::appendTicksToList(const QString &date, const QString &instr
     const auto contractOffsetNum = SinYeeBar::getAvailableContracts(barStream);
     barStream.rollbackTransaction();
 
+    TimeMapper mapTime;
     mapTime.setTradingDay(date);
     for (const auto &contractName : contractNames) {
         QSet<int> minutes;  // 用于检查某个时间是否是在交易时段内.

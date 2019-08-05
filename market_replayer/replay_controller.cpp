@@ -21,7 +21,7 @@ ReplayController::~ReplayController()
     delete replayerObj;
 }
 
-void ReplayController::setupReplayRange(QCommandLineParser &parser)
+void ReplayController::setupReplayRange(const QCommandLineParser &parser)
 {
     auto replayStartTime = getReplayDateTime(parser, "start");
     auto replayStopTime = getReplayDateTime(parser, "stop");
@@ -42,7 +42,7 @@ void ReplayController::setupDbus(const CONFIG_ITEM &config)
     dbus.registerService(config.dbusService);
 }
 
-QDateTime ReplayController::getReplayDateTime(QCommandLineParser &parser, const QString &option)
+QDateTime ReplayController::getReplayDateTime(const QCommandLineParser &parser, const QString &option)
 {
     QDateTime dateTime;
     if (parser.isSet(option)) {

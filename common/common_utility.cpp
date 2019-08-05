@@ -121,6 +121,31 @@ std::unique_ptr<QSettings> getSettingsSmart(const QString &organization, const Q
     }
 }
 
+/*!
+ * \brief getSettingItemList
+ * 获取该小节的所有启用的配置项名.
+ * xxx=1表示启用该配置.
+ * xxx=0表示不启用.
+ *
+ * \param settings  QSettings指针.
+ * \param groupName 配置所在的小节名.
+ * \return 启用的配置项表.
+ */
+QStringList getSettingItemList(QSettings *settings, const QString &groupName)
+{
+    QStringList itemList;
+    settings->beginGroup(groupName);
+    const auto tmpList = settings->childKeys();
+    for (const auto &key : tmpList) {
+        if (settings->value(key).toBool()) {
+            itemList.append(key);
+        }
+    }
+    settings->endGroup();
+    itemList.removeDuplicates();
+    return itemList;
+}
+
 #define String const QString&
 
 // 通过合约名获得文件的扩展名.

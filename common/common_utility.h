@@ -43,6 +43,7 @@ bool isOption(const QString &instrumentID);
 class QSettings;
 class QObject;
 std::unique_ptr<QSettings> getSettingsSmart(const QString &organization, const QString &name, QObject *parent = nullptr);
+QStringList getSettingItemList(QSettings *settings, const QString &groupName);
 
 template<typename EnumType>
 QList<int> enumValueToList(int value)

@@ -19,11 +19,11 @@ public:
     explicit ReplayController(CommonReplayer *replayer);
     ~ReplayController();
 
-    void setupReplayRange(QCommandLineParser &parser);
+    void setupReplayRange(const QCommandLineParser &parser);
     void setupDbus(const CONFIG_ITEM &config);
 
 private:
-    QDateTime getReplayDateTime(QCommandLineParser &parser, const QString &option);
+    QDateTime getReplayDateTime(const QCommandLineParser &parser, const QString &option);
 
 };
 
