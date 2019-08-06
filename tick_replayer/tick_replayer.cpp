@@ -1,12 +1,12 @@
 #include <QPair>
 
-#include "common_replayer.h"
+#include "tick_replayer.h"
 
-CommonReplayer::CommonReplayer(QObject *parent) : QObject(parent)
+TickReplayer::TickReplayer(QObject *parent) : QObject(parent)
 {
 }
 
-void CommonReplayer::sortTickPairList()
+void TickReplayer::sortTickPairList()
 {
     std::stable_sort(tickPairList.begin(), tickPairList.end(), [](const auto &item1, const auto &item2) -> bool {
         return item1.second.timestamp < item2.second.timestamp;
@@ -16,47 +16,47 @@ void CommonReplayer::sortTickPairList()
 }
 
 /*!
- * \brief CommonReplayer::startReplay
+ * \brief TickReplayer::startReplay
  * 复盘指定日期的行情, 复盘合约由配置文件中ReplayList指定.
  *
  * \param date 复盘日期.
  */
-void CommonReplayer::startReplay(const QString &date)
+void TickReplayer::startReplay(const QString &date)
 {
     startReplay(date, replayList);
 }
 
 /*!
- * \brief CommonReplayer::startReplay
+ * \brief TickReplayer::startReplay
  * 复盘指定日期的单个合约行情, 复盘合约由参数instrument指定.
  *
  * \param date 复盘日期.
  * \param instrument 复盘合约.
  */
-void CommonReplayer::startReplay(const QString &date, const QString &instrument)
+void TickReplayer::startReplay(const QString &date, const QString &instrument)
 {
     startReplay(date, QStringList() << instrument);
 }
 
 /*!
- * \brief CommonReplayer::startReplay
+ * \brief TickReplayer::startReplay
  * 复盘指定日期的多个合约行情, 复盘合约列表由参数instruments指定.
  *
  * \param date 复盘日期.
  * \param instruments 复盘合约列表.
  */
-void CommonReplayer::startReplay(const QString &date, const QStringList &instruments)
+void TickReplayer::startReplay(const QString &date, const QStringList &instruments)
 {
     prepareReplay(date, instruments);
     replayTo(INT_MAX);
 }
 
-bool CommonReplayer::prepareReplay(const QString &date)
+bool TickReplayer::prepareReplay(const QString &date)
 {
     return prepareReplay(date, replayList);
 }
 
-bool CommonReplayer::prepareReplay(const QString &date, const QStringList &instruments)
+bool TickReplayer::prepareReplay(const QString &date, const QStringList &instruments)
 {
     replayDate = date;
     tickPairList.clear();
@@ -70,7 +70,7 @@ bool CommonReplayer::prepareReplay(const QString &date, const QStringList &instr
     return tickCnt > 0;
 }
 
-bool CommonReplayer::replayTo(int time)
+bool TickReplayer::replayTo(int time)
 {
     bool ret = false;
     if (tickCnt > 0) {

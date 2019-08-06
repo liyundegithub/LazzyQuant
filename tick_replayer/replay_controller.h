@@ -7,7 +7,7 @@
 
 class QCommandLineParser;
 
-class CommonReplayer;
+class TickReplayer;
 class ControlWidget;
 struct CONFIG_ITEM;
 
@@ -16,7 +16,7 @@ class ReplayController {
     ControlWidget *controlWidget;
 
 public:
-    explicit ReplayController(CommonReplayer *replayer);
+    explicit ReplayController(TickReplayer *replayer);
     ~ReplayController();
 
     void setupReplayRange(const QCommandLineParser &parser);

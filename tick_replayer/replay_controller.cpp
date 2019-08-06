@@ -1,5 +1,5 @@
 #include "config_struct.h"
-#include "common_replayer.h"
+#include "tick_replayer.h"
 #include "control_widget.h"
 #include "replay_controller.h"
 
@@ -8,7 +8,7 @@
 #include <QTimeZone>
 #include <QCommandLineParser>
 
-ReplayController::ReplayController(CommonReplayer *replayer)
+ReplayController::ReplayController(TickReplayer *replayer)
 {
     controlWidget = new ControlWidget(replayer);
     controlWidget->show();

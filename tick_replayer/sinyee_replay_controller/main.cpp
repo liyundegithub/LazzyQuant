@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
     parser.addOptions(replayRangeOptions);
     parser.process(a);
 
-    CommonReplayer *replayer = new SinYeeReplayer(replayerConfigs[0]);  // Will be deleted in ~ReplayController
+    TickReplayer *replayer = new SinYeeReplayer(replayerConfigs[0]);  // Will be deleted in ~ReplayController
     ReplayController controller(replayer);
     controller.setupReplayRange(parser);
     controller.setupDbus(replayerConfigs[0]);

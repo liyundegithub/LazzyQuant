@@ -9,7 +9,7 @@ SOURCES += main.cpp \
     ../../common/common_utility.cpp \
     ../../common/trading_calendar.cpp \
     ../../common/time_mapper.cpp \
-    ../common_replayer.cpp \
+    ../tick_replayer.cpp \
     ../replay_controller.cpp \
     ../control_widget.cpp \
     ../sinyee_replayer/sinyee_tick.cpp \
@@ -21,7 +21,7 @@ HEADERS += \
     ../../common/trading_calendar.h \
     ../../common/time_mapper.h \
     ../common_tick.h \
-    ../common_replayer.h \
+    ../tick_replayer.h \
     ../replay_controller.h \
     ../control_widget.h \
     ../sinyee_replayer/sinyee_tick.h \

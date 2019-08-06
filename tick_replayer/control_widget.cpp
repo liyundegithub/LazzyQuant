@@ -3,9 +3,9 @@
 
 #include "control_widget.h"
 #include "ui_control_widget.h"
-#include "common_replayer.h"
+#include "tick_replayer.h"
 
-ControlWidget::ControlWidget(CommonReplayer *replayer, QWidget *parent) :
+ControlWidget::ControlWidget(TickReplayer *replayer, QWidget *parent) :
     QWidget(parent),
     ui(new Ui::ControlWidget),
     replayer(replayer)

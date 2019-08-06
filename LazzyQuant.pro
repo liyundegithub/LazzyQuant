@@ -4,6 +4,6 @@ SUBDIRS = market_watcher \
           quant_trader \
           quant_trader/quant_trader_bundle \
           trade_executer \
-          market_replayer \
+          tick_replayer \
           future_arbitrageur \
           lazzy_controller

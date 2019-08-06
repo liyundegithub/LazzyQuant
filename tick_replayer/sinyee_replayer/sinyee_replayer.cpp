@@ -11,7 +11,7 @@
 #include "sinyee_replayer.h"
 
 SinYeeReplayer::SinYeeReplayer(const CONFIG_ITEM &config, QObject *parent) :
-    CommonReplayer(parent)
+    TickReplayer(parent)
 {
     auto settings = getSettingsSmart(config.organization, "sinyee_replayer", this);
     sinYeeDataPath = settings->value("SinYeeDataPath").toString();

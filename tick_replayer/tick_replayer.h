@@ -1,12 +1,12 @@
-#ifndef COMMON_REPLAYER_H
-#define COMMON_REPLAYER_H
+#ifndef TICK_REPLAYER_H
+#define TICK_REPLAYER_H
 
 #include <QObject>
 #include <QStringList>
 
 #include "common_tick.h"
 
-class CommonReplayer : public QObject
+class TickReplayer : public QObject
 {
     Q_OBJECT
 
@@ -18,16 +18,16 @@ protected:
     QString replayDate;
 
 public:
-    explicit CommonReplayer(QObject *parent = nullptr);
+    explicit TickReplayer(QObject *parent = nullptr);
 
 protected:
     virtual void appendTicksToList(const QString &date, const QString &instrument) = 0;
-    void sortTickPairList();
+    virtual void sortTickPairList();
 
 signals:
-    void tradingDayChanged(const QString& tradingDay);
-    void endOfReplay(const QString& tradingDay);
-    void newMarketData(const QString& instrumentID, qint64 time, double lastPrice, int volume,
+    void tradingDayChanged(const QString &tradingDay);
+    void endOfReplay(const QString &tradingDay);
+    void newMarketData(const QString &instrumentID, qint64 time, double lastPrice, int volume,
                        double askPrice1, int askVolume1, double bidPrice1, int bidVolume1);
 
 public slots:
@@ -41,4 +41,4 @@ public slots:
 
 };
 
-#endif // COMMON_REPLAYER_H
+#endif // TICK_REPLAYER_H

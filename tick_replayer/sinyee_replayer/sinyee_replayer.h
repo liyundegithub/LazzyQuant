@@ -2,11 +2,11 @@
 #define SINYEE_REPLAYER_H
 
 #include "time_mapper.h"
-#include "common_replayer.h"
+#include "tick_replayer.h"
 
 struct CONFIG_ITEM;
 
-class SinYeeReplayer : public CommonReplayer
+class SinYeeReplayer : public TickReplayer
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "com.lazzyquant.tick_replayer")

@@ -4,7 +4,7 @@
 #include <QWidget>
 
 class QTimer;
-class CommonReplayer;
+class TickReplayer;
 
 namespace Ui {
 class ControlWidget;
@@ -15,7 +15,7 @@ class ControlWidget : public QWidget
     Q_OBJECT
 
 public:
-    explicit ControlWidget(CommonReplayer *replayer, QWidget *parent = nullptr);
+    explicit ControlWidget(TickReplayer *replayer, QWidget *parent = nullptr);
     ~ControlWidget();
 
     void setStart(const QDateTime &startDateTime);
@@ -31,7 +31,7 @@ private slots:
 
 private:
     Ui::ControlWidget *ui;
-    CommonReplayer *replayer;
+    TickReplayer *replayer;
     QTimer *timer;
     int startTime;
     int endTime;
