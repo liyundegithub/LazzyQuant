@@ -20,6 +20,7 @@ SOURCES += main.cpp \
     ../../market_watcher/market_watcher.cpp \
     ../../market_watcher/tick_receiver.cpp \
     ../../tick_replayer/tick_replayer.cpp \
+    ../../tick_replayer/ctp_replayer/ctp_replayer.cpp \
     ../../tick_replayer/sinyee_replayer/sinyee_tick.cpp \
     ../../tick_replayer/sinyee_replayer/sinyee_bar.cpp \
     ../../tick_replayer/sinyee_replayer/sinyee_replayer.cpp \
@@ -31,6 +32,7 @@ SOURCES += main.cpp \
     ../bar.cpp \
     ../bar_collector.cpp \
     ../quant_trader.cpp \
+    ../quant_trader_bundle.cpp \
     ../editable.cpp \
     ../indicators_and_strategies.cpp \
     ../indicator/abstract_indicator.cpp \
@@ -52,8 +54,7 @@ SOURCES += main.cpp \
     ../strategy/BigHit_strategy.cpp \
     ../strategy/addon_trailingstop.cpp \
     ../strategy/chaos2.cpp \
-    ../strategy/lemon1.cpp \
-    ../quant_trader_manager_bundle.cpp
+    ../strategy/lemon1.cpp
 
 HEADERS += ../../config.h \
     ../../common/market.h \
@@ -70,6 +71,7 @@ HEADERS += ../../config.h \
     ../../market_watcher/tick_receiver.h \
     ../../tick_replayer/common_tick.h \
     ../../tick_replayer/tick_replayer.h \
+    ../../tick_replayer/ctp_replayer/ctp_replayer.h \
     ../../tick_replayer/sinyee_replayer/sinyee_tick.h \
     ../../tick_replayer/sinyee_replayer/sinyee_bar.h \
     ../../tick_replayer/sinyee_replayer/sinyee_replayer.h \
@@ -80,7 +82,9 @@ HEADERS += ../../config.h \
     ../bar.h \
     ../bar_collector.h \
     ../quant_trader.h \
+    ../quant_trader_bundle.h \
     ../quant_trader_options.h \
+    ../quant_trader_manager.h \
     ../mql5_compatible.h \
     ../mql5_moving_averages.h \
     ../editable.h \
@@ -105,15 +109,14 @@ HEADERS += ../../config.h \
     ../strategy/BigHit_strategy.h \
     ../strategy/addon_trailingstop.h \
     ../strategy/chaos2.h \
-    ../strategy/lemon1.h \
-    ../quant_trader_manager.h \
-    ../quant_trader_manager_bundle.h
+    ../strategy/lemon1.h
 
 INCLUDEPATH += \
     ../ \
     ../../ \
     ../../common/ \
     ../../tick_replayer/ \
+    ../../tick_replayer/ctp_replayer/ \
     ../../tick_replayer/sinyee_replayer/ \
     ../../market_watcher/ \
     ../../sinyee_replayer/ \
