@@ -56,6 +56,7 @@ HEADERS += ../config.h \
     bar.h \
     bar_collector.h \
     quant_trader.h \
+    quant_trader_options.h \
     mql5_compatible.h \
     mql5_moving_averages.h \
     editable.h \
