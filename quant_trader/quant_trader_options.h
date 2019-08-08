@@ -3,7 +3,6 @@
 
 #include <QString>
 #include <QList>
-#include <QPair>
 #include <QCommandLineOption>
 #include <QCommandLineParser>
 
@@ -29,7 +28,7 @@ struct QuantTraderOptions {
     bool log2File;
 
     bool saveBarsToDB() const { return explicitSave || (!replayMode); }
-    QPair<QString, QString> replayRange() const { return qMakePair(replayStartDate, replayStopDate); }
+    bool isReplayReady() const { return replayMode && !replayStartDate.isEmpty() && !replayStopDate.isEmpty(); }
 };
 
 static QuantTraderOptions getQuantTraderOptions(const QCommandLineParser &parser)

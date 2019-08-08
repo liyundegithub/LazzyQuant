@@ -2,6 +2,7 @@
 #include <QCommandLineParser>
 
 #include "config.h"
+#include "market.h"
 #include "message_handler.h"
 #include "parked_order.h"
 #include "quant_trader_options.h"
@@ -14,6 +15,7 @@ int main(int argc, char *argv[])
     QCoreApplication::setApplicationName("quant_trader_bundle");
     QCoreApplication::setApplicationVersion(VERSION_STR);
 
+    loadCommonMarketData();
     qMetaTypeId<ParkedOrder>();
 
     QCommandLineParser parser;

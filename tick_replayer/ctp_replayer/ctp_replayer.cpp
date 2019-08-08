@@ -11,7 +11,7 @@
 #include "trading_calendar.h"
 #include "ctp_replayer.h"
 
-QDataStream& operator>>(QDataStream& s, CThostFtdcDepthMarketDataField& dataField)
+static QDataStream& operator>>(QDataStream& s, CThostFtdcDepthMarketDataField& dataField)
 {
     s.readRawData((char*)&dataField, sizeof(CThostFtdcDepthMarketDataField));
     return s;

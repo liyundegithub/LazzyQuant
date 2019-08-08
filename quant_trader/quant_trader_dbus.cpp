@@ -2,48 +2,45 @@
 #include <QTimeZone>
 
 #include "config.h"
-#include "market_watcher.h"
-#include "ctp_replayer.h"
-#include "sinyee_replayer.h"
 #include "trade_logger.h"
 #include "quant_trader.h"
-#include "ctp_executer.h"
-#include "quant_trader.h"
+#include "quant_trader_adaptor.h"
 #include "quant_trader_options.h"
 #include "quant_trader_manager.h"
-#include "quant_trader_bundle.h"
+#include "quant_trader_dbus.h"
+
+#include "market_watcher_interface.h"
+#include "tick_replayer_interface.h"
+#include "trade_executer_interface.h"
 
 using std::placeholders::_1;
 using std::placeholders::_2;
 using std::placeholders::_3;
 using std::placeholders::_4;
 
-QuantTraderBundle::QuantTraderBundle(const QuantTraderOptions &options, const QString &source)
+using namespace com::lazzyquant;
+
+QuantTraderDbus::QuantTraderDbus(const QuantTraderOptions &options)
 {
     QuantTrader *pTrader = new QuantTrader(traderConfigs[0], options.saveBarsToDB());
 
-    CtpExecuter *pExecuter = nullptr;
+    trade_executer *pExecuter = nullptr;
     if ((!options.replayMode && !options.explicitNoConnectToExecuter) || options.explicitConnectToExecuter) {
-        pExecuter = new CtpExecuter(executerConfigs[0]);
-        pTrader->cancelAllOrders = std::bind(&CtpExecuter::cancelAllOrders, pExecuter, _1);
-        pTrader->setPosition = std::bind(&CtpExecuter::setPosition, pExecuter, _1, _2);
+        pExecuter = new trade_executer(EXECUTER_DBUS_SERVICE, EXECUTER_DBUS_OBJECT, QDBusConnection::sessionBus());
+        pTrader->cancelAllOrders = std::bind(&trade_executer::cancelAllOrders, pExecuter, _1);
+        pTrader->setPosition = std::bind(&trade_executer::setPosition, pExecuter, _1, _2);
     }
 
     if (options.replayMode) {
-        TickReplayer *pReplayer = nullptr;
-        if (source.compare("ctp", Qt::CaseInsensitive) == 0) {
-            pReplayer = new CtpReplayer(replayerConfigs[0]);
-        } else {    // if (source.compare("sinyee", Qt::CaseInsensitive) == 0)
-            pReplayer = new SinYeeReplayer(replayerConfigs[0]);
-        }
-        auto managerReplay = new QuantTraderManagerReplay<TickReplayer, QuantTrader, CtpExecuter>(pReplayer, pTrader, pExecuter);
+        auto pReplayer = new tick_replayer(REPLAYER_DBUS_SERVICE, REPLAYER_DBUS_OBJECT, QDBusConnection::sessionBus());
+        auto managerReplay = new QuantTraderManagerReplay<tick_replayer, QuantTrader, trade_executer>(pReplayer, pTrader, nullptr);
         if (options.isReplayReady()) {
-            managerReplay->setAutoReplayDate(options.replayStartDate, options.replayStopDate, true);
+            managerReplay->setAutoReplayDate(options.replayStartDate, options.replayStopDate);
         }
         pManager = managerReplay;
     } else {
-        auto pWatcher = new MarketWatcher(watcherConfigs[0]);
-        pManager = new QuantTraderManagerReal<MarketWatcher, QuantTrader, CtpExecuter>(pWatcher, pTrader, pExecuter);
+        auto pWatcher = new market_watcher(WATCHER_DBUS_SERVICE, WATCHER_DBUS_OBJECT, QDBusConnection::sessionBus());
+        pManager = new QuantTraderManagerReal<market_watcher, QuantTrader, trade_executer>(pWatcher, pTrader, nullptr);
     }
 
     pManager->init();
@@ -57,9 +54,14 @@ QuantTraderBundle::QuantTraderBundle(const QuantTraderOptions &options, const QS
                               << "New position for" << instrumentID << newPosition << ", price =" << price;
         };
     }
+
+    new Quant_traderAdaptor(pTrader);
+    QDBusConnection dbus = QDBusConnection::sessionBus();
+    dbus.registerObject(traderConfigs[0].dbusObject, pTrader);
+    dbus.registerService(traderConfigs[0].dbusService);
 }
 
-QuantTraderBundle::~QuantTraderBundle()
+QuantTraderDbus::~QuantTraderDbus()
 {
     delete pLogger;
     auto pSource = pManager->getSource();

@@ -15,10 +15,10 @@ SOURCES += main.cpp \
     ../common/message_handler.cpp \
     ../common/db_helper.cpp \
     ../common/trade_logger.cpp \
-    quant_trader_manager_dbus.cpp \
     bar.cpp \
     bar_collector.cpp \
     quant_trader.cpp \
+    quant_trader_dbus.cpp \
     editable.cpp \
     indicators_and_strategies.cpp \
     indicator/abstract_indicator.cpp \
@@ -51,12 +51,12 @@ HEADERS += ../config.h \
     ../common/db_helper.h \
     ../common/trade_logger.h \
     ../common/abstract_manager.h \
-    quant_trader_manager.h \
-    quant_trader_manager_dbus.h \
     bar.h \
     bar_collector.h \
     quant_trader.h \
     quant_trader_options.h \
+    quant_trader_dbus.h \
+    quant_trader_manager.h \
     mql5_compatible.h \
     mql5_moving_averages.h \
     editable.h \
