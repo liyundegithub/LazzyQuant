@@ -42,4 +42,7 @@ INCLUDEPATH += ../ ../common/ ../trade_executer/
 trade_executer_interface.files = ../interface/trade_executer.xml
 trade_executer_interface.header_flags = -i parked_order.h
 
-DBUS_INTERFACES += ../interface/market_watcher.xml trade_executer_interface
+DBUS_INTERFACES += \
+    ../interface/market_watcher.xml \
+    ../interface/tick_replayer.xml \
+    trade_executer_interface

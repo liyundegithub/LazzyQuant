@@ -31,6 +31,7 @@ signals:
                        double askPrice1, int askVolume1, double bidPrice1, int bidVolume1);
 
 public slots:
+    QStringList getReplayList() const { return replayList; }
     void startReplay(const QString &date);
     void startReplay(const QString &date, const QString &instrument);
     void startReplay(const QString &date, const QStringList &instruments);

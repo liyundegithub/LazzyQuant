@@ -17,6 +17,9 @@
       <arg name="bidPrice1" type="d" direction="out"/>
       <arg name="bidVolume1" type="i" direction="out"/>
     </signal>
+    <method name="getReplayList">
+      <arg type="as" direction="out"/>
+    </method>
     <method name="startReplay">
       <arg name="date" type="s" direction="in"/>
     </method>

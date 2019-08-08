@@ -1,9 +1,8 @@
 #ifndef OPTION_ARBITRAGEUR_H
 #define OPTION_ARBITRAGEUR_H
 
-#include "common_utility.h"
-
 #include <QObject>
+#include <QStringList>
 #include <QSet>
 
 class OptionHelper;

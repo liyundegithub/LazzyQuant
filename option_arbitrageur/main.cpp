@@ -10,6 +10,7 @@
 #include "option_arbitrageur.h"
 
 #include "market_watcher_interface.h"
+#include "tick_replayer_interface.h"
 #include "trade_executer_interface.h"
 
 using std::placeholders::_1;
@@ -57,16 +58,20 @@ int main(int argc, char *argv[])
     bool log2File = parser.isSet("logtofile");
     setupMessageHandler(true, log2File, "option_arbitrageur");
 
-    com::lazzyquant::market_watcher *pWatcher = new com::lazzyquant::market_watcher(WATCHER_DBUS_SERVICE, WATCHER_DBUS_OBJECT, QDBusConnection::sessionBus());
+    com::lazzyquant::market_watcher *pWatcher = nullptr;
+    com::lazzyquant::tick_replayer *pReplayer = nullptr;
     com::lazzyquant::trade_executer *pExecuter = nullptr;
-    if (!replayMode) {
-        pExecuter = new com::lazzyquant::trade_executer(EXECUTER_DBUS_SERVICE, EXECUTER_DBUS_OBJECT, QDBusConnection::sessionBus());
-    }
+    QObject *pSource = nullptr;
     QStringList instruments;
     if (replayMode) {
-        instruments = pWatcher->getSubscribeList();
+        pReplayer = new com::lazzyquant::tick_replayer(REPLAYER_DBUS_SERVICE, REPLAYER_DBUS_OBJECT, QDBusConnection::sessionBus());
+        instruments = pReplayer->getReplayList();
+        pSource = pReplayer;
     } else {
+        pWatcher = new com::lazzyquant::market_watcher(WATCHER_DBUS_SERVICE, WATCHER_DBUS_OBJECT, QDBusConnection::sessionBus());
+        pExecuter = new com::lazzyquant::trade_executer(EXECUTER_DBUS_SERVICE, EXECUTER_DBUS_OBJECT, QDBusConnection::sessionBus());
         instruments = pExecuter->getCachedInstruments();
+        pSource = pWatcher;
     }
     OptionHelper helper(pExecuter);
     OptionArbitrageur arbitrageur(instruments, &helper);
@@ -117,10 +122,10 @@ int main(int argc, char *argv[])
     }
     ConnectionManager *pConnManager = nullptr;
     if (!update) {
-        pConnManager = new ConnectionManager({pWatcher}, {&arbitrageur});
+        pConnManager = new ConnectionManager({pSource}, {&arbitrageur});
     }
     if (replayMode) {
-        pWatcher->startReplay(replayDate);
+        pReplayer->startReplay(replayDate);
     }
 
     int ret = a.exec();
@@ -134,6 +139,7 @@ int main(int argc, char *argv[])
     }
     delete pConnManager;
     delete pExecuter;
+    delete pReplayer;
     delete pWatcher;
     restoreMessageHandler();
     return ret;
