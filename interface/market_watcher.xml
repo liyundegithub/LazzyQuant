@@ -26,9 +26,6 @@
     <method name="getTradingDay">
       <arg type="s" direction="out"/>
     </method>
-    <method name="setTradingDay">
-      <arg name="tradingDay" type="s" direction="in"/>
-    </method>
     <method name="subscribeInstruments">
       <arg name="instruments" type="as" direction="in"/>
       <arg name="updateIni" type="b" direction="in"/>

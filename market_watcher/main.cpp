@@ -20,8 +20,7 @@ int main(int argc, char *argv[])
     parser.addVersionOption();
 
     parser.addOptions({
-        {{"f", "logtofile"},
-            QCoreApplication::translate("main", "Save log to a file")},
+        {{"f", "logtofile"}, "Save log to a file"},
     });
 
     parser.process(a);

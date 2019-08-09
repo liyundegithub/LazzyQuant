@@ -29,6 +29,7 @@ HEADERS += ../config.h \
     ../common/trading_calendar.h \
     ../common/message_handler.h \
     option_arbitrageur.h \
+    option_arbitrageur_options.h \
     option_pricing.h \
     option_helper.h \
     high_frequency.h \

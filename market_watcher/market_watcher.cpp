@@ -219,7 +219,14 @@ void MarketWatcher::customEvent(QEvent *event)
     case RSP_USER_LOGIN:
         qInfo() << "Market watcher logged in OK!";
         loggedIn = true;
-        setTradingDay(getTradingDay());
+    {
+        auto tradingDay = getTradingDay();
+        if (currentTradingDay != tradingDay) {
+            emit tradingDayChanged(tradingDay);
+            mapTime.setTradingDay(tradingDay);
+            currentTradingDay = tradingDay;
+        }
+    }
         subscribe();
         break;
     case RSP_USER_LOGOUT:
@@ -362,17 +369,6 @@ QString MarketWatcher::getStatus() const
 QString MarketWatcher::getTradingDay() const
 {
     return pUserApi->GetTradingDay();
-}
-
-/*!
- * \brief MarketWatcher::setTradingDay
- * 设定交易日期.
- *
- * \param tradingDay 交易日(yyyyMMdd)
- */
-void MarketWatcher::setTradingDay(const QString &tradingDay)
-{
-    mapTime.setTradingDay(tradingDay);
 }
 
 /*!

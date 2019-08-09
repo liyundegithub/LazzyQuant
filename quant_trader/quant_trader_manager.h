@@ -87,7 +87,6 @@ void QuantTraderManagerReal<W, T, E>::init()
     QObject::connect(marketOpenTimer, &MultipleTimer::timesUp, [=]() -> void {
                          if (this->pSource->getStatus() == "Ready") {
                              QString tradingDay = this->pSource->getTradingDay();
-                             this->pSource->setTradingDay(tradingDay);
                              this->pTrader->setTradingDay(tradingDay);
                          } else {
                              qWarning() << "Market Watcher Not Ready!";

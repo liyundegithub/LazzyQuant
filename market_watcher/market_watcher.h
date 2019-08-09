@@ -26,6 +26,7 @@ public:
     ~MarketWatcher() override;
 
 protected:
+    QString currentTradingDay;
     TimeMapper mapTime;
 
     const QString name;
@@ -71,7 +72,6 @@ public slots:
     QString getStatus() const;
     bool isLoggedIn() const { return loggedIn; }
     QString getTradingDay() const;
-    void setTradingDay(const QString &tradingDay);
     void subscribeInstruments(const QStringList &instruments, bool updateIni = true);
     QStringList getSubscribeList() const;
     void quit();
