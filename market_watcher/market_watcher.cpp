@@ -19,10 +19,9 @@
 
 extern QList<Market> markets;
 
-MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, bool replayMode, QObject *parent) :
+MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, QObject *parent) :
     QObject(parent),
-    name(config.name),
-    replayMode(replayMode)
+    name(config.name)
 {
     settings = getSettingsSmart(config.organization, config.name, this).release();
     const auto flowPath = settings->value("FlowPath").toByteArray();
@@ -31,32 +30,13 @@ MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, bool replayMode, QObject
     QDir dir(saveDepthMarketDataPath);
     if (!dir.exists()) {
         qWarning() << "SaveDepthMarketDataPath:" << saveDepthMarketDataPath << "does not exist!";
-        if (replayMode) {
-            qFatal("Can not replay without SaveDepthMarketDataPath!");
-            return;
-        }
         if (saveDepthMarketData && !dir.mkpath(saveDepthMarketDataPath)) {
             qWarning() << "Create directory:" << saveDepthMarketDataPath << "failed! Depth market data will not be saved!";
             saveDepthMarketData = false;
         }
     }
 
-    settings->beginGroup("SubscribeList");
-    const auto subscribeList = settings->childKeys();
-    for (const auto &key : subscribeList) {
-        if (settings->value(key).toBool()) {
-            subscribeSet.insert(key);
-        }
-    }
-    settings->endGroup();
-
-// 复盘模式和实盘模式共用的部分到此为止 ---------------------------------------
-    if (replayMode) {
-        qInfo() << "Relay mode is ready!";
-        return;
-    }
-// 以下设置仅用于实盘模式 --------------------------------------------------
-    nRequestID = 0;
+    subscribeSet = getSettingItemList(settings, "SubscribeList").toSet();
 
     for (const auto &instrumentID : qAsConst(subscribeSet)) {
         if (checkTradingTimes(instrumentID)) {
@@ -101,8 +81,6 @@ MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, bool replayMode, QObject
 
     setupTimers();
 
-    loggedIn = false;
-
     pUserApi->Init();
     localTime.start();
 }
@@ -110,10 +88,8 @@ MarketWatcher::MarketWatcher(const CONFIG_ITEM &config, bool replayMode, QObject
 MarketWatcher::~MarketWatcher()
 {
     qDebug() << "~MarketWatcher()";
-    if (!replayMode) {
-        pUserApi->Release();
-        delete pReceiver;
-    }
+    pUserApi->Release();
+    delete pReceiver;
     delete multiTimer;
     delete settings;
 }
@@ -144,19 +120,13 @@ void MarketWatcher::setupTimers()
     connect(multiTimer, &MultipleTimer::timesUp, this, &MarketWatcher::timesUp);
 }
 
-QDataStream& operator<<(QDataStream& s, const CThostFtdcDepthMarketDataField& dataField)
+static QDataStream &operator<<(QDataStream &s, const CThostFtdcDepthMarketDataField &dataField)
 {
     s.writeRawData((const char*)&dataField, sizeof(CThostFtdcDepthMarketDataField));
     return s;
 }
 
-QDataStream& operator>>(QDataStream& s, CThostFtdcDepthMarketDataField& dataField)
-{
-    s.readRawData((char*)&dataField, sizeof(CThostFtdcDepthMarketDataField));
-    return s;
-}
-
-QDebug operator<<(QDebug dbg, const CThostFtdcDepthMarketDataField &dm)
+static QDebug operator<<(QDebug dbg, const CThostFtdcDepthMarketDataField &dm)
 {
     QDebugStateSaver saver(dbg);
     dbg.nospace() << "Ask 1:\t" << dm.AskPrice1 << '\t' << dm.AskVolume1 << '\n'
@@ -191,6 +161,7 @@ void MarketWatcher::timesUp(int index)
                     QFile depthMarketDataFile(fileName);
                     depthMarketDataFile.open(QFile::WriteOnly);
                     QDataStream wstream(&depthMarketDataFile);
+                    wstream.setVersion(QDataStream::Qt_5_9);
                     wstream << depthMarketDataList;
                     depthMarketDataFile.close();
                     depthMarketDataList.clear();
@@ -368,26 +339,6 @@ void MarketWatcher::processDepthMarketData(const CThostFtdcDepthMarketDataField&
 }
 
 /*!
- * \brief MarketWatcher::emitNewMarketData
- * 发送newMarketData信号 (仅用于reply mode)
- *
- * \param depthMarketDataField 深度市场数据.
- */
-void MarketWatcher::emitNewMarketData(const CThostFtdcDepthMarketDataField& depthMarketDataField)
-{
-    const QString instrumentID(depthMarketDataField.InstrumentID);
-    auto time = mapTime(hhmmssToSec(depthMarketDataField.UpdateTime));
-    emit newMarketData(instrumentID,
-                       time,
-                       depthMarketDataField.LastPrice,
-                       depthMarketDataField.Volume,
-                       depthMarketDataField.AskPrice1,
-                       depthMarketDataField.AskVolume1,
-                       depthMarketDataField.BidPrice1,
-                       depthMarketDataField.BidVolume1);
-}
-
-/*!
  * \brief MarketWatcher::getStatus
  * 获取状态字符串.
  *
@@ -395,7 +346,7 @@ void MarketWatcher::emitNewMarketData(const CThostFtdcDepthMarketDataField& dept
  */
 QString MarketWatcher::getStatus() const
 {
-    if (replayMode || (!replayMode && loggedIn)) {
+    if (loggedIn) {
         return "Ready";
     } else {
         return "NotReady";
@@ -410,11 +361,7 @@ QString MarketWatcher::getStatus() const
  */
 QString MarketWatcher::getTradingDay() const
 {
-    if (replayMode) {
-        return "ReplayMode";    // FIXME
-    } else {
-        return pUserApi->GetTradingDay();
-    }
+    return pUserApi->GetTradingDay();
 }
 
 /*!
@@ -437,11 +384,6 @@ void MarketWatcher::setTradingDay(const QString &tradingDay)
  */
 void MarketWatcher::subscribeInstruments(const QStringList &instruments, bool updateIni)
 {
-    if (replayMode) {
-        qWarning() << "Can not subscribe instruments in replay mode!";
-        return;
-    }
-
     const int num = instruments.size();
     char* subscribe_array = new char[num * 32];
     char** ppInstrumentID = new char*[num];
@@ -500,66 +442,6 @@ void MarketWatcher::subscribeInstruments(const QStringList &instruments, bool up
 QStringList MarketWatcher::getSubscribeList() const
 {
     return subscribeSet.toList();
-}
-
-/*!
- * \brief MarketWatcher::startReplay
- * 复盘某一天的行情.
- *
- * \param date 希望复盘的日期 (格式YYYYMMDD)
- */
-void MarketWatcher::startReplay(const QString &date)
-{
-    if (!replayMode) {
-        qWarning() << "Not in replay mode!";
-        return;
-    }
-
-    qDebug() << "Start replaying" << date;
-    QList<CThostFtdcDepthMarketDataField> mdList;
-
-    for (const auto &instrumentID : subscribeSet) {
-        QDir dir(saveDepthMarketDataPath + "/" + instrumentID);
-        const auto marketDataFiles = dir.entryList(QStringList({date + "*"}), QDir::Files | QDir::NoDotAndDotDot, QDir::Name);
-        for (const auto &fileName : marketDataFiles) {
-            QString mdFileFullName = saveDepthMarketDataPath + "/" + instrumentID + "/" + fileName;
-            QFile mdFile(mdFileFullName);
-            if (!mdFile.open(QFile::ReadOnly)) {
-                qCritical() << "Open file:" << mdFileFullName << "failed!";
-                continue;
-            }
-            QDataStream mdStream(&mdFile);
-            QList<CThostFtdcDepthMarketDataField> tmpList;
-            mdStream >> tmpList;
-            if (tmpList.length() > 0) {
-                qDebug() << tmpList.size() << "in" << mdFileFullName;
-                mdList.append(tmpList);
-            }
-        }
-    }
-
-    std::stable_sort(mdList.begin(), mdList.end(), [](const auto &item1, const auto &item2) -> bool {
-        int ret = QString::compare(item1.UpdateTime, item2.UpdateTime);
-        if (ret == 0) {
-            if (item1.UpdateMillisec == item2.UpdateMillisec) {
-                return *((int*)item1.ActionDay) < *((int*)item2.ActionDay); // 比较本地时间戳.
-            } else {
-                return item1.UpdateMillisec < item2.UpdateMillisec;
-            }
-        } else {
-            return ret < 0;
-        }
-    });
-
-    if (!mdList.empty()) {
-        emit tradingDayChanged(date);
-        setTradingDay(date);
-
-        for (const auto &md : qAsConst(mdList)) {
-            emitNewMarketData(md);
-        }
-        emit endOfReplay(date);
-    }
 }
 
 /*!

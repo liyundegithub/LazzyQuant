@@ -20,9 +20,6 @@
     <method name="getStatus">
       <arg type="s" direction="out"/>
     </method>
-    <method name="isReplayMode">
-      <arg type="b" direction="out"/>
-    </method>
     <method name="isLoggedIn">
       <arg type="b" direction="out"/>
     </method>
@@ -41,9 +38,6 @@
     </method>
     <method name="getSubscribeList">
       <arg type="as" direction="out"/>
-    </method>
-    <method name="startReplay">
-      <arg name="date" type="s" direction="in"/>
     </method>
     <method name="quit">
     </method>
