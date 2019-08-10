@@ -74,6 +74,17 @@ void FutureArbitrageur::setupStrategies()
     }
 }
 
+/*!
+ * \brief FutureArbitrageur::setTradingDay
+ * 设定交易日.
+ *
+ * \param tradingDay 交易日(yyyyMMdd)
+ */
+void FutureArbitrageur::setTradingDay(const QString &tradingDay)
+{
+    qDebug() << "Set Trading Day to" << tradingDay;
+}
+
 void FutureArbitrageur::onMarketData(const QString &instrumentID, qint64 time, double lastPrice, int volume,
                                      double askPrice1, int askVolume1, double bidPrice1, int bidVolume1)
 {
@@ -103,4 +114,14 @@ void FutureArbitrageur::onMarketData(const QString &instrumentID, qint64 time, d
             pStrategy->onInstrumentChanged(idx);
         }
     }
+}
+
+/*!
+ * \brief FutureArbitrageur::onMarketClose
+ * 收盘.
+ */
+void FutureArbitrageur::onMarketClose()
+{
+    // Clear market data after maket closed
+    pMarketCollection->clearAll();
 }

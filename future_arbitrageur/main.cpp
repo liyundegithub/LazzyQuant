@@ -11,8 +11,6 @@
 #include "market_watcher_interface.h"
 #include "trade_executer_interface.h"
 
-com::lazzyquant::tick_replayer *pReplayer = nullptr;
-com::lazzyquant::market_watcher *pWatcher = nullptr;
 com::lazzyquant::trade_executer *pExecuter = nullptr;
 StrategyStatusManager *pStatusManager = nullptr;
 
@@ -44,6 +42,8 @@ int main(int argc, char *argv[])
     bool log2File = parser.isSet("logtofile");
     setupMessageHandler(true, log2File, "future_arbitrageur");
 
+    com::lazzyquant::tick_replayer *pReplayer = nullptr;
+    com::lazzyquant::market_watcher *pWatcher = nullptr;
     if (replayMode) {
         pReplayer = new com::lazzyquant::tick_replayer(REPLAYER_DBUS_SERVICE, REPLAYER_DBUS_OBJECT, QDBusConnection::sessionBus());
     } else {
@@ -61,12 +61,8 @@ int main(int argc, char *argv[])
 
     delete pStatusManager;
     delete pExecuter;
-    if (pReplayer) {
-        delete pReplayer;
-    }
-    if (pWatcher) {
-        delete pWatcher;
-    }
+    delete pReplayer;
+    delete pWatcher;
     restoreMessageHandler();
     return ret;
 }

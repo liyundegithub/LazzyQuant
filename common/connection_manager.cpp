@@ -1,18 +1,21 @@
-#include <QObject>
-
 #include "connection_manager.h"
 
-ConnectionManager::ConnectionManager(const QList<QObject *> &inputs, const QList<QObject *> &strategies)
+ConnectionManager::ConnectionManager(const QObjectList &inputs, const QObjectList &strategies)
 {
     for (auto * input : inputs) {
         if (input != nullptr) {
-            senders << input;
             for (auto * strategy : strategies) {
                 if (strategy != nullptr) {
-                    QObject::connect(input, SIGNAL(newMarketData(QString,qint64,double,int,double,int,double,int)),
-                                     strategy, SLOT(onMarketData(QString,qint64,double,int,double,int,double,int)), Qt::UniqueConnection);
-                    QObject::connect(input, SIGNAL(tradingDayChanged(QString)),
-                                     strategy, SLOT(setTradingDay(QString)), Qt::UniqueConnection);
+                    auto conn = QObject::connect(input, SIGNAL(newMarketData(QString,qint64,double,int,double,int,double,int)),
+                                                strategy, SLOT(onMarketData(QString,qint64,double,int,double,int,double,int)), Qt::UniqueConnection);
+                    if (conn) {
+                        connections << conn;
+                    }
+                    conn = QObject::connect(input, SIGNAL(tradingDayChanged(QString)),
+                                           strategy, SLOT(setTradingDay(QString)), Qt::UniqueConnection);
+                    if (conn) {
+                        connections << conn;
+                    }
                 }
             }
         }
@@ -21,7 +24,7 @@ ConnectionManager::ConnectionManager(const QList<QObject *> &inputs, const QList
 
 ConnectionManager::~ConnectionManager()
 {
-    for (auto * sender : qAsConst(senders)) {
-        sender->disconnect();
+    for (const auto &connection : qAsConst(connections)) {
+        QObject::disconnect(connection);
     }
 }

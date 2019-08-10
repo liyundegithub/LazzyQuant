@@ -18,11 +18,12 @@ public:
     DepthMarketCollection *pMarketCollection;
     QList<BaseStrategy *> pStrategyList;
 
-signals:
-
 public slots:
+    void setTradingDay(const QString &tradingDay);
     void onMarketData(const QString &instrumentID, qint64 time, double lastPrice, int volume,
                       double askPrice1, int askVolume1, double bidPrice1, int bidVolume1);
+    void onMarketClose();
+
 };
 
 #endif // FUTURE_ARBITRAGEUR_H
