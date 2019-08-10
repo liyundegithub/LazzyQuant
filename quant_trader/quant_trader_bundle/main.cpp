@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
     QuantTraderOptions options = getQuantTraderOptions(parser);
     QString source = parser.value("source");
 
-    setupMessageHandler(true, options.log2File, "quant_trader");
+    setupMessageHandler(true, options.log2File, "quant_trader", !options.replayMode);
     QuantTraderBundle bundle(options, source);
     int ret = a.exec();
     restoreMessageHandler();

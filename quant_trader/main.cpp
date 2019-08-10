@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
     parser.process(a);
 
     auto options = getQuantTraderOptions(parser);
-    setupMessageHandler(true, options.log2File, "quant_trader");
+    setupMessageHandler(true, options.log2File, "quant_trader", !options.replayMode);
     QuantTraderDbus quantTraderDbus(options);
     int ret = a.exec();
     restoreMessageHandler();

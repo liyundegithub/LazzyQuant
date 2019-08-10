@@ -6,28 +6,32 @@
 #include "message_handler.h"
 
 static FILE *pLogFile = NULL;
+static bool gPrintTimeStamp = false;
 
 static inline QByteArray getLocalMsg(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
     QString typeHeader = "";
     switch (type) {
     case QtDebugMsg:
-        typeHeader = "D";
+        typeHeader = "D: ";
         break;
     case QtInfoMsg:
-        typeHeader = "I";
+        typeHeader = "I: ";
         break;
     case QtWarningMsg:
-        typeHeader = "W";
+        typeHeader = "W: ";
         break;
     case QtCriticalMsg:
-        typeHeader = "C";
+        typeHeader = "C: ";
         break;
     case QtFatalMsg:
-        typeHeader = "F";
+        typeHeader = "F: ";
         break;
     }
-    QString localMsg = typeHeader + QDateTime::currentDateTime().toString(QStringLiteral(": yy-MM-dd HH:mm:ss.zzz ")) + msg;
+    QString localMsg = typeHeader;
+    if (gPrintTimeStamp)
+        localMsg += QDateTime::currentDateTime().toString(QStringLiteral("yy-MM-dd HH:mm:ss.zzz "));
+    localMsg += msg;
 #ifdef QT_MESSAGELOGCONTEXT
     localMsg += QString(" (%1:%2, %3)").arg(context.file).arg(context.line).arg(context.function);
 #endif
@@ -64,8 +68,9 @@ static void toFile(QtMsgType type, const QMessageLogContext &context, const QStr
     }
 }
 
-QString setupMessageHandler(bool logtoStdout, bool logtoFile, const QString &moduleName)
+QString setupMessageHandler(bool logtoStdout, bool logtoFile, const QString &moduleName, bool printTimeStamp)
 {
+    gPrintTimeStamp = printTimeStamp;
     if (logtoFile) {
         QString fullFileName = QCoreApplication::applicationDirPath() + "/" + moduleName;
         fullFileName += QDateTime::currentDateTime().toString(QStringLiteral("_yyyyMMdd_HHmmss"));
