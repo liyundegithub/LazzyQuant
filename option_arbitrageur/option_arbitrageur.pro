@@ -14,6 +14,7 @@ SOURCES += main.cpp \
     ../common/trading_calendar.cpp \
     ../common/message_handler.cpp \
     option_arbitrageur.cpp \
+    option_arbitrageur_dbus.cpp \
     option_pricing.cpp \
     option_helper.cpp \
     high_frequency.cpp \
@@ -29,6 +30,8 @@ HEADERS += ../config.h \
     ../common/trading_calendar.h \
     ../common/message_handler.h \
     option_arbitrageur.h \
+    option_arbitrageur_dbus.h \
+    option_arbitrageur_manager.h \
     option_arbitrageur_options.h \
     option_pricing.h \
     option_helper.h \

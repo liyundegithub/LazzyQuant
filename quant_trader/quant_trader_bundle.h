@@ -1,6 +1,8 @@
 #ifndef QUANT_TRADER_BUNDLE_H
 #define QUANT_TRADER_BUNDLE_H
 
+class QString;
+
 class AbstractManager;
 class TradeLogger;
 struct QuantTraderOptions;

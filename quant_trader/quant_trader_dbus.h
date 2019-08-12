@@ -11,7 +11,7 @@ class QuantTraderDbus
     TradeLogger *pLogger = nullptr;
 
 public:
-    QuantTraderDbus(const QuantTraderOptions &options);
+    explicit QuantTraderDbus(const QuantTraderOptions &options);
     ~QuantTraderDbus();
 
 };

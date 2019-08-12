@@ -8,7 +8,6 @@
 #include "trade_logger.h"
 #include "quant_trader.h"
 #include "ctp_executer.h"
-#include "quant_trader.h"
 #include "quant_trader_options.h"
 #include "quant_trader_manager.h"
 #include "quant_trader_bundle.h"
@@ -36,14 +35,14 @@ QuantTraderBundle::QuantTraderBundle(const QuantTraderOptions &options, const QS
         } else {    // if (source.compare("sinyee", Qt::CaseInsensitive) == 0)
             pReplayer = new SinYeeReplayer(replayerConfigs[0]);
         }
-        auto managerReplay = new QuantTraderManagerReplay<TickReplayer, QuantTrader, CtpExecuter>(pReplayer, pTrader, pExecuter);
+        auto managerReplay = new ReplayManager<TickReplayer, QuantTrader, CtpExecuter>(pReplayer, pTrader, pExecuter);
         if (options.isReplayReady()) {
             managerReplay->setAutoReplayDate(options.replayStartDate, options.replayStopDate, true);
         }
         pManager = managerReplay;
     } else {
         auto pWatcher = new MarketWatcher(watcherConfigs[0]);
-        pManager = new QuantTraderManagerReal<MarketWatcher, QuantTrader, CtpExecuter>(pWatcher, pTrader, pExecuter);
+        pManager = new QuantTraderRealManager<MarketWatcher, QuantTrader, CtpExecuter>(pWatcher, pTrader, pExecuter);
     }
 
     pManager->init();
