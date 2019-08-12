@@ -35,7 +35,7 @@ OptionArbitrageurDbus::OptionArbitrageurDbus(const OptionArbitrageurOptions &opt
         pExecuter = new trade_executer(EXECUTER_DBUS_SERVICE, EXECUTER_DBUS_OBJECT, QDBusConnection::sessionBus());
         instruments = pExecuter->getCachedInstruments();
     }
-    pHelper = new OptionHelper(pExecuter);
+    pHelper = new OptionHelperImpl<trade_executer>(pExecuter);
     OptionArbitrageur *pArbitrageur = new OptionArbitrageur(instruments, pHelper);
 
     if (options.replayMode) {

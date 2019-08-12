@@ -24,7 +24,7 @@ protected:
     QStringList allInstruments;
     OptionHelper *pHelper;
 
-    QSet<QString> underlyingIDs;
+    QStringList underlyingIDs;
     QStringList underlyingsForRiskFree;
     QStringList underlyingsForHighFreq;
 
@@ -40,7 +40,7 @@ public:
     explicit OptionArbitrageur(const QStringList &allInstruments, OptionHelper *pHelper, QObject *parent = nullptr);
     ~OptionArbitrageur();
 
-    QSet<QString> getUnderlyingIDs() const { return underlyingIDs; }
+    QStringList getUnderlyingIDs() const { return underlyingIDs; }
 
 public slots:
     void setTradingDay(const QString &tradingDay);

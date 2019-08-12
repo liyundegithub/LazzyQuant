@@ -47,7 +47,7 @@ void OptionArbitrageur::loadOptionArbitrageurSettings()
     riskFreeInterestRate = settings->value("RiskFreeInterestRate", 0.05).toDouble();
     qInfo() << "Risk-free interest rate =" << riskFreeInterestRate;
 
-    underlyingIDs = getSettingItemList(settings.get(), "Underlyings").toSet();
+    underlyingIDs = getSettingItemList(settings.get(), "Underlyings");
     qInfo() << "Underlyings:" << underlyingIDs;
 
     underlyingsForRiskFree = getSettingItemList(settings.get(), "RiskFree");
@@ -142,7 +142,7 @@ void OptionArbitrageur::preparePricing(const QMultiMap<QString, int> &underlying
     for (const auto &key : keys) {
         const auto endDate = pHelper->getEndDate(key);
         qInfo() << "Calculating:" << key << ", startDate =" << startDate << ", endDate =" << endDate;
-        pPricingEngine->generate(key, pHelper->getOptionTradingDays(key, startDate));
+        pPricingEngine->generate(key, getOptionTradingDays(key, startDate));
     }
 }
 

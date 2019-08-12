@@ -39,7 +39,7 @@ void OptionArbitrageurRealManager<W, T, E>::prepareOpen()
     if (updateOnly) {
         const QStringList subscribedInstruments = this->pWatcher->getSubscribeList();
         const QStringList cachedInstruments = this->pExecuter->getCachedInstruments();
-        const QSet<QString> underlyingIDs = this->pTrader->getUnderlyingIDs();
+        const QStringList underlyingIDs = this->pTrader->getUnderlyingIDs();
         QStringList instrumentsToSubscribe;
         for (const auto &item : cachedInstruments) {
             if (!subscribedInstruments.contains(item)) {
