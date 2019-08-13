@@ -7,44 +7,19 @@ CONFIG -= app_bundle
 
 TEMPLATE = app
 
-SOURCES += main.cpp \
-    ../common/market.cpp \
-    ../common/common_utility.cpp \
-    ../common/multiple_timer.cpp \
-    ../common/trading_calendar.cpp \
-    ../common/message_handler.cpp \
-    ../common/time_mapper.cpp \
-    market_watcher.cpp \
-    tick_receiver.cpp
+LAZZYQUANT_ROOT = $$PWD/..
 
-HEADERS += ../config.h \
-    ../common/market.h \
-    ../common/common_utility.h \
-    ../common/multiple_timer.h \
-    ../common/trading_calendar.h \
-    ../common/message_handler.h \
-    ../common/time_mapper.h \
-    market_watcher.h \
-    tick_receiver.h
-
-INCLUDEPATH += ../ ../common/
-DBUS_ADAPTORS += ../interface/market_watcher.xml
-
-unix:CTP_FOLDER_PREFIX = linux
-win32:CTP_FOLDER_PREFIX = win
-
-contains(QT_ARCH, i386) {
-    CTP_FOLDER_SUFFIX = 32
-} else {
-    CTP_FOLDER_SUFFIX = 64
-}
+SOURCES += \
+    main.cpp \
+    $$LAZZYQUANT_ROOT/common/message_handler.cpp
 
 HEADERS += \
-    ../ctp/$$CTP_FOLDER_PREFIX$$CTP_FOLDER_SUFFIX/ThostFtdcMdApi.h \
-    ../ctp/$$CTP_FOLDER_PREFIX$$CTP_FOLDER_SUFFIX/ThostFtdcUserApiDataType.h \
-    ../ctp/$$CTP_FOLDER_PREFIX$$CTP_FOLDER_SUFFIX/ThostFtdcUserApiStruct.h
+    $$LAZZYQUANT_ROOT/config.h \
+    $$LAZZYQUANT_ROOT/common/message_handler.h
 
-INCLUDEPATH += ../ctp/$$CTP_FOLDER_PREFIX$$CTP_FOLDER_SUFFIX/
+INCLUDEPATH += $$LAZZYQUANT_ROOT
 
-unix:LIBS += $$PWD/../ctp/$$CTP_FOLDER_PREFIX$$CTP_FOLDER_SUFFIX/thostmduserapi.so
-win32:LIBS += $$PWD/../ctp/$$CTP_FOLDER_PREFIX$$CTP_FOLDER_SUFFIX/thostmduserapi.lib
+include(../ctp/mduser.pri)
+include(market_watcher.pri)
+
+DBUS_ADAPTORS += $$LAZZYQUANT_ROOT/interface/market_watcher.xml

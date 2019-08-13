@@ -4,9 +4,6 @@
     <signal name="tradingDayChanged">
       <arg name="tradingDay" type="s" direction="out"/>
     </signal>
-    <signal name="endOfReplay">
-      <arg name="tradingDay" type="s" direction="out"/>
-    </signal>
     <signal name="newMarketData">
       <arg name="instrumentID" type="s" direction="out"/>
       <arg name="time" type="x" direction="out"/>

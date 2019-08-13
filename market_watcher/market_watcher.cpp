@@ -130,7 +130,7 @@ static QDebug operator<<(QDebug dbg, const CThostFtdcDepthMarketDataField &dm)
 {
     QDebugStateSaver saver(dbg);
     dbg.nospace() << "Ask 1:\t" << dm.AskPrice1 << '\t' << dm.AskVolume1 << '\n'
-                  << " ------ " << QString("%1:%2").arg(dm.UpdateTime).arg(dm.UpdateMillisec, 3, 10, QLatin1Char('0'))
+                  << " ------ " << QString("%1.%2").arg(dm.UpdateTime).arg(dm.UpdateMillisec, 3, 10, QLatin1Char('0'))
                   << " lastPrice:" << dm.LastPrice << " ------ " << '\n'
                   << "Bid 1:\t" << dm.BidPrice1 << '\t' << dm.BidVolume1;
     return dbg;
