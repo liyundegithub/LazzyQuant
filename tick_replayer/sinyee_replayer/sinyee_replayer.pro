@@ -7,24 +7,12 @@ CONFIG -= app_bundle
 
 TEMPLATE = app
 
-SOURCES += main.cpp \
-    ../../common/common_utility.cpp \
-    ../../common/trading_calendar.cpp \
-    ../../common/time_mapper.cpp \
-    ../tick_replayer.cpp \
-    sinyee_tick.cpp \
-    sinyee_bar.cpp \
-    sinyee_replayer.cpp
+LAZZYQUANT_ROOT = $$PWD/../..
 
-HEADERS += \
-    ../../common/common_utility.h \
-    ../../common/trading_calendar.h \
-    ../../common/time_mapper.h \
-    ../common_tick.h \
-    ../tick_replayer.h \
-    sinyee_tick.h \
-    sinyee_bar.h \
-    sinyee_replayer.h
+SOURCES += main.cpp
 
-INCLUDEPATH += ../ ../../ ../../common/
-DBUS_ADAPTORS += ../../interface/tick_replayer.xml
+INCLUDEPATH += $$LAZZYQUANT_ROOT
+
+include(sinyee_replayer.pri)
+
+DBUS_ADAPTORS += $$LAZZYQUANT_ROOT/interface/tick_replayer.xml
