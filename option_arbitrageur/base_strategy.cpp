@@ -3,8 +3,6 @@
 #include "depth_market.h"
 #include "base_strategy.h"
 
-#include "trade_executer_interface.h"
-
 extern std::function<void(const QString&, int, double, int)> buyLimit;
 extern std::function<void(const QString&, int, double, int)> sellLimit;
 
