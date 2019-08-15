@@ -38,7 +38,7 @@ OptionArbitrageurBundle::OptionArbitrageurBundle(const OptionArbitrageurOptions 
     if (options.replayMode) {
         auto managerReplay = new ReplayManager<TickReplayer, OptionArbitrageur, CtpExecuter>(pReplayer, pArbitrageur, pExecuter);
         if (options.isReplayReady()) {
-            managerReplay->setAutoReplayDate(options.replayDate, options.replayDate);
+            managerReplay->setAutoReplayDate(options.replayStartDate, options.replayStopDate, true);
         }
         pManager = managerReplay;
     } else {

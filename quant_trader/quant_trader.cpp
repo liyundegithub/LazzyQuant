@@ -1,6 +1,7 @@
 #include <QCoreApplication>
 #include <QFile>
 #include <QSettings>
+#include <QDataStream>
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QSqlError>

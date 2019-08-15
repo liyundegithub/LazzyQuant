@@ -2,8 +2,9 @@
 #define BAR_H
 
 #include <QMetaType>
-#include <QDataStream>
 #include <QDebug>
+
+class QDataStream;
 
 typedef unsigned short      WORD;
 
@@ -40,10 +41,9 @@ public:
 
 Q_DECLARE_METATYPE(Bar)
 
-QDataStream& operator>>(QDataStream& s, KTExportBar& bar);
-QDataStream& operator>>(QDataStream& s, Bar& bar);
-QDataStream& operator<<(QDataStream& s, const Bar& bar);
+QDataStream &operator>>(QDataStream &s, KTExportBar &bar);
+QDataStream &operator>>(QDataStream &s, Bar &bar);
+QDataStream &operator<<(QDataStream &s, const Bar &bar);
 QDebug operator<<(QDebug dbg, const Bar &bar);
 
 #endif // BAR_H
-

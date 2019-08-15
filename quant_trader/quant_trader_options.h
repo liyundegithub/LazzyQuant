@@ -28,7 +28,9 @@ struct QuantTraderOptions {
     bool log2File;
 
     bool saveBarsToDB() const { return explicitSave || (!replayMode); }
-    bool isReplayReady() const { return replayMode && !replayStartDate.isEmpty() && !replayStopDate.isEmpty(); }
+    bool isReplayReady() const {
+        return replayMode && replayStartDate.length() == 8 && replayStopDate.length() == 8;
+    }
 };
 
 static QuantTraderOptions getQuantTraderOptions(const QCommandLineParser &parser)

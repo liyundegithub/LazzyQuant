@@ -41,7 +41,7 @@ OptionArbitrageurDbus::OptionArbitrageurDbus(const OptionArbitrageurOptions &opt
     if (options.replayMode) {
         auto managerReplay = new ReplayManager<tick_replayer, OptionArbitrageur, trade_executer>(pReplayer, pArbitrageur, pExecuter);
         if (options.isReplayReady()) {
-            managerReplay->setAutoReplayDate(options.replayDate, options.replayDate);
+            managerReplay->setAutoReplayDate(options.replayStartDate, options.replayStopDate);
         }
         pManager = managerReplay;
     } else {

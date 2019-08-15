@@ -1,4 +1,7 @@
 #include <cfloat>
+#include <QDateTime>
+#include <QTimeZone>
+#include <QDataStream>
 #include <QDebugStateSaver>
 
 #include "bar.h"
@@ -35,7 +38,7 @@ bool Bar::isEmpty() const
     return tick_volume == 0;
 }
 
-QDataStream& operator>>(QDataStream& s, KTExportBar& bar)
+QDataStream &operator>>(QDataStream &s, KTExportBar &bar)
 {
     s >> bar.m_time;
     s >> bar.m_fOpen;
@@ -51,7 +54,7 @@ QDataStream& operator>>(QDataStream& s, KTExportBar& bar)
     return s;
 }
 
-QDataStream& operator>>(QDataStream& s, Bar& bar)
+QDataStream &operator>>(QDataStream &s, Bar &bar)
 {
     s >> bar.time;
     s >> bar.open;
@@ -63,7 +66,7 @@ QDataStream& operator>>(QDataStream& s, Bar& bar)
     return s;
 }
 
-QDataStream& operator<<(QDataStream& s, const Bar& bar)
+QDataStream &operator<<(QDataStream &s, const Bar &bar)
 {
     s << bar.time;
     s << bar.open;
@@ -78,7 +81,7 @@ QDataStream& operator<<(QDataStream& s, const Bar& bar)
 QDebug operator<<(QDebug dbg, const Bar &bar)
 {
     QDebugStateSaver saver(dbg);
-    dbg.nospace() <<   "time = " << bar.time
+    dbg.nospace() << QDateTime::fromSecsSinceEpoch(bar.time, QTimeZone::utc()).toString(QStringLiteral("yyyy-MM-dd HH:mm:ss"))
                   << ", open = " << bar.open
                   << ", high = " << bar.high
                   << ", low = " << bar.low

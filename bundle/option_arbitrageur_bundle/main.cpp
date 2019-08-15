@@ -23,10 +23,13 @@ int main(int argc, char *argv[])
     parser.addHelpOption();
     parser.addVersionOption();
     parser.addOptions(optionArbitrageurOptions);
-
     parser.process(a);
-    OptionArbitrageurOptions options = getOptionArbitrageurOptions(parser);
-    QString source = parser.value("source");
+
+    auto options = getOptionArbitrageurOptions(parser);
+    if (options.replayMode && options.updateOnly) {
+        qCritical().noquote() << "Can not do update in replay mode!";
+        return -1;
+    }
 
     setupMessageHandler(true, options.log2File, "option_arbitrageur_bundle", !options.replayMode);
     OptionArbitrageurBundle bundle(options);
