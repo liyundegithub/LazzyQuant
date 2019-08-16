@@ -5,24 +5,29 @@ CONFIG += c++14
 
 TEMPLATE = app
 
-SOURCES += main.cpp \
-    ../common/dbus_monitor.cpp \
-    mainwindow.cpp
+LAZZYQUANT_ROOT = $$PWD/..
 
-HEADERS += ../config.h \
-    ../common/dbus_monitor.h \
-    mainwindow.h
+SOURCES += \
+    $$LAZZYQUANT_ROOT/common/dbus_monitor.cpp \
+    mainwindow.cpp \
+    main.cpp
+
+HEADERS += \
+    $$LAZZYQUANT_ROOT/common/dbus_monitor.h \
+    mainwindow.h \
+    $$LAZZYQUANT_ROOT/config.h
 
 FORMS += \
     mainwindow.ui
 
-INCLUDEPATH += ../ ../common/ ../trade_executer/
+INCLUDEPATH += \
+    $$LAZZYQUANT_ROOT \
+    $$LAZZYQUANT_ROOT/common
 
-trade_executer_interface.files = ../interface/trade_executer.xml
-trade_executer_interface.header_flags = -i parked_order.h
+include($$LAZZYQUANT_ROOT/trade_executer/trade_executer_dbus.pri)
 
 DBUS_INTERFACES += \
-    ../interface/market_watcher.xml \
-    trade_executer_interface \
-    ../interface/tick_replayer.xml \
-    ../interface/quant_trader.xml
+    $$LAZZYQUANT_ROOT/interface/market_watcher.xml \
+    trade_executer_dbus \
+    $$LAZZYQUANT_ROOT/interface/tick_replayer.xml \
+    $$LAZZYQUANT_ROOT/interface/quant_trader.xml

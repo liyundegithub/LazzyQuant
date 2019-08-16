@@ -7,31 +7,25 @@ CONFIG -= app_bundle
 
 TEMPLATE = app
 
-SOURCES += main.cpp \
-    ../common/common_utility.cpp \
-    ../common/connection_manager.cpp \
-    ../common/message_handler.cpp \
-    ../common/strategy_status.cpp \
-    future_arbitrageur.cpp \
-    depth_market.cpp \
-    base_strategy.cpp \
-    pair_trade.cpp \
-    butterfly.cpp
+LAZZYQUANT_ROOT = $$PWD/..
 
-HEADERS += ../config.h \
-    ../common/common_utility.h \
-    ../common/connection_manager.h \
-    ../common/message_handler.h \
-    ../common/strategy_status.h \
-    future_arbitrageur.h \
-    depth_market.h \
-    base_strategy.h \
-    pair_trade.h \
-    butterfly.h
+SOURCES += \
+    $$LAZZYQUANT_ROOT/common/message_handler.cpp \
+    $$LAZZYQUANT_ROOT/common/connection_manager.cpp \
+    main.cpp
 
-INCLUDEPATH += ../ ../common/ ../trade_executer/
+HEADERS += \
+    $$LAZZYQUANT_ROOT/common/message_handler.h \
+    $$LAZZYQUANT_ROOT/common/connection_manager.h \
+    $$LAZZYQUANT_ROOT/config.h
 
-trade_executer_interface.files = ../interface/trade_executer.xml
-trade_executer_interface.header_flags = -i parked_order.h
+INCLUDEPATH += \
+    $$LAZZYQUANT_ROOT
 
-DBUS_INTERFACES += ../interface/tick_replayer.xml ../interface/market_watcher.xml trade_executer_interface
+include(future_arbitrageur.pri)
+include($$LAZZYQUANT_ROOT/trade_executer/trade_executer_dbus.pri)
+
+DBUS_INTERFACES += \
+    $$LAZZYQUANT_ROOT/interface/tick_replayer.xml \
+    $$LAZZYQUANT_ROOT/interface/market_watcher.xml \
+    trade_executer_dbus
