@@ -44,7 +44,7 @@ public:
         HOUR12  = 0x10000000,
         DAY     = 0x20000000,
         WEEK    = 0x40000000,
-        MONTH   = 0x80000000,
+        MONTH   = (int)0x80000000,
     };
     Q_DECLARE_FLAGS(TimeFrames, TimeFrame)
     Q_FLAG(TimeFrames)

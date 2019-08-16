@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
         replayDate = parser.value("replay");
     }
     bool log2File = parser.isSet("logtofile");
-    setupMessageHandler(true, log2File, "future_arbitrageur");
+    setupMessageHandler(true, log2File, "future_arbitrageur", !replayMode);
 
     com::lazzyquant::tick_replayer *pReplayer = nullptr;
     com::lazzyquant::market_watcher *pWatcher = nullptr;

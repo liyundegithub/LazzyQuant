@@ -1,4 +1,3 @@
-#include "common_tick.h"
 #include "sinyee_tick.h"
 
 #include <QDateTime>

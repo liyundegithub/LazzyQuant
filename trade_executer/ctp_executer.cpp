@@ -602,7 +602,6 @@ void CtpExecuter::customEvent(QEvent *event)
 
 void CtpExecuter::timerEvent(QTimerEvent *event)
 {
-    Q_UNUSED(event)
     if (event->timerId() == queueTimerId) {
         if (!queuedQueries.isEmpty()) {
             auto ctpQry = queuedQueries.dequeue();
@@ -1536,7 +1535,7 @@ QString CtpExecuter::getStatus() const
 
 /*!
  * \brief CtpExecuter::getTradingDay
- * 获取交易日
+ * 获取交易日.
  *
  * \return 交易日(YYYYMMDD)
  */

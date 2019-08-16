@@ -5,8 +5,6 @@
 
 class QDataStream;
 
-struct CommonTick;
-
 struct SinYeeTick
 {
     int time;
