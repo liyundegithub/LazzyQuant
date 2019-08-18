@@ -5,6 +5,7 @@
 #include <QAtomicInt>
 #include <QByteArray>
 #include <QMap>
+#include <QHash>
 #include <QQueue>
 #include <QPair>
 
@@ -88,10 +89,10 @@ protected:
     QMap<QString, int> tdLongPositions;
     QMap<QString, int> tdShortPositions;
 
-    QMap<QString, CThostFtdcInstrumentMarginRateField> marginRateCache;
-    QMap<QString, CThostFtdcInstrumentCommissionRateField> commissionRateCache;
-    QMap<QString, CThostFtdcInstrumentField> instrumentDataCache;
-    QMap<QString, QPair<double, double>> upperLowerLimitCache;
+    QHash<QString, CThostFtdcInstrumentMarginRateField> marginRateCache;
+    QHash<QString, CThostFtdcInstrumentCommissionRateField> commissionRateCache;
+    QHash<QString, CThostFtdcInstrumentField> instrumentDataCache;
+    QHash<QString, QPair<double, double>> upperLowerLimitCache;
     QStringList combineInstruments;
 
     void customEvent(QEvent *event) override;
