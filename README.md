@@ -11,11 +11,12 @@
 8. 支持预埋单, 组合单  
 9. 支持兼容MQL5语法的策略设计  
 
-## 开发环境:
-&emsp;&emsp;Visual Studio 2015/2017 (Windows) / GCC 5.3 (Linux)  
-&emsp;&emsp;Qt 5.9.7  
+## 开发与测试环境:
+&emsp;&emsp;Visual Studio 2015/2017 (Windows)
+&emsp;&emsp;GCC 5.3/8.2 (Linux)
+&emsp;&emsp;Qt 5.12.4 (最低要求5.10)  
 &emsp;&emsp;Boost 1.68  
-&emsp;&emsp;D-Bus 1.10.26  
-&emsp;&emsp;MySQL 5.7.24  
+&emsp;&emsp;D-Bus 1.10.28  
+&emsp;&emsp;MySQL 5.7.26  
 
 #### 部分开发文档存放在LazzyDocument仓库中  

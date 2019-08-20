@@ -2,7 +2,7 @@
 #define ABSTRACT_MANAGER_H
 
 #include <QCoreApplication>
-#include <QTimer>
+#include <QMetaObject>
 #include <QDebug>
 
 #include "connection_manager.h"
@@ -83,7 +83,7 @@ void RealManager<W, T, E>::init()
             qWarning() << "MarketWatcher or TradeExecuter is not ready!";
         }
     };
-    QTimer::singleShot(500, checkPrepare);
+    QMetaObject::invokeMethod(pTrader, checkPrepare, Qt::QueuedConnection);
 
     marketOpenTimer = new MultipleTimer({{8, 45}, {20, 45}});
     QObject::connect(marketOpenTimer, &MultipleTimer::timesUp, checkPrepare);
@@ -166,11 +166,11 @@ void ReplayManager<R, T, E>::init()
             });
         }
 
-        QTimer::singleShot(500, [=]() -> void {
+        QMetaObject::invokeMethod(pReplayer, [=]() -> void {
             for (const auto& date : qAsConst(replayDates)) {
                 pReplayer->startReplay(date);
             }
-        });
+        }, Qt::QueuedConnection);
     }
 }
 
