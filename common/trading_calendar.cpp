@@ -27,12 +27,8 @@ bool TradingCalendar::isTradingDay(const QDate &date) const
     const int day = date.dayOfWeek();
     if (day == 0 || day == 6 || day == 7) {
         return false;
-    } else {
-        if (nonTradingDays.contains(date)) {
-            return false;
-        }
-    }
-    return true;
+    } 
+    return !nonTradingDays.contains(date);
 }
 
 bool TradingCalendar::tradesTonight(const QDate &date) const

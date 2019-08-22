@@ -12,8 +12,8 @@
 9. 支持兼容MQL5语法的策略设计  
 
 ## 开发与测试环境:
-&emsp;&emsp;Visual Studio 2015/2017 (Windows)
-&emsp;&emsp;GCC 5.3/8.2 (Linux)
+&emsp;&emsp;Visual Studio 2015/2017 (Windows)  
+&emsp;&emsp;GCC 5.3/8.2 (Linux)  
 &emsp;&emsp;Qt 5.12.4 (最低要求5.10)  
 &emsp;&emsp;Boost 1.68  
 &emsp;&emsp;D-Bus 1.10.28  

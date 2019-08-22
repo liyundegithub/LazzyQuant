@@ -1617,9 +1617,8 @@ QString CtpExecuter::getExchangeID(const QString &instrument)
 
     if (instrumentDataCache.contains(instrument)) {
         return instrumentDataCache.value(instrument).ExchangeID;
-    } else {
-        return QString();
-    }
+    } 
+    return QString();
 }
 
 /*!
@@ -1636,9 +1635,8 @@ QString CtpExecuter::getExpireDate(const QString &instrument)
 
     if (instrumentDataCache.contains(instrument)) {
         return instrumentDataCache.value(instrument).ExpireDate;
-    } else {
-        return INVALID_DATE_STRING;
-    }
+    } 
+    return INVALID_DATE_STRING;
 }
 
 /*!
@@ -1655,9 +1653,8 @@ double CtpExecuter::getUpperLimit(const QString &instrument)
 
     if (upperLowerLimitCache.contains(instrument)) {
         return upperLowerLimitCache.value(instrument).first;
-    } else {
-        return -DBL_MAX;
-    }
+    } 
+    return -DBL_MAX;
 }
 
 /*!
@@ -1674,9 +1671,8 @@ double CtpExecuter::getLowerLimit(const QString &instrument)
 
     if (upperLowerLimitCache.contains(instrument)) {
         return upperLowerLimitCache.value(instrument).second;
-    } else {
-        return DBL_MAX;
-    }
+    } 
+    return DBL_MAX;
 }
 
 /*!

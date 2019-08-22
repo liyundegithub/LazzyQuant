@@ -62,7 +62,7 @@ bool createDbIfNotExist(const QString &dbName)
 
 bool createTablesIfNotExist(const QString &dbName, const QStringList &tableNames, const QString &format)
 {
-    int ret = true;
+    bool ret = true;
     QSqlDatabase sqlDB = QSqlDatabase::database();
     QSqlQuery qry(sqlDB);
     QString oldDbName = sqlDB.databaseName();
