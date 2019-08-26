@@ -11,7 +11,6 @@ class TimeMapper
 
 public:
     TimeMapper() = default;
-    ~TimeMapper() = default;
 
     void setTradingDay(const QString &tradingDay);
     qint64 mapTime(int inTime) const;

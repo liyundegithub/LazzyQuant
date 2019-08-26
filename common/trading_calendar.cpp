@@ -47,17 +47,14 @@ QDate TradingCalendar::getOpenDay(const QDate &date) const
 
     if (isTradingDay(day1)) {
         return day1;
-    } else {
-        if (isTradingDay(day2)) {
-            return date;
-        } else {
-            if (isTradingDay(day3)) {
-                return day3;
-            } else {
-                return date;
-            }
-        }
     }
+    if (isTradingDay(day2)) {
+        return date;
+    }
+    if (isTradingDay(day3)) {
+        return day3;
+    }
+    return date;
 }
 
 int TradingCalendar::getTradingDays(const QDate &startDate, const QDate &endDate) const

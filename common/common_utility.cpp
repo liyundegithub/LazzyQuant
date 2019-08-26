@@ -115,10 +115,9 @@ std::unique_ptr<QSettings> getSettingsSmart(const QString &organization, const Q
     const QString localFileName = QCoreApplication::applicationDirPath() + "/" + name + ".ini";
     QFile localFile(localFileName);
     if (localFile.exists()) {
-        return std::unique_ptr<QSettings>(new QSettings(localFileName, QSettings::IniFormat, parent));
-    } else {
-        return std::unique_ptr<QSettings>(new QSettings(QSettings::IniFormat, QSettings::UserScope, organization, name, parent));
-    }
+        return std::make_unique<QSettings>(localFileName, QSettings::IniFormat, parent);
+    } 
+    return std::make_unique<QSettings>(QSettings::IniFormat, QSettings::UserScope, organization, name, parent);
 }
 
 /*!

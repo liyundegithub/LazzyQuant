@@ -49,10 +49,6 @@ BarCollector::BarCollector(const QString &instrumentID, int timeFrameFlags, bool
     }
 }
 
-BarCollector::~BarCollector()
-{
-}
-
 #define MIN_UNIT    60
 #define HOUR_UNIT   3600
 
@@ -159,7 +155,7 @@ void BarCollector::saveBar(int timeFrame, const Bar &bar)
     QSqlDatabase sqlDB = QSqlDatabase();
     QSqlQuery qry(sqlDB);
     QString tableName = QMetaEnum::fromType<TimeFrames>().valueToKey(timeFrame);
-    QString tableOfDB = QString("market.%1_%2").arg(instrument).arg(tableName);
+    QString tableOfDB = QString("market.%1_%2").arg(instrument, tableName);
     qry.prepare("INSERT INTO " + tableOfDB + " (time, open, high, low, close, tick_volume, volume, type) "
                   "VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
     qry.bindValue(0, bar.time);

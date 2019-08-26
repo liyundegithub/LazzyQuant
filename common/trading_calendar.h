@@ -7,12 +7,13 @@
 class TradingCalendar
 {
     TradingCalendar();
+    ~TradingCalendar() = default;
 
 public:
-    TradingCalendar(const TradingCalendar& arg) = delete; // Copy constructor
-    TradingCalendar(const TradingCalendar&& arg) = delete;  // Move constructor
-    TradingCalendar& operator=(const TradingCalendar& arg) = delete; // Assignment operator
-    TradingCalendar& operator=(const TradingCalendar&& arg) = delete; // Move operator
+    TradingCalendar(const TradingCalendar &arg) = delete;
+    TradingCalendar(const TradingCalendar &&arg) = delete;
+    TradingCalendar& operator=(const TradingCalendar &arg) = delete;
+    TradingCalendar& operator=(const TradingCalendar &&arg) = delete;
 
     static TradingCalendar *getInstance();
 
