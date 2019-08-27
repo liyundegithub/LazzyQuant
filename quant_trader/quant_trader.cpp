@@ -224,7 +224,7 @@ QList<Bar>* QuantTrader::getBars(const QString &instrumentID, int timeFrame)
 
     // Load Collector Bars
     QList<Bar> collectedBarList;
-    const QString tableName = QString("%1_%2").arg(instrumentID).arg(time_frame_str);
+    const QString tableName = QString("%1_%2").arg(instrumentID, time_frame_str);
     QSqlDatabase sqlDB = QSqlDatabase::database();
     const QStringList tables = sqlDB.isOpen() ? sqlDB.tables() : QStringList();
     if (tables.contains(tableName, Qt::CaseInsensitive)) {
@@ -595,14 +595,13 @@ QStringList QuantTrader::getStrategyId(const QString &instrument) const
 {
     if (instrument.isEmpty()) {
         return strategyIdMap.keys();
-    } else {
-        const auto strategyList = strategy_map.values(instrument);
-        QStringList strategyIdList;
-        for (const auto item : strategyList) {
-            strategyIdList << item->getId();
-        }
-        return strategyIdList;
     }
+    const auto strategyList = strategy_map.values(instrument);
+    QStringList strategyIdList;
+    for (const auto item : strategyList) {
+        strategyIdList << item->getId();
+    }
+    return strategyIdList;
 }
 
 bool QuantTrader::getStrategyEnabled(const QString &id) const
