@@ -18,6 +18,7 @@ public:
     void closeShort(qint64 actionTime, const QString &instrumentID, double price, int volume);
 
 protected:
+    void addRecord();
     void saveActionToDB(qint64 actionTime, const QString &instrumentID, double price, int volume, bool direction, bool openCloseFlag);
 };
 
