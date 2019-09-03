@@ -50,7 +50,6 @@ public:
     Q_FLAG(TimeFrames)
 
     explicit BarCollector(const QString &instrumentID, int timeFrameFlags, bool saveBarsToDB, QObject *parent = nullptr);
-    ~BarCollector();
 
     Bar *getBarPtr(int timeFrame) {
         return &barMap[timeFrame];

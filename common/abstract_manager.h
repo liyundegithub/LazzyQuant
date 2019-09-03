@@ -26,7 +26,7 @@ public:
     virtual void init() = 0;
 };
 
-void AbstractManager::makeDefaultConnections()
+inline void AbstractManager::makeDefaultConnections()
 {
     pConnManager = new ConnectionManager({getSource()}, {getTrader()});
 }
@@ -113,7 +113,7 @@ class ReplayManager : public AbstractManager
 
 public:
     ReplayManager(R *pReplayer, T *pTrader, E *pExecuter);
-    ~ReplayManager() {}
+    ~ReplayManager() = default;
 
     QObject *getSource() const { return pReplayer; }
     QObject *getTrader() const { return pTrader; }

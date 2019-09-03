@@ -12,6 +12,11 @@ class ConnectionManager
 public:
     ConnectionManager(const QObjectList &inputs, const QObjectList &strategies);
     ~ConnectionManager();
+
+    ConnectionManager(const ConnectionManager &arg) = delete;
+    ConnectionManager(const ConnectionManager &&arg) = delete;
+    ConnectionManager& operator=(const ConnectionManager &arg) = delete;
+    ConnectionManager& operator=(const ConnectionManager &&arg) = delete;
 };
 
 #endif // CONNECTION_MANAGER_H

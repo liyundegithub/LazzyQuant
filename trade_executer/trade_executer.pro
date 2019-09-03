@@ -2,7 +2,7 @@ QT += core dbus
 QT -= gui
 
 TARGET = ctp_executer
-CONFIG += console c++11
+CONFIG += console c++14
 CONFIG -= app_bundle
 
 TEMPLATE = app
